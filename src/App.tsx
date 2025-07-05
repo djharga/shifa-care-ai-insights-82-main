@@ -18,6 +18,7 @@ import FacilityExpenses from './pages/FacilityExpenses';
 import Rooms from './pages/Rooms';
 import TestPage from './pages/TestPage';
 import SimplePage from './pages/SimplePage';
+import WorkingPage from './pages/WorkingPage';
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,7 @@ const App = () => (
           <Route path="/simple" element={<SimplePage />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<SimplePage />} />
+          <Route path="/" element={<WorkingPage />} />
           <Route path="/dashboard" element={<Index />} />
           <Route path="/patients" element={
             <ProtectedRoute>
