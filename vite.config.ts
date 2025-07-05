@@ -11,14 +11,6 @@ export default defineConfig({
   },
   build: {
     target: 'es2015',
-    outDir: 'dist',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js']
-        }
-      }
-    }
+    outDir: 'dist'
   }
 });
