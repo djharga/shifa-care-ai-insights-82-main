@@ -1,73 +1,94 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>شفاء كير - نظام إدارة العيادة الطبية</title>
-    <meta name="description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي - إدارة المرضى، الجلسات، التقارير والماليات" />
-    <meta name="author" content="Shifa Care Team" />
-    <meta name="keywords" content="عيادة طبية, إدارة المرضى, الذكاء الاصطناعي, تقارير طبية, إدارة الجلسات" />
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <meta name="description" content="شفاء كير - نظام إدارة العيادات النفسية بالذكاء الاصطناعي" />
     <meta name="theme-color" content="#0f172a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Shifa Care" />
-    <link rel="apple-touch-icon" href="/placeholder.svg" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="شفاء كير - نظام إدارة العيادة الطبية" />
-    <meta property="og:description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي - إدارة المرضى، الجلسات، التقارير والماليات" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/placeholder.svg" />
-    <meta property="og:locale" content="ar_EG" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="شفاء كير - نظام إدارة العيادة الطبية" />
-    <meta name="twitter:description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي" />
-    <meta name="twitter:image" content="/placeholder.svg" />
-
-    <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>شفاء كير - نظام إدارة العيادات النفسية</title>
     
-    <!-- Security Headers -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
-    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <!-- تحسين الأداء -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      /* شاشة التحميل */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: 'Cairo', sans-serif;
+        color: white;
+      }
+      
+      .loading-content {
+        text-align: center;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      
+      .loading-subtitle {
+        font-size: 14px;
+        opacity: 0.8;
+        margin-top: 10px;
+      }
+    </style>
   </head>
-
   <body>
     <div id="root">
-      <!-- Loading message -->
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-        <div style="text-align: center;">
-          <h1 style="font-size: 2rem; margin-bottom: 1rem;">شفاء كير</h1>
-          <p>جاري التحميل...</p>
+      <!-- شاشة التحميل -->
+      <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">شفاء كير</div>
+          <div class="loading-subtitle">جاري تحميل النظام...</div>
         </div>
       </div>
     </div>
+    
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
+      // إخفاء شاشة التحميل بعد تحميل التطبيق
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('loadingScreen');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.5s ease';
+            setTimeout(function() {
+              loadingScreen.style.display = 'none';
+            }, 500);
+          }
+        }, 1000);
+      });
     </script>
   </body>
 </html>
