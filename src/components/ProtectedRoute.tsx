@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
+
+interface User {
+  id: string;
+  email: string;
+  role?: string;
+}
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,9 +21,10 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        setUser(session.user as User);
+        setUserRole(session.user.role || 'admin');
+        setLoading(false);
       } else {
         setLoading(false);
       }
@@ -26,23 +32,19 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        setUser(session.user as User);
+        setUserRole(session.user.role || 'admin');
+        setLoading(false);
       } else {
+        setUser(null);
+        setUserRole(null);
         setLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line
   }, []);
-
-  const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
-    setUserRole(data?.role || null);
-    setLoading(false);
-  };
 
   if (loading) {
     return (
