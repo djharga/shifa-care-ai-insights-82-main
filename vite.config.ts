@@ -20,15 +20,18 @@ export default defineConfig({
     include: ['react', 'react-dom']
   },
   build: {
-    target: 'es2015',
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu']
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          supabase: ['@supabase/supabase-js'],
+          charts: ['recharts']
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 1000
   },
   define: {
     global: 'globalThis'
