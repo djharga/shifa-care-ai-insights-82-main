@@ -169,7 +169,7 @@
   "expense_category": "فئة المصروف",
   "select_expense_category": "اختر فئة المصروف",
   "expense_name": "اسم المصروف",
-  "expense_name_example": "مثال: فاتورة الكهرباء - يناير 2024",
+  "expense_name_example": "مثال: فاتورة الكهرباء - يناير 2025",
   "amount_example_facility": "مثال: 2500",
   "expense_date_facility": "تاريخ المصروف",
   "due_date": "تاريخ الاستحقاق",
@@ -321,5 +321,18 @@
   "ai_parse_error": "حصلت مشكلة في تحليل رد الذكاء الاصطناعي",
   "ai_emotion_undefined": "مش محدد",
   "ai_goal_therapeutic": "هدف علاجي",
-  "ai_activity_therapeutic": "نشاط علاجي"
+  "ai_activity_therapeutic": "نشاط علاجي",
+  "dark_mode": "الوضع المظلم",
+  "light_mode": "الوضع الفاتح",
+  "theme_toggle": "تبديل المظهر",
+  "performance_optimized": "الأداء محسن",
+  "loading_optimized": "تحميل محسن",
+  "mobile_ready": "جاهز للموبايل",
+  "back": "رجوع",
+  "mobile_app": "تطبيق موبايل",
+  "offline_mode": "وضع عدم الاتصال",
+  "online_mode": "وضع الاتصال",
+  "mobile_optimized": "محسن للموبايل",
+  "touch_friendly": "سهل اللمس",
+  "responsive_design": "تصميم متجاوب"
 } 

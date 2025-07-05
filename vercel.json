@@ -1,14 +1,15 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "vite",
-  "outputDirectory": "dist",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "version": 2,
+  "builds": [
+    { "src": "src/main.tsx", "use": "@vercel/node" }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
     }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "headers": [
     {

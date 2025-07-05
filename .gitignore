@@ -140,3 +140,25 @@ temp/
 # Misc
 *.tgz
 *.tar.gz
+
+# Node.js installation files
+node-v*.zip
+node-v*/
+
+# Capacitor
+android/
+ios/
+www/
+
+# Mobile build
+shifa-care-mobile/
+
+# Performance monitoring
+*.perf
+
+# Backup files
+*.bak
+*.backup
+
+# Local development files
+.local/

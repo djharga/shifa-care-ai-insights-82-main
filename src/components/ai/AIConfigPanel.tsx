@@ -302,7 +302,7 @@ const AIConfigPanel = () => {
                 </div>
                 <Switch
                   checked={config.enableAdvancedFeatures}
-                  onCheckedChange={(checked) => setConfig({...config, enableAdvancedFeatures: checked})}
+                  onCheckedChange={(checked: boolean) => setConfig({...config, enableAdvancedFeatures: checked})}
                 />
               </div>
 
@@ -313,7 +313,7 @@ const AIConfigPanel = () => {
                 </div>
                 <Switch
                   checked={config.enableAnalytics}
-                  onCheckedChange={(checked) => setConfig({...config, enableAnalytics: checked})}
+                  onCheckedChange={(checked: boolean) => setConfig({...config, enableAnalytics: checked})}
                 />
               </div>
             </div>

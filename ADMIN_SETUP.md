@@ -206,7 +206,7 @@ $$ LANGUAGE plpgsql;
 // src/config/app-config.ts
 export const appConfig = {
   name: 'شفاء كير',
-  version: '1.0.0',
+      version: '2025.1.0',
   environment: import.meta.env.VITE_APP_ENVIRONMENT,
   features: {
     ai: import.meta.env.VITE_ENABLE_AI_FEATURES === 'true',

@@ -41,9 +41,9 @@ const questions = [
   },
   {
     name: 'appVersion',
-    question: '📦 إصدار التطبيق (افتراضي: 2.0.0): ',
+    question: '📦 إصدار التطبيق (افتراضي: 2025.1.0): ',
     required: false,
-    default: '2.0.0'
+    default: '2025.1.0'
   }
 ];
 

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   Bed, Building, Users, Plus, Edit, Trash2, 
   CheckCircle, AlertCircle, Clock, X, 
-  Home, Floor, DollarSign, User, Calendar
+  Home, Building, DollarSign, User, Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';

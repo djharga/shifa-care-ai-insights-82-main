@@ -32,7 +32,7 @@ VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 VITE_OPENAI_API_KEY=your-openai-api-key
 VITE_APP_NAME=شفاء كير
-VITE_APP_VERSION=1.0.0
+VITE_APP_VERSION=2025.1.0
 VITE_APP_ENVIRONMENT=production
 ```
 

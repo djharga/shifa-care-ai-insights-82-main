@@ -8,8 +8,8 @@
 
 [build.environment]
   # متغيرات البيئة للبناء
-  NODE_VERSION = "18"
-  NPM_VERSION = "9"
+  NODE_VERSION = "20"
+  NPM_VERSION = "10"
 
 # إعدادات إعادة التوجيه للـ SPA
 [[redirects]]
@@ -83,8 +83,4 @@
 [context.branch-deploy.environment]
   VITE_APP_ENV = "development"
 
-[dev]
-  command = "npm run dev"
-  port = 8080
-  publish = "dist"
-  framework = "#custom" 
+# تم إزالة إعدادات التطوير المحلي - المشروع مخصص للنشر السحابي فقط 

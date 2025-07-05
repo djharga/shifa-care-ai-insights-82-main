@@ -25,7 +25,7 @@ VITE_OPENAI_API_KEY=sk-proj-EYGlTFVOWh_ZhD2ju9lh8zJ4XOp6ckwZY9FCYG80z7QezLoB_TN_
 
 # Application Configuration
 VITE_APP_NAME=شفاء كير
-VITE_APP_VERSION=2.0.0
+VITE_APP_VERSION=2025.1.0
 VITE_APP_DESCRIPTION=نظام إدارة مراكز علاج الإدمان مع الذكاء الاصطناعي
 
 # Development Configuration

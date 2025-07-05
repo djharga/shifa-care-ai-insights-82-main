@@ -181,7 +181,7 @@ const Sessions = () => {
         session_date: '',
         session_time: '',
         session_type: 'individual',
-        status: 'scheduled',
+
         duration: 60,
         notes: ''
       });
