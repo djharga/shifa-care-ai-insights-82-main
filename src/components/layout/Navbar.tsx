@@ -24,6 +24,7 @@ const Navbar = () => {
     { to: "/patients", icon: User, label: "العيانين" },
     { to: "/sessions", icon: Calendar, label: "الجلسات" },
     { to: "/ai-treatment", icon: Brain, label: "ذكاء صناعي" },
+    { to: "/advanced-ai", icon: Brain, label: "ذكاء متقدم" },
     { to: "/reports", icon: FileText, label: "تقارير" },
   ];
 
