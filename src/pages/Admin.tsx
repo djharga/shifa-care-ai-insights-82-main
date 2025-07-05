@@ -324,118 +324,118 @@ const Admin = () => {
 
           {/* Users Management Tab */}
           <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                    <Shield className="h-5 w-5" />
-                    <span>إدارة المستخدمين</span>
-                  </CardTitle>
-                  <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        إضافة مستخدم
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>إضافة مستخدم جديد</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label>الاسم الكامل</Label>
-                          <Input
-                            value={newUser.full_name}
-                            onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
-                          />
-                        </div>
-                        <div>
-                          <Label>البريد الإلكتروني</Label>
-                          <Input
-                            type="email"
-                            value={newUser.email}
-                            onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                          />
-                        </div>
-                        <div>
-                          <Label>الدور</Label>
-                          <Select value={newUser.role} onValueChange={(value: any) => setNewUser({...newUser, role: value})}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="therapist">معالج</SelectItem>
-                              <SelectItem value="supervisor">مشرف</SelectItem>
-                              <SelectItem value="accountant">محاسب</SelectItem>
-                              <SelectItem value="admin">مدير</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button onClick={handleAddUser} className="w-full">إضافة المستخدم</Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <Shield className="h-5 w-5" />
+                  <span>إدارة المستخدمين</span>
+                </CardTitle>
+                <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      إضافة مستخدم
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>إضافة مستخدم جديد</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
                       <div>
-                        <div className="font-medium">{user.full_name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                        <Label>الاسم الكامل</Label>
+                        <Input
+                          value={newUser.full_name}
+                          onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
+                        />
                       </div>
-                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        {getRoleBadge(user.role)}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setIsEditUserDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <Label>البريد الإلكتروني</Label>
+                        <Input
+                          type="email"
+                          value={newUser.email}
+                          onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        />
                       </div>
+                      <div>
+                        <Label>الدور</Label>
+                        <Select value={newUser.role} onValueChange={(value: any) => setNewUser({...newUser, role: value})}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="therapist">معالج</SelectItem>
+                            <SelectItem value="supervisor">مشرف</SelectItem>
+                            <SelectItem value="accountant">محاسب</SelectItem>
+                            <SelectItem value="admin">مدير</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleAddUser} className="w-full">إضافة المستخدم</Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {users.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{user.full_name}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      {getRoleBadge(user.role)}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsEditUserDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteUser(user.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
           </TabsContent>
 
           {/* Relapse Indicators Tab */}
           <TabsContent value="indicators" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span>مؤشرات الانتكاس</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {relapseIndicators.map((indicator) => (
-                    <div key={indicator.id} className="p-3 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">{indicator.patient_name}</div>
-                        {getSeverityBadge(indicator.severity)}
-                      </div>
-                      <div className="text-sm text-muted-foreground mb-2">
-                        {indicator.indicator_name}
-                      </div>
-                      <div className="text-sm">{indicator.description}</div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                <AlertTriangle className="h-5 w-5" />
+                <span>مؤشرات الانتكاس</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {relapseIndicators.map((indicator) => (
+                  <div key={indicator.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium">{indicator.patient_name}</div>
+                      {getSeverityBadge(indicator.severity)}
                     </div>
-                  ))}
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {indicator.indicator_name}
+                    </div>
+                    <div className="text-sm">{indicator.description}</div>
+                  </div>
+                ))}
                 </div>
               </CardContent>
             </Card>
@@ -470,10 +470,10 @@ const Admin = () => {
                       <span>دقة التحليل</span>
                       <Badge variant="outline" className="bg-green-100 text-green-800">94%</Badge>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
             
             <AIConfigPanel />
           </TabsContent>
