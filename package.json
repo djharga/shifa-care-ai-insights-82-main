@@ -1,6 +1,6 @@
 {
   "name": "shifa-care-ai-insights",
-  "version": "2025.2.0",
+  "version": "2025.2.1",
   "description": "Shifa Care AI Insights - نظام شفاء كير للذكاء الاصطناعي",
   "type": "module",
   "scripts": {
@@ -79,8 +79,8 @@
     "vite": "^5.2.8"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   },
   "browserslist": {
     "production": [
