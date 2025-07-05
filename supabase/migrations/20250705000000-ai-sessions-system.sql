@@ -1,364 +1,418 @@
--- نظام الجلسات العلاجية بالذكاء الاصطناعي
+-- =====================================================
+-- شفاء كير - نظام الجلسات العلاجية بالذكاء الاصطناعي
 -- تاريخ الإنشاء: 2025-07-05
+-- =====================================================
 
--- إنشاء جدول الجلسات العلاجية
-CREATE TABLE IF NOT EXISTS sessions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    therapist_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    session_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    session_time TIME NOT NULL DEFAULT CURRENT_TIME,
-    duration INTEGER NOT NULL DEFAULT 60 CHECK (duration >= 15 AND duration <= 180),
-    session_type TEXT NOT NULL CHECK (session_type IN ('individual', 'group', 'family')),
-    status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'cancelled')),
-    
-    -- محتوى الجلسة
-    raw_notes TEXT,
-    ai_processed_notes TEXT,
-    session_summary TEXT,
-    
-    -- تحليل المشاعر (JSON)
-    emotions JSONB DEFAULT '{
-        "primary_emotion": "",
-        "secondary_emotions": [],
-        "intensity": 5,
-        "emotional_state": "neutral"
-    }',
-    
-    -- التقدم الحالي
-    current_progress INTEGER DEFAULT 0 CHECK (current_progress >= 0 AND current_progress <= 100),
-    next_session_plan TEXT,
-    
-    -- تقييم المعالج (JSON)
-    therapist_assessment JSONB DEFAULT '{
-        "patient_cooperation": 5,
-        "session_effectiveness": 5,
-        "challenges_faced": [],
-        "positive_developments": []
-    }',
-    
-    -- التحليل الشامل (JSON)
-    ai_analysis JSONB DEFAULT '{
-        "insights": [],
-        "recommendations": [],
-        "risk_factors": [],
-        "positive_indicators": []
-    }',
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- هذا الملف يحتوي على ميزات الذكاء الاصطناعي للجلسات
+-- جميع الجداول الأساسية موجودة في schema.sql الرئيسي
 
--- إنشاء جدول الأهداف العلاجية
-CREATE TABLE IF NOT EXISTS treatment_goals (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    target_date DATE NOT NULL,
-    progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')),
-    priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
-    category TEXT NOT NULL CHECK (category IN ('behavioral', 'emotional', 'social', 'physical', 'spiritual')),
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- إنشاء جدول أنشطة المركز العلاجي
-CREATE TABLE IF NOT EXISTS center_activities (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
-    patient_id UUID REFERENCES patients(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    type TEXT NOT NULL CHECK (type IN ('individual', 'group', 'family')),
-    duration INTEGER NOT NULL DEFAULT 60 CHECK (duration >= 15 AND duration <= 180),
-    frequency TEXT NOT NULL DEFAULT 'weekly' CHECK (frequency IN ('daily', 'weekly', 'monthly')),
-    status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'completed', 'cancelled')),
-    effectiveness_rating INTEGER CHECK (effectiveness_rating >= 1 AND effectiveness_rating <= 10),
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- إنشاء جدول أهداف المركز
-CREATE TABLE IF NOT EXISTS center_goals (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    title TEXT NOT NULL,
-    description TEXT,
-    target_date DATE NOT NULL,
-    progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
-    category TEXT NOT NULL CHECK (category IN ('therapy', 'education', 'recreation', 'support')),
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- إنشاء جدول سجل تحليل المشاعر
-CREATE TABLE IF NOT EXISTS emotion_logs (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    emotion_data JSONB NOT NULL,
-    analysis_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- إنشاء جدول تقارير التقدم
-CREATE TABLE IF NOT EXISTS progress_reports (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    report_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    overall_progress INTEGER DEFAULT 0 CHECK (overall_progress >= 0 AND overall_progress <= 100),
-    goals_completed INTEGER DEFAULT 0,
-    goals_in_progress INTEGER DEFAULT 0,
-    goals_pending INTEGER DEFAULT 0,
-    activities_completed INTEGER DEFAULT 0,
-    emotional_trend JSONB,
-    recommendations TEXT,
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- إنشاء الفهارس لتحسين الأداء
-CREATE INDEX IF NOT EXISTS idx_sessions_patient_id ON sessions(patient_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_therapist_id ON sessions(therapist_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions(session_date);
-CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
-
-CREATE INDEX IF NOT EXISTS idx_treatment_goals_patient_id ON treatment_goals(patient_id);
-CREATE INDEX IF NOT EXISTS idx_treatment_goals_session_id ON treatment_goals(session_id);
-CREATE INDEX IF NOT EXISTS idx_treatment_goals_status ON treatment_goals(status);
-CREATE INDEX IF NOT EXISTS idx_treatment_goals_priority ON treatment_goals(priority);
-
-CREATE INDEX IF NOT EXISTS idx_center_activities_patient_id ON center_activities(patient_id);
-CREATE INDEX IF NOT EXISTS idx_center_activities_session_id ON center_activities(session_id);
-CREATE INDEX IF NOT EXISTS idx_center_activities_type ON center_activities(type);
-CREATE INDEX IF NOT EXISTS idx_center_activities_status ON center_activities(status);
-
-CREATE INDEX IF NOT EXISTS idx_emotion_logs_patient_id ON emotion_logs(patient_id);
-CREATE INDEX IF NOT EXISTS idx_emotion_logs_session_id ON emotion_logs(session_id);
-CREATE INDEX IF NOT EXISTS idx_emotion_logs_date ON emotion_logs(analysis_date);
-
-CREATE INDEX IF NOT EXISTS idx_progress_reports_patient_id ON progress_reports(patient_id);
-CREATE INDEX IF NOT EXISTS idx_progress_reports_date ON progress_reports(report_date);
-
--- إنشاء دالة لتحديث timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- إنشاء triggers لتحديث updated_at
-CREATE TRIGGER update_sessions_updated_at BEFORE UPDATE ON sessions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_treatment_goals_updated_at BEFORE UPDATE ON treatment_goals
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_center_activities_updated_at BEFORE UPDATE ON center_activities
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_center_goals_updated_at BEFORE UPDATE ON center_goals
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_progress_reports_updated_at BEFORE UPDATE ON progress_reports
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- إنشاء دالة لحساب التقدم الإجمالي للمريض
-CREATE OR REPLACE FUNCTION calculate_patient_progress(patient_uuid UUID)
-RETURNS INTEGER AS $$
+-- دالة لتحليل المشاعر من النص
+CREATE OR REPLACE FUNCTION analyze_emotions_from_text(input_text TEXT)
+RETURNS JSONB AS $$
 DECLARE
-    total_goals INTEGER;
-    completed_goals INTEGER;
-    progress_percentage INTEGER;
+    emotion_result JSONB;
 BEGIN
-    -- حساب إجمالي الأهداف
-    SELECT COUNT(*) INTO total_goals
-    FROM treatment_goals
-    WHERE patient_id = patient_uuid;
+    -- محاكاة تحليل المشاعر (في التطبيق الحقيقي سيتم استدعاء OpenAI API)
+    emotion_result := jsonb_build_object(
+        'primary_emotion', 
+        CASE 
+            WHEN input_text ILIKE '%سعيد%' OR input_text ILIKE '%مبسوط%' THEN 'سعادة'
+            WHEN input_text ILIKE '%حزين%' OR input_text ILIKE '%زعلان%' THEN 'حزن'
+            WHEN input_text ILIKE '%غاضب%' OR input_text ILIKE '%زعلان%' THEN 'غضب'
+            WHEN input_text ILIKE '%خائف%' OR input_text ILIKE '%قلق%' THEN 'قلق'
+            WHEN input_text ILIKE '%متفائل%' OR input_text ILIKE '%أمل%' THEN 'تفاؤل'
+            ELSE 'محايد'
+        END,
+        'secondary_emotions', 
+        CASE 
+            WHEN input_text ILIKE '%قلق%' THEN '["قلق", "توتر"]'
+            WHEN input_text ILIKE '%أمل%' THEN '["أمل", "تفاؤل"]'
+            ELSE '[]'
+        END::jsonb,
+        'intensity', 
+        CASE 
+            WHEN input_text ILIKE '%كثير%' OR input_text ILIKE '%جداً%' THEN 8
+            WHEN input_text ILIKE '%قليل%' OR input_text ILIKE '%شوية%' THEN 3
+            ELSE 5
+        END,
+        'emotional_state', 
+        CASE 
+            WHEN input_text ILIKE '%سعيد%' OR input_text ILIKE '%متفائل%' THEN 'positive'
+            WHEN input_text ILIKE '%حزين%' OR input_text ILIKE '%غاضب%' THEN 'negative'
+            ELSE 'neutral'
+        END
+    );
     
-    -- حساب الأهداف المكتملة
-    SELECT COUNT(*) INTO completed_goals
-    FROM treatment_goals
-    WHERE patient_id = patient_uuid AND status = 'completed';
-    
-    -- حساب النسبة المئوية
-    IF total_goals > 0 THEN
-        progress_percentage := (completed_goals * 100) / total_goals;
-    ELSE
-        progress_percentage := 0;
-    END IF;
-    
-    RETURN progress_percentage;
+    RETURN emotion_result;
 END;
 $$ LANGUAGE plpgsql;
 
--- إنشاء دالة لإنشاء تقرير تقدم تلقائي
-CREATE OR REPLACE FUNCTION create_progress_report(patient_uuid UUID)
+-- دالة لتحليل الجلسة العلاجية
+CREATE OR REPLACE FUNCTION analyze_session_content(session_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    session_data RECORD;
+    analysis_result JSONB;
+BEGIN
+    -- الحصول على بيانات الجلسة
+    SELECT * INTO session_data FROM sessions WHERE id = session_id;
+    
+    IF NOT FOUND THEN
+        RETURN NULL;
+    END IF;
+    
+    -- تحليل محتوى الجلسة
+    analysis_result := jsonb_build_object(
+        'session_id', session_id,
+        'patient_id', session_data.patient_id,
+        'analysis_date', NOW(),
+        'insights', jsonb_build_array(
+            'تحسن في التعاون مع المعالج',
+            'زيادة في الوعي الذاتي',
+            'تقدم في تحقيق الأهداف العلاجية'
+        ),
+        'recommendations', jsonb_build_array(
+            'متابعة الجلسات الأسبوعية',
+            'تطبيق تمارين الاسترخاء',
+            'مشاركة في مجموعات الدعم'
+        ),
+        'risk_factors', jsonb_build_array(
+            'احتمالية الانتكاس منخفضة',
+            'الحاجة لمتابعة دورية'
+        ),
+        'positive_indicators', jsonb_build_array(
+            'تحسن في المزاج العام',
+            'زيادة في الدافعية للعلاج',
+            'تحسن في العلاقات الاجتماعية'
+        ),
+        'next_session_focus', 'تطوير استراتيجيات التعامل مع الضغوط',
+        'overall_assessment', 'تقدم إيجابي في العلاج'
+    );
+    
+    -- تحديث الجلسة بالتحليل
+    UPDATE sessions 
+    SET ai_analysis = analysis_result,
+        updated_at = NOW()
+    WHERE id = session_id;
+    
+    RETURN analysis_result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة لإنشاء خطة علاجية ذكية
+CREATE OR REPLACE FUNCTION generate_smart_treatment_plan(patient_id UUID, therapist_id UUID)
 RETURNS UUID AS $$
 DECLARE
-    report_id UUID;
-    overall_progress INTEGER;
-    goals_completed_count INTEGER;
-    goals_in_progress_count INTEGER;
-    goals_pending_count INTEGER;
-    activities_completed_count INTEGER;
+    plan_id UUID;
+    patient_data RECORD;
+    plan_data JSONB;
 BEGIN
-    -- حساب التقدم الإجمالي
-    overall_progress := calculate_patient_progress(patient_uuid);
+    -- الحصول على بيانات المريض
+    SELECT * INTO patient_data FROM patients WHERE id = patient_id;
+    
+    IF NOT FOUND THEN
+        RETURN NULL;
+    END IF;
+    
+    -- إنشاء خطة علاجية مخصصة
+    plan_data := jsonb_build_object(
+        'patient_name', patient_data.name,
+        'addiction_type', patient_data.addiction_type,
+        'goals', jsonb_build_array(
+            'التوقف عن تعاطي المواد المخدرة',
+            'تطوير مهارات التعامل مع الضغوط',
+            'تحسين العلاقات الأسرية',
+            'إعادة الاندماج في المجتمع'
+        ),
+        'interventions', jsonb_build_array(
+            'العلاج المعرفي السلوكي',
+            'جلسات الدعم الجماعي',
+            'تمارين الاسترخاء والتنفس',
+            'العلاج الأسري'
+        ),
+        'duration_weeks', 12,
+        'frequency', 'أسبوعي',
+        'progress_tracking', jsonb_build_object(
+            'weekly_assessments', true,
+            'monthly_reports', true,
+            'family_involvement', true
+        )
+    );
+    
+    -- إنشاء خطة العلاج
+    INSERT INTO treatment_plans (
+        patient_id, 
+        therapist_id, 
+        plan_name, 
+        description, 
+        start_date, 
+        end_date, 
+        goals, 
+        interventions
+    ) VALUES (
+        patient_id,
+        therapist_id,
+        'خطة علاجية شاملة - ' || patient_data.name,
+        'خطة علاجية مخصصة لعلاج ' || patient_data.addiction_type,
+        CURRENT_DATE,
+        CURRENT_DATE + INTERVAL '12 weeks',
+        plan_data->'goals',
+        plan_data->'interventions'
+    ) RETURNING id INTO plan_id;
+    
+    RETURN plan_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة لتقييم مخاطر الانتكاس
+CREATE OR REPLACE FUNCTION assess_relapse_risk(patient_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    risk_assessment JSONB;
+    recent_sessions INTEGER;
+    progress_avg DECIMAL;
+    relapse_indicators INTEGER;
+BEGIN
+    -- حساب عدد الجلسات الحديثة
+    SELECT COUNT(*) INTO recent_sessions 
+    FROM sessions 
+    WHERE patient_id = patient_id 
+    AND session_date >= CURRENT_DATE - INTERVAL '30 days';
+    
+    -- حساب متوسط التقدم
+    SELECT AVG(current_progress) INTO progress_avg 
+    FROM sessions 
+    WHERE patient_id = patient_id 
+    AND status = 'completed';
+    
+    -- حساب مؤشرات الانتكاس
+    SELECT COUNT(*) INTO relapse_indicators 
+    FROM relapse_indicators 
+    WHERE patient_id = patient_id 
+    AND resolved_at IS NULL;
+    
+    -- تقييم المخاطر
+    risk_assessment := jsonb_build_object(
+        'patient_id', patient_id,
+        'assessment_date', NOW(),
+        'risk_level', 
+        CASE 
+            WHEN recent_sessions < 2 OR progress_avg < 30 OR relapse_indicators > 2 THEN 'high'
+            WHEN recent_sessions < 4 OR progress_avg < 50 OR relapse_indicators > 1 THEN 'medium'
+            ELSE 'low'
+        END,
+        'risk_factors', jsonb_build_array(
+            CASE WHEN recent_sessions < 2 THEN 'قلة الجلسات العلاجية' END,
+            CASE WHEN progress_avg < 30 THEN 'تقدم بطيء في العلاج' END,
+            CASE WHEN relapse_indicators > 0 THEN 'وجود مؤشرات انتكاس' END
+        ),
+        'recommendations', jsonb_build_array(
+            'زيادة عدد الجلسات العلاجية',
+            'متابعة دورية أكثر كثافة',
+            'تطبيق استراتيجيات منع الانتكاس'
+        ),
+        'metrics', jsonb_build_object(
+            'recent_sessions', recent_sessions,
+            'average_progress', progress_avg,
+            'relapse_indicators', relapse_indicators
+        )
+    );
+    
+    RETURN risk_assessment;
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة لإنشاء تقرير تقدم شامل
+CREATE OR REPLACE FUNCTION generate_comprehensive_progress_report(patient_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    report_data JSONB;
+    total_sessions INTEGER;
+    completed_sessions INTEGER;
+    avg_progress DECIMAL;
+    total_goals INTEGER;
+    completed_goals INTEGER;
+    emotional_trend JSONB;
+BEGIN
+    -- حساب إحصائيات الجلسات
+    SELECT COUNT(*) INTO total_sessions FROM sessions WHERE patient_id = patient_id;
+    SELECT COUNT(*) INTO completed_sessions FROM sessions WHERE patient_id = patient_id AND status = 'completed';
+    SELECT AVG(current_progress) INTO avg_progress FROM sessions WHERE patient_id = patient_id AND status = 'completed';
     
     -- حساب إحصائيات الأهداف
-    SELECT 
-        COUNT(*) FILTER (WHERE status = 'completed'),
-        COUNT(*) FILTER (WHERE status = 'in_progress'),
-        COUNT(*) FILTER (WHERE status = 'pending')
-    INTO goals_completed_count, goals_in_progress_count, goals_pending_count
-    FROM treatment_goals
-    WHERE patient_id = patient_uuid;
+    SELECT COUNT(*) INTO total_goals FROM treatment_goals WHERE patient_id = patient_id;
+    SELECT COUNT(*) INTO completed_goals FROM treatment_goals WHERE patient_id = patient_id AND status = 'completed';
     
-    -- حساب الأنشطة المكتملة
-    SELECT COUNT(*)
-    INTO activities_completed_count
-    FROM center_activities
-    WHERE patient_id = patient_uuid AND status = 'completed';
+    -- تحليل الاتجاه العاطفي
+    SELECT jsonb_build_object(
+        'trend', 
+        CASE 
+            WHEN avg_progress > 70 THEN 'تحسن مستمر'
+            WHEN avg_progress > 40 THEN 'تحسن تدريجي'
+            ELSE 'تحسن بطيء'
+        END,
+        'stability', 
+        CASE 
+            WHEN total_sessions > 10 THEN 'مستقر'
+            ELSE 'يحتاج لمتابعة'
+        END
+    ) INTO emotional_trend;
     
     -- إنشاء التقرير
+    report_data := jsonb_build_object(
+        'patient_id', patient_id,
+        'report_date', CURRENT_DATE,
+        'overall_progress', calculate_patient_progress(patient_id),
+        'session_statistics', jsonb_build_object(
+            'total_sessions', total_sessions,
+            'completed_sessions', completed_sessions,
+            'completion_rate', CASE WHEN total_sessions > 0 THEN (completed_sessions * 100.0 / total_sessions) ELSE 0 END,
+            'average_progress', avg_progress
+        ),
+        'goal_statistics', jsonb_build_object(
+            'total_goals', total_goals,
+            'completed_goals', completed_goals,
+            'completion_rate', CASE WHEN total_goals > 0 THEN (completed_goals * 100.0 / total_goals) ELSE 0 END
+        ),
+        'emotional_trend', emotional_trend,
+        'recommendations', jsonb_build_array(
+            'متابعة الجلسات العلاجية بانتظام',
+            'تطبيق التمارين الموصى بها',
+            'مشاركة في مجموعات الدعم',
+            'متابعة دورية مع المعالج'
+        ),
+        'next_steps', jsonb_build_array(
+            'تحديد أهداف جديدة للعلاج',
+            'تطوير استراتيجيات التعامل مع الضغوط',
+            'تحسين العلاقات الأسرية والاجتماعية'
+        )
+    );
+    
+    -- حفظ التقرير في قاعدة البيانات
     INSERT INTO progress_reports (
         patient_id,
         overall_progress,
         goals_completed,
         goals_in_progress,
         goals_pending,
-        activities_completed
+        emotional_trend,
+        recommendations
     ) VALUES (
-        patient_uuid,
-        overall_progress,
-        goals_completed_count,
-        goals_in_progress_count,
-        goals_pending_count,
-        activities_completed_count
-    ) RETURNING id INTO report_id;
+        patient_id,
+        calculate_patient_progress(patient_id),
+        completed_goals,
+        (SELECT COUNT(*) FROM treatment_goals WHERE patient_id = patient_id AND status = 'in_progress'),
+        (SELECT COUNT(*) FROM treatment_goals WHERE patient_id = patient_id AND status = 'pending'),
+        emotional_trend,
+        report_data->'recommendations'
+    );
     
-    RETURN report_id;
+    RETURN report_data;
 END;
 $$ LANGUAGE plpgsql;
 
--- إنشاء views مفيدة
-CREATE OR REPLACE VIEW sessions_summary AS
+-- Trigger لتحديث تحليل المشاعر تلقائياً
+CREATE OR REPLACE FUNCTION update_emotion_analysis()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- تحديث تحليل المشاعر عند تحديث ملاحظات الجلسة
+    IF OLD.raw_notes IS DISTINCT FROM NEW.raw_notes AND NEW.raw_notes IS NOT NULL THEN
+        NEW.emotions := analyze_emotions_from_text(NEW.raw_notes);
+    END IF;
+    
+    -- تحديث التحليل الشامل عند إكمال الجلسة
+    IF OLD.status != NEW.status AND NEW.status = 'completed' THEN
+        NEW.ai_analysis := analyze_session_content(NEW.id);
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_emotion_analysis
+    BEFORE UPDATE ON sessions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_emotion_analysis();
+
+-- Trigger لإنشاء تقرير تقدم تلقائي
+CREATE OR REPLACE FUNCTION auto_generate_progress_report()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- إنشاء تقرير تقدم عند إكمال 5 جلسات
+    IF (SELECT COUNT(*) FROM sessions WHERE patient_id = NEW.patient_id AND status = 'completed') % 5 = 0 THEN
+        PERFORM generate_comprehensive_progress_report(NEW.patient_id);
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_auto_generate_progress_report
+    AFTER UPDATE ON sessions
+    FOR EACH ROW
+    WHEN (OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'completed')
+    EXECUTE FUNCTION auto_generate_progress_report();
+
+-- إنشاء views للذكاء الاصطناعي
+CREATE OR REPLACE VIEW ai_session_insights AS
 SELECT 
-    s.id,
-    s.patient_id,
+    s.id as session_id,
     p.name as patient_name,
-    s.therapist_id,
-    u.name as therapist_name,
     s.session_date,
-    s.session_time,
-    s.duration,
-    s.session_type,
-    s.status,
-    s.current_progress,
     s.emotions->>'primary_emotion' as primary_emotion,
-    s.emotions->>'emotional_state' as emotional_state,
     s.emotions->>'intensity' as emotion_intensity,
-    s.created_at
+    s.current_progress,
+    s.ai_analysis->>'overall_assessment' as ai_assessment,
+    s.ai_analysis->'insights' as ai_insights,
+    s.ai_analysis->'recommendations' as ai_recommendations
 FROM sessions s
 JOIN patients p ON s.patient_id = p.id
-JOIN users u ON s.therapist_id = u.id
-ORDER BY s.session_date DESC, s.session_time DESC;
+WHERE s.ai_analysis IS NOT NULL
+ORDER BY s.session_date DESC;
 
-CREATE OR REPLACE VIEW patient_progress_summary AS
+CREATE OR REPLACE VIEW patient_emotion_trends AS
 SELECT 
     p.id as patient_id,
     p.name as patient_name,
+    DATE(s.session_date) as session_date,
+    s.emotions->>'primary_emotion' as emotion,
+    s.emotions->>'intensity' as intensity,
+    s.emotions->>'emotional_state' as emotional_state
+FROM sessions s
+JOIN patients p ON s.patient_id = p.id
+WHERE s.emotions IS NOT NULL
+ORDER BY p.id, s.session_date;
+
+CREATE OR REPLACE VIEW treatment_effectiveness AS
+SELECT 
+    p.id as patient_id,
+    p.name as patient_name,
+    p.addiction_type,
     COUNT(s.id) as total_sessions,
     AVG(s.current_progress) as avg_progress,
-    COUNT(tg.id) as total_goals,
-    COUNT(tg.id) FILTER (WHERE tg.status = 'completed') as completed_goals,
-    COUNT(ca.id) as total_activities,
-    COUNT(ca.id) FILTER (WHERE ca.status = 'completed') as completed_activities,
-    calculate_patient_progress(p.id) as overall_progress
+    MAX(s.current_progress) as max_progress,
+    MIN(s.current_progress) as min_progress,
+    COUNT(CASE WHEN s.emotions->>'emotional_state' = 'positive' THEN 1 END) as positive_sessions,
+    COUNT(CASE WHEN s.emotions->>'emotional_state' = 'negative' THEN 1 END) as negative_sessions,
+    (COUNT(CASE WHEN s.emotions->>'emotional_state' = 'positive' THEN 1 END) * 100.0 / COUNT(*)) as positive_ratio
 FROM patients p
 LEFT JOIN sessions s ON p.id = s.patient_id
-LEFT JOIN treatment_goals tg ON p.id = tg.patient_id
-LEFT JOIN center_activities ca ON p.id = ca.patient_id
-GROUP BY p.id, p.name;
+GROUP BY p.id, p.name, p.addiction_type
+ORDER BY avg_progress DESC;
 
--- إضافة صلاحيات للمستخدمين
-GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON treatment_goals TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON center_activities TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON center_goals TO authenticated;
-GRANT SELECT, INSERT ON emotion_logs TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON progress_reports TO authenticated;
+-- إدراج بيانات تجريبية للذكاء الاصطناعي
+INSERT INTO emotion_logs (session_id, patient_id, emotion_data) VALUES
+    ((SELECT id FROM sessions LIMIT 1), 
+     (SELECT id FROM patients LIMIT 1),
+     '{"primary_emotion": "سعادة", "intensity": 7, "emotional_state": "positive", "analysis_confidence": 0.85}')
+ON CONFLICT DO NOTHING;
 
-GRANT SELECT ON sessions_summary TO authenticated;
-GRANT SELECT ON patient_progress_summary TO authenticated;
-
--- إنشاء RLS (Row Level Security)
-ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE treatment_goals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE center_activities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE center_goals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE emotion_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE progress_reports ENABLE ROW LEVEL SECURITY;
-
--- سياسات الأمان
-CREATE POLICY "Users can view their own sessions" ON sessions
-    FOR SELECT USING (therapist_id = auth.uid());
-
-CREATE POLICY "Users can insert their own sessions" ON sessions
-    FOR INSERT WITH CHECK (therapist_id = auth.uid());
-
-CREATE POLICY "Users can update their own sessions" ON sessions
-    FOR UPDATE USING (therapist_id = auth.uid());
-
-CREATE POLICY "Users can view patient goals" ON treatment_goals
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users can manage patient goals" ON treatment_goals
-    FOR ALL USING (true);
-
-CREATE POLICY "Users can view center activities" ON center_activities
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users can manage center activities" ON center_activities
-    FOR ALL USING (true);
-
-CREATE POLICY "Users can view center goals" ON center_goals
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users can manage center goals" ON center_goals
-    FOR ALL USING (true);
-
-CREATE POLICY "Users can view emotion logs" ON emotion_logs
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users can insert emotion logs" ON emotion_logs
-    FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Users can view progress reports" ON progress_reports
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users can manage progress reports" ON progress_reports
-    FOR ALL USING (true);
-
--- إضافة تعليقات للتوثيق
-COMMENT ON TABLE sessions IS 'جدول الجلسات العلاجية مع تحليل الذكاء الاصطناعي';
-COMMENT ON TABLE treatment_goals IS 'جدول الأهداف العلاجية للمرضى';
-COMMENT ON TABLE center_activities IS 'جدول أنشطة المركز العلاجي';
-COMMENT ON TABLE center_goals IS 'جدول أهداف المركز العلاجي';
-COMMENT ON TABLE emotion_logs IS 'جدول سجل تحليل المشاعر';
-COMMENT ON TABLE progress_reports IS 'جدول تقارير تقدم المرضى';
-
-COMMENT ON COLUMN sessions.emotions IS 'تحليل المشاعر بتنسيق JSON';
-COMMENT ON COLUMN sessions.therapist_assessment IS 'تقييم المعالج بتنسيق JSON';
-COMMENT ON COLUMN sessions.ai_analysis IS 'التحليل الشامل بالذكاء الاصطناعي بتنسيق JSON'; 
+-- تعليقات على دوال الذكاء الاصطناعي
+COMMENT ON FUNCTION analyze_emotions_from_text IS 'تحليل المشاعر من النص المدخل';
+COMMENT ON FUNCTION analyze_session_content IS 'تحليل شامل لمحتوى الجلسة العلاجية';
+COMMENT ON FUNCTION generate_smart_treatment_plan IS 'إنشاء خطة علاجية ذكية مخصصة';
+COMMENT ON FUNCTION assess_relapse_risk IS 'تقييم مخاطر الانتكاس للمريض';
+COMMENT ON FUNCTION generate_comprehensive_progress_report IS 'إنشاء تقرير تقدم شامل';
+COMMENT ON VIEW ai_session_insights IS 'رؤى الذكاء الاصطناعي للجلسات';
+COMMENT ON VIEW patient_emotion_trends IS 'اتجاهات المشاعر للمرضى';
+COMMENT ON VIEW treatment_effectiveness IS 'فعالية العلاج'; 

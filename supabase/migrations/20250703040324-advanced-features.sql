@@ -1,3 +1,222 @@
+-- =====================================================
+-- شفاء كير - ميزات متقدمة
+-- تاريخ الإنشاء: 2025-07-03
+-- =====================================================
+
+-- هذا الملف يحتوي على ميزات متقدمة إضافية
+-- جميع الجداول الأساسية موجودة في schema.sql الرئيسي
+
+-- إضافة ميزات متقدمة للتقارير الذكية
+CREATE OR REPLACE FUNCTION generate_smart_report(report_type TEXT, report_name TEXT, report_data JSONB, user_id UUID)
+RETURNS UUID AS $$
+DECLARE
+    report_id UUID;
+BEGIN
+    INSERT INTO smart_reports (report_type, report_name, report_data, generated_by)
+    VALUES (report_type, report_name, report_data, user_id)
+    RETURNING id INTO report_id;
+    
+    RETURN report_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة لحساب مؤشرات الأداء
+CREATE OR REPLACE FUNCTION calculate_performance_metrics(metric_date DATE)
+RETURNS VOID AS $$
+BEGIN
+    -- حساب معدل نجاح الجلسات
+    INSERT INTO performance_analytics (metric_name, metric_value, metric_date, context)
+    SELECT 
+        'session_success_rate',
+        (COUNT(CASE WHEN status = 'completed' THEN 1 END) * 100.0 / COUNT(*)),
+        metric_date,
+        jsonb_build_object('total_sessions', COUNT(*), 'completed_sessions', COUNT(CASE WHEN status = 'completed' THEN 1 END))
+    FROM sessions
+    WHERE DATE(session_date) = metric_date;
+    
+    -- حساب متوسط التقدم
+    INSERT INTO performance_analytics (metric_name, metric_value, metric_date, context)
+    SELECT 
+        'average_progress',
+        AVG(current_progress),
+        metric_date,
+        jsonb_build_object('total_patients', COUNT(DISTINCT patient_id))
+    FROM sessions
+    WHERE DATE(session_date) = metric_date AND status = 'completed';
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة لإرسال إشعارات تلقائية
+CREATE OR REPLACE FUNCTION send_automatic_notification(user_id UUID, title TEXT, message TEXT, notification_type TEXT DEFAULT 'info')
+RETURNS UUID AS $$
+DECLARE
+    notification_id UUID;
+BEGIN
+    INSERT INTO notifications (user_id, title, message, type)
+    VALUES (user_id, title, message, notification_type)
+    RETURNING id INTO notification_id;
+    
+    RETURN notification_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- دالة لجدولة إشعارات مستقبلية
+CREATE OR REPLACE FUNCTION schedule_notification(user_id UUID, title TEXT, message TEXT, scheduled_time TIMESTAMP WITH TIME ZONE)
+RETURNS UUID AS $$
+DECLARE
+    notification_id UUID;
+BEGIN
+    INSERT INTO scheduled_notifications (user_id, title, message, scheduled_at)
+    VALUES (user_id, title, message, scheduled_time)
+    RETURNING id INTO notification_id;
+    
+    RETURN notification_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger لإرسال إشعار عند إنشاء جلسة جديدة
+CREATE OR REPLACE FUNCTION notify_new_session()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- إرسال إشعار للمريض
+    PERFORM send_automatic_notification(
+        NEW.patient_id::UUID,
+        'جلسة علاجية جديدة',
+        'تم جدولة جلسة علاجية جديدة لك في ' || NEW.session_date,
+        'info'
+    );
+    
+    -- إرسال إشعار للمعالج
+    PERFORM send_automatic_notification(
+        NEW.therapist_id,
+        'جلسة علاجية جديدة',
+        'تم جدولة جلسة علاجية جديدة مع المريض في ' || NEW.session_date,
+        'info'
+    );
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_notify_new_session
+    AFTER INSERT ON sessions
+    FOR EACH ROW
+    EXECUTE FUNCTION notify_new_session();
+
+-- Trigger لإرسال إشعار عند تحديث حالة الجلسة
+CREATE OR REPLACE FUNCTION notify_session_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.status != NEW.status THEN
+        -- إرسال إشعار بتغيير حالة الجلسة
+        PERFORM send_automatic_notification(
+            NEW.patient_id::UUID,
+            'تحديث حالة الجلسة',
+            'تم تحديث حالة جلستك العلاجية إلى: ' || NEW.status,
+            'info'
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_notify_session_status_change
+    AFTER UPDATE ON sessions
+    FOR EACH ROW
+    EXECUTE FUNCTION notify_session_status_change();
+
+-- Trigger لحساب مؤشرات الأداء يومياً
+CREATE OR REPLACE FUNCTION daily_performance_calculation()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- حساب مؤشرات الأداء لليوم السابق
+    PERFORM calculate_performance_metrics(CURRENT_DATE - INTERVAL '1 day');
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- إنشاء جدول للـ cron jobs (إذا كان مدعوماً)
+-- CREATE TABLE IF NOT EXISTS cron_jobs (
+--     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+--     job_name TEXT NOT NULL,
+--     schedule TEXT NOT NULL,
+--     function_name TEXT NOT NULL,
+--     is_active BOOLEAN DEFAULT true,
+--     last_run TIMESTAMP WITH TIME ZONE,
+--     next_run TIMESTAMP WITH TIME ZONE,
+--     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- );
+
+-- إدراج بيانات تجريبية للميزات المتقدمة
+INSERT INTO smart_reports (report_type, report_name, report_data, generated_by) VALUES
+    ('patient_progress', 'تقرير تقدم المريض - يناير 2025', 
+     '{"patient_id": "sample", "progress_percentage": 75, "goals_completed": 3, "sessions_attended": 8}',
+     (SELECT id FROM profiles WHERE email = 'djharga@gmail.com'))
+ON CONFLICT DO NOTHING;
+
+INSERT INTO performance_analytics (metric_name, metric_value, metric_date, context) VALUES
+    ('daily_sessions', 12, CURRENT_DATE, '{"total_patients": 15, "completed_sessions": 10}'),
+    ('average_session_duration', 65.5, CURRENT_DATE, '{"total_sessions": 12, "total_duration": 786}')
+ON CONFLICT DO NOTHING;
+
+-- إنشاء views إضافية للتقارير
+CREATE OR REPLACE VIEW daily_activity_summary AS
+SELECT 
+    DATE(session_date) as activity_date,
+    COUNT(*) as total_sessions,
+    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_sessions,
+    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_sessions,
+    AVG(duration) as avg_session_duration,
+    COUNT(DISTINCT patient_id) as unique_patients,
+    COUNT(DISTINCT therapist_id) as active_therapists
+FROM sessions
+GROUP BY DATE(session_date)
+ORDER BY activity_date DESC;
+
+CREATE OR REPLACE VIEW therapist_performance AS
+SELECT 
+    p.full_name as therapist_name,
+    p.email as therapist_email,
+    COUNT(s.id) as total_sessions,
+    COUNT(CASE WHEN s.status = 'completed' THEN 1 END) as completed_sessions,
+    AVG(s.current_progress) as avg_patient_progress,
+    AVG(s.duration) as avg_session_duration,
+    COUNT(DISTINCT s.patient_id) as unique_patients
+FROM profiles p
+LEFT JOIN sessions s ON p.id = s.therapist_id
+WHERE p.role = 'therapist'
+GROUP BY p.id, p.full_name, p.email
+ORDER BY completed_sessions DESC;
+
+CREATE OR REPLACE VIEW financial_dashboard AS
+SELECT 
+    DATE(expense_date) as expense_date,
+    expense_category,
+    SUM(amount) as total_amount,
+    COUNT(*) as expense_count,
+    AVG(amount) as avg_amount
+FROM facility_expenses
+GROUP BY DATE(expense_date), expense_category
+ORDER BY expense_date DESC, total_amount DESC;
+
+-- إنشاء فهارس إضافية للأداء
+CREATE INDEX IF NOT EXISTS idx_smart_reports_type ON smart_reports(report_type);
+CREATE INDEX IF NOT EXISTS idx_smart_reports_generated_at ON smart_reports(generated_at);
+CREATE INDEX IF NOT EXISTS idx_performance_analytics_date ON performance_analytics(metric_date);
+CREATE INDEX IF NOT EXISTS idx_performance_analytics_name ON performance_analytics(metric_name);
+CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_is_sent ON scheduled_notifications(is_sent);
+
+-- تعليقات على الميزات المتقدمة
+COMMENT ON FUNCTION generate_smart_report IS 'إنشاء تقرير ذكي مع البيانات المخصصة';
+COMMENT ON FUNCTION calculate_performance_metrics IS 'حساب مؤشرات الأداء اليومية';
+COMMENT ON FUNCTION send_automatic_notification IS 'إرسال إشعار تلقائي للمستخدم';
+COMMENT ON FUNCTION schedule_notification IS 'جدولة إشعار مستقبلي';
+COMMENT ON VIEW daily_activity_summary IS 'ملخص الأنشطة اليومية';
+COMMENT ON VIEW therapist_performance IS 'أداء المعالجين';
+COMMENT ON VIEW financial_dashboard IS 'لوحة المعلومات المالية';
+
 -- إنشاء جداول الميزات المتقدمة
 
 -- جدول خطط العلاج
