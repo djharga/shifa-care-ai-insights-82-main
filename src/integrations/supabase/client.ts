@@ -105,13 +105,14 @@ class LocalAuth {
     this.currentUser = user;
   }
 
-  async signInWithPassword({ email, password }: { email: string; password: string }) {
+  async signInWithPassword(credentials: { email: string; password: string }) {
     const user = this.users.find(u => 
-      u.email === email && u.password === password && u.is_active
+      u.email === credentials.email && u.password === credentials.password && u.is_active
     );
 
     if (user) {
-      const { password: _, ...userWithoutPassword } = user;
+      const userWithoutPassword = { ...user };
+      delete userWithoutPassword.password;
       this.saveCurrentUser(userWithoutPassword);
       
       return {
@@ -126,8 +127,8 @@ class LocalAuth {
     }
   }
 
-  async signUp({ email, password, options = {} }: { email: string; password: string; options?: any }) {
-    const existingUser = this.users.find(u => u.email === email);
+  async signUp(credentials: { email: string; password: string; options?: any }) {
+    const existingUser = this.users.find(u => u.email === credentials.email);
     if (existingUser) {
       return {
         data: { user: null },
@@ -135,13 +136,16 @@ class LocalAuth {
       };
     }
 
+    const options = credentials.options || {};
+    const userData = options.data || {};
+
     const newUser = {
       id: Date.now().toString(),
-      email,
-      password,
-      full_name: options.data?.full_name || 'مستخدم جديد',
-      role: options.data?.role || 'therapist',
-      permissions: options.data?.permissions || {},
+      email: credentials.email,
+      password: credentials.password,
+      full_name: userData.full_name || 'مستخدم جديد',
+      role: userData.role || 'therapist',
+      permissions: userData.permissions || {},
       is_active: true,
       created_at: new Date().toISOString()
     };
@@ -149,7 +153,8 @@ class LocalAuth {
     this.users.push(newUser);
     localStorage.setItem('shifa_users', JSON.stringify(this.users));
 
-    const { password: _, ...userWithoutPassword } = newUser;
+    const userWithoutPassword = { ...newUser };
+    delete userWithoutPassword.password;
     this.saveCurrentUser(userWithoutPassword);
 
     return {
@@ -212,7 +217,8 @@ class LocalAuth {
           }),
           limit: async (count: number) => {
             const users = this.users.map(user => {
-              const { password, ...userWithoutPassword } = user;
+              const userWithoutPassword = { ...user };
+              delete userWithoutPassword.password;
               return userWithoutPassword;
             });
             return { data: users.slice(0, count), error: null };
