@@ -6,6 +6,7 @@ import RecentSessions from "@/components/dashboard/RecentSessions";
 import TreatmentProgress from "@/components/dashboard/TreatmentProgress";
 import TodaySessions from "@/components/dashboard/TodaySessions";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
+import AISessionsQuickAccess from "@/components/dashboard/AISessionsQuickAccess";
 import { useTranslation } from 'react-i18next';
 import i18n from '../lib/i18n';
 
@@ -60,6 +61,14 @@ const Index = () => {
       trend: { value: 45, isPositive: true },
       variant: "info" as const,
     },
+    {
+      title: "الجلسات بالذكاء الاصطناعي",
+      value: 15,
+      description: "جلسة محللة بالذكاء الاصطناعي",
+      icon: Brain,
+      trend: { value: 67, isPositive: true },
+      variant: "success" as const,
+    },
   ];
 
   return (
@@ -106,6 +115,7 @@ const Index = () => {
 
           {/* Right Column */}
           <div className="lg:col-span-1 space-y-8">
+            <AISessionsQuickAccess />
             <TreatmentProgress />
             <NotificationCenter />
           </div>

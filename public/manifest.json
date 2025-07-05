@@ -1,16 +1,21 @@
 {
-  "name": "شفاء كير - نظام إدارة مراكز علاج الإدمان",
-  "short_name": "شفاء كير",
-  "description": "نظام متكامل لإدارة مراكز علاج الإدمان مع الذكاء الاصطناعي",
+  "name": "Shifa Care AI Insights",
+  "short_name": "Shifa Care",
+  "description": "نظام إدارة مراكز علاج الإدمان مع الذكاء الاصطناعي",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "ar",
   "dir": "rtl",
   "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",

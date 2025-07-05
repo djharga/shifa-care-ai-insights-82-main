@@ -8,7 +8,7 @@ Disallow: /_headers
 Disallow: /_redirects
 
 # خريطة الموقع
-Sitemap: https://your-domain.netlify.app/sitemap.xml
+Sitemap: https://your-domain.vercel.app/sitemap.xml
 
 # إعدادات إضافية
 Crawl-delay: 1

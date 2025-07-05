@@ -1,115 +1,399 @@
-# إعداد المدير الرئيسي - شفا كير
+# دليل إعداد الإدارة - شفاء كير
 
-## بيانات المدير الرئيسي
+## 👨‍💼 إعداد نظام الإدارة
 
-**الإيميل:** `djharga@gmail.com`  
-**كلمة المرور:** `[مخفي لأسباب أمنية]`  
-**الدور:** مدير رئيسي  
-**الصلاحيات:** جميع الصلاحيات
+### المتطلبات
+- حساب Supabase
+- مفتاح OpenAI API
+- معرفة أساسية بـ SQL
+- معرفة بـ React
 
-## كيفية إعداد المدير الرئيسي
+## 🗄️ إعداد قاعدة البيانات
 
-### الطريقة الأولى: إعداد تلقائي (موصى به)
+### 1. إنشاء مشروع Supabase
+```bash
+# تثبيت Supabase CLI
+npm install -g supabase
 
-1. **تحديث ملف `setup-admin.js`**:
-   - استبدل `YOUR_SUPABASE_URL` برابط Supabase الخاص بك
-   - استبدل `YOUR_SUPABASE_SERVICE_KEY` بمفتاح الخدمة الخاص بك
+# تسجيل الدخول
+supabase login
 
-2. **تشغيل الملف**:
-   ```bash
-   node setup-admin.js
-   ```
+# إنشاء مشروع جديد
+supabase init
+```
 
-### الطريقة الثانية: إعداد يدوي
-
-#### 1. إنشاء حساب في Supabase Auth
-
-اذهب إلى لوحة تحكم Supabase:
-- **Authentication** → **Users** → **Add User**
-- الإيميل: `djharga@gmail.com`
-- كلمة المرور: `[مخفي لأسباب أمنية]`
-- تأكيد الإيميل: ✅
-
-#### 2. إضافة بيانات المدير في قاعدة البيانات
-
+### 2. تشغيل الهجرات
 ```sql
-INSERT INTO profiles (id, full_name, email, role, permissions, is_active) VALUES (
-  'USER_ID_FROM_AUTH', -- استبدل بمعرف المستخدم من Auth
-  'المدير الرئيسي',
-  'djharga@gmail.com',
-  'admin',
-  '{
-    "manage_users": true,
-    "manage_patients": true,
-    "manage_sessions": true,
-    "view_reports": true,
-    "manage_settings": true,
-    "manage_finances": true,
-    "manage_facility": true,
-    "manage_rooms": true
-  }',
-  true
+-- تشغيل ملف الهجرات الكامل
+-- انسخ محتوى supabase/migrations/complete-system.sql
+-- والصقه في SQL Editor في Supabase Dashboard
+```
+
+### 3. إعداد RLS (Row Level Security)
+```sql
+-- تفعيل RLS على الجداول
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE treatment_goals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE center_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE center_goals ENABLE ROW LEVEL SECURITY;
+
+-- إنشاء سياسات الأمان
+CREATE POLICY "Users can view their own sessions" ON sessions
+  FOR SELECT USING (auth.uid() = therapist_id);
+
+CREATE POLICY "Users can insert their own sessions" ON sessions
+  FOR INSERT WITH CHECK (auth.uid() = therapist_id);
+
+CREATE POLICY "Users can update their own sessions" ON sessions
+  FOR UPDATE USING (auth.uid() = therapist_id);
+```
+
+## 🔐 إعداد المصادقة
+
+### 1. إعداد Supabase Auth
+```typescript
+// src/integrations/supabase/client.ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
+```
+
+### 2. إنشاء مستخدمي الإدارة
+```sql
+-- إنشاء مستخدم إدارة
+INSERT INTO auth.users (
+  id,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at,
+  role
+) VALUES (
+  gen_random_uuid(),
+  'admin@shifa-care.com',
+  crypt('admin123', gen_salt('bf')),
+  now(),
+  now(),
+  now(),
+  'admin'
 );
 ```
 
-## الصلاحيات الممنوحة للمدير الرئيسي
+### 3. إعداد الأدوار
+```sql
+-- إنشاء جدول الأدوار
+CREATE TABLE user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  role VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-✅ **إدارة المستخدمين**: إضافة/تعديل/حذف المستخدمين  
-✅ **إدارة المرضى**: إدارة بيانات المرضى  
-✅ **إدارة الجلسات**: جدولة ومتابعة الجلسات  
-✅ **التقارير**: عرض جميع التقارير  
-✅ **الإعدادات**: إدارة إعدادات النظام  
-✅ **الحسابات المالية**: إدارة المدفوعات والمصاريف  
-✅ **مصاريف المصحة**: إدارة مصاريف الكهرباء والمياه  
-✅ **الغرف والأسرّة**: إدارة الغرف والأسرّة  
+-- إضافة أدوار افتراضية
+INSERT INTO user_roles (user_id, role) VALUES
+  ('admin-user-id', 'admin'),
+  ('therapist-user-id', 'therapist'),
+  ('supervisor-user-id', 'supervisor');
+```
 
-## كيفية تسجيل الدخول
+## 🤖 إعداد الذكاء الاصطناعي
 
-1. اذهب إلى الموقع
-2. اضغط على "دخول المدير" في النافبار
-3. أدخل البيانات:
-   - **الإيميل:** `djharga@gmail.com`
-   - **كلمة المرور:** `[مخفي لأسباب أمنية]`
-4. اضغط "دخول"
+### 1. الحصول على مفتاح OpenAI
+```bash
+# اذهب إلى platform.openai.com
+# أنشئ حساب جديد
+# اذهب إلى API Keys
+# أنشئ مفتاح جديد
+# انسخ المفتاح
+```
 
-## الوصول المتاح
+### 2. إعداد خدمة الذكاء الاصطناعي
+```typescript
+// src/services/session-ai-service.ts
+export class SessionAIService {
+  private openaiApiKey: string;
 
-بعد تسجيل الدخول، سيكون المدير الرئيسي قادر على الوصول إلى:
+  constructor() {
+    this.openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    
+    if (!this.openaiApiKey) {
+      console.warn('OpenAI API key not found');
+    }
+  }
+}
+```
 
-- **لوحة التحكم** (`/admin`)
-- **الحسابات المالية** (`/finance`)
-- **مصاريف المصحة** (`/facility-expenses`)
-- **الغرف والأسرّة** (`/rooms`)
-- جميع الصفحات الأخرى
+### 3. اختبار الاتصال
+```typescript
+// اختبار الاتصال بـ OpenAI
+const testConnection = async () => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/models', {
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`
+      }
+    });
+    
+    if (response.ok) {
+      console.log('OpenAI connection successful');
+    }
+  } catch (error) {
+    console.error('OpenAI connection failed:', error);
+  }
+};
+```
 
-## ملاحظات مهمة
+## 📊 إعداد التقارير
 
-⚠️ **الأمان**: 
-- احتفظ بكلمة المرور في مكان آمن
-- لا تشارك بيانات الدخول مع أي شخص
-- غيّر كلمة المرور دورياً
+### 1. إنشاء جداول التقارير
+```sql
+-- جدول التقارير
+CREATE TABLE reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  report_type VARCHAR(50) NOT NULL,
+  data JSONB,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-🔧 **التحديثات**:
-- يمكن تحديث الصلاحيات من لوحة التحكم
-- يمكن إضافة صلاحيات جديدة حسب الحاجة
+-- جدول إعدادات التقارير
+CREATE TABLE report_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_type VARCHAR(50) NOT NULL,
+  settings JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-📧 **الدعم**:
-- في حالة نسيان كلمة المرور، استخدم "نسيت كلمة المرور"
-- أو تواصل مع المطور لإعادة تعيين الحساب
+### 2. إنشاء وظائف التقارير
+```sql
+-- وظيفة لتوليد تقرير الجلسات
+CREATE OR REPLACE FUNCTION generate_sessions_report(
+  start_date DATE,
+  end_date DATE
+) RETURNS JSONB AS $$
+BEGIN
+  RETURN (
+    SELECT jsonb_build_object(
+      'total_sessions', COUNT(*),
+      'completed_sessions', COUNT(*) FILTER (WHERE status = 'completed'),
+      'avg_progress', AVG(current_progress),
+      'sessions_by_type', jsonb_object_agg(session_type, count)
+    )
+    FROM sessions
+    WHERE session_date BETWEEN start_date AND end_date
+  );
+END;
+$$ LANGUAGE plpgsql;
+```
 
-## اختبار الحساب
+## 🔧 إعدادات النظام
 
-بعد الإعداد، تأكد من:
+### 1. إعدادات التطبيق
+```typescript
+// src/config/app-config.ts
+export const appConfig = {
+  name: 'شفاء كير',
+  version: '1.0.0',
+  environment: import.meta.env.VITE_APP_ENVIRONMENT,
+  features: {
+    ai: import.meta.env.VITE_ENABLE_AI_FEATURES === 'true',
+    analytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
+    notifications: import.meta.env.VITE_ENABLE_NOTIFICATIONS === 'true'
+  },
+  limits: {
+    maxSessionsPerDay: 50,
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    maxSessionDuration: 180 // 3 hours
+  }
+};
+```
 
-1. **تسجيل الدخول** بنجاح
-2. **الوصول** لجميع الصفحات
-3. **إدارة المستخدمين** من لوحة التحكم
-4. **إدارة المالية** والغرف
-5. **تغيير الإعدادات** إذا لزم الأمر
+### 2. إعدادات الأمان
+```typescript
+// src/config/security-config.ts
+export const securityConfig = {
+  sessionTimeout: 30 * 60 * 1000, // 30 minutes
+  maxLoginAttempts: 5,
+  passwordMinLength: 8,
+  requireTwoFactor: false,
+  allowedFileTypes: ['pdf', 'doc', 'docx', 'txt'],
+  maxFileUploads: 10
+};
+```
+
+## 📱 إعداد الإشعارات
+
+### 1. إعداد Service Worker
+```javascript
+// public/sw.js
+self.addEventListener('push', function(event) {
+  const options = {
+    body: event.data.text(),
+    icon: '/icon-192x192.png',
+    badge: '/badge-72x72.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification('شفاء كير', options)
+  );
+});
+```
+
+### 2. إعداد الإشعارات في التطبيق
+```typescript
+// src/services/notification-service.ts
+export class NotificationService {
+  async requestPermission() {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    }
+    return false;
+  }
+
+  async sendNotification(title: string, body: string) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body });
+    }
+  }
+}
+```
+
+## 🔍 المراقبة والتحليل
+
+### 1. إعداد Analytics
+```typescript
+// src/services/analytics-service.ts
+export class AnalyticsService {
+  trackEvent(eventName: string, data: any) {
+    if (import.meta.env.VITE_ENABLE_ANALYTICS === 'true') {
+      // إرسال البيانات إلى خدمة التحليل
+      console.log('Analytics event:', eventName, data);
+    }
+  }
+
+  trackError(error: Error) {
+    this.trackEvent('error', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+```
+
+### 2. إعداد Logging
+```typescript
+// src/services/logging-service.ts
+export class LoggingService {
+  log(level: 'info' | 'warn' | 'error', message: string, data?: any) {
+    const logEntry = {
+      level,
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent
+    };
+
+    if (import.meta.env.VITE_ENABLE_DEBUG_MODE === 'true') {
+      console.log(logEntry);
+    }
+
+    // إرسال إلى خدمة Logging
+    this.sendToLoggingService(logEntry);
+  }
+}
+```
+
+## 🚀 النشر والإنتاج
+
+### 1. إعدادات الإنتاج
+```env
+# .env.production
+VITE_APP_ENVIRONMENT=production
+VITE_ENABLE_DEBUG_MODE=false
+VITE_ENABLE_ANALYTICS=true
+VITE_ENABLE_NOTIFICATIONS=true
+```
+
+### 2. إعدادات الأمان للإنتاج
+```typescript
+// src/config/production-config.ts
+export const productionConfig = {
+  cors: {
+    origin: ['https://your-domain.com'],
+    credentials: true
+  },
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+  },
+  helmet: {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"]
+      }
+    }
+  }
+};
+```
+
+## 📋 قائمة التحقق
+
+### قبل النشر
+- [ ] قاعدة البيانات مهيأة
+- [ ] المصادقة تعمل
+- [ ] الذكاء الاصطناعي متصل
+- [ ] التقارير تعمل
+- [ ] الإشعارات تعمل
+- [ ] الأمان مفعل
+- [ ] الاختبارات تمر
+- [ ] الوثائق محدثة
+
+### بعد النشر
+- [ ] الموقع يعمل
+- [ ] تسجيل الدخول يعمل
+- [ ] الجلسات تحفظ
+- [ ] الذكاء الاصطناعي يعمل
+- [ ] التقارير تولد
+- [ ] الإشعارات تصل
+- [ ] الأداء جيد
+- [ ] الأمان محقق
+
+## 📞 الدعم
+
+### في حالة المشاكل
+1. راجع سجلات الأخطاء
+2. تحقق من إعدادات قاعدة البيانات
+3. تحقق من مفاتيح API
+4. تواصل مع فريق الدعم
+
+### الموارد
+- [Supabase Documentation](https://supabase.com/docs)
+- [OpenAI API Documentation](https://platform.openai.com/docs)
+- [React Documentation](https://react.dev)
 
 ---
 
-**تم إنشاء هذا الملف بواسطة نظام شفا كير**  
-**GitHub:** https://github.com/djharga/shifa-care-ai-insights-82-main.git  
-**تاريخ الإنشاء:** 2024  
-**الإصدار:** 1.0 
+**شفاء كير** - إدارة متقدمة وآمنة 👨‍💼🔐 

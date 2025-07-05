@@ -23,10 +23,15 @@ const Navbar = () => {
     { to: "/", icon: BarChart3, label: "الرئيسية" },
     { to: "/patients", icon: User, label: "العيانين" },
     { to: "/sessions", icon: Calendar, label: "الجلسات" },
+    { to: "/advanced-sessions", icon: Brain, label: "الجلسات بالذكاء الاصطناعي" },
     { to: "/ai-treatment", icon: Brain, label: "ذكاء صناعي" },
-    { to: "/advanced-ai", icon: Brain, label: "ذكاء متقدم" },
     { to: "/reports", icon: FileText, label: "تقارير" },
   ];
+
+  // أضف رابط إدارة المرافق الموحد إذا كان المستخدم مدير أو محاسب
+  if (userRole === 'admin' || userRole === 'accountant') {
+    navItems.push({ to: "/facility-management", icon: Building, label: "إدارة المرافق" });
+  }
 
   // أضف رابط الحسابات المالية إذا كان المستخدم مدير أو محاسب
   if (userRole === 'admin' || userRole === 'accountant') {

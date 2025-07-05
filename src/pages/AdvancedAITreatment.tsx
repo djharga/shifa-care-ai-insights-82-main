@@ -20,7 +20,7 @@ import {
   Shield,
   BarChart3
 } from 'lucide-react';
-import { aiService, PatientData, TreatmentPlan, RelapseRisk } from '@/services/ai-service';
+import { AIService, PatientData, TreatmentPlan, RelapseRisk } from '@/services/ai-service';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/layout/Navbar';
 
@@ -45,6 +45,9 @@ const AdvancedAITreatment = () => {
   const [reportContent, setReportContent] = useState('');
   const [reportType, setReportType] = useState('progress');
   const { toast } = useToast();
+  
+  // إنشاء instance من AIService
+  const aiService = new AIService();
 
   useEffect(() => {
     loadPatients();

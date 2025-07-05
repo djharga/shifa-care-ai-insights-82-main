@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { 
   Users, Settings, BarChart3, Shield, UserPlus, 
   Edit, Trash2, Save, X, Plus, AlertTriangle,
-  TrendingUp, TrendingDown, CheckCircle, Crown
+  TrendingUp, TrendingDown, CheckCircle, Crown,
+  Brain
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +18,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AIStatusIndicator from '@/components/ai/AIStatusIndicator';
+import AIConfigPanel from '@/components/ai/AIConfigPanel';
 
 interface User {
   id: string;
@@ -53,6 +57,7 @@ const Admin = () => {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState('users');
   const [newUser, setNewUser] = useState({
     full_name: '',
     email: '',
@@ -287,132 +292,211 @@ const Admin = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الإعدادات</CardTitle>
-              <Settings className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">الذكاء الاصطناعي</CardTitle>
+              <Brain className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{settings.length}</div>
+              <div className="text-2xl font-bold text-green-600">نشط</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Users Management */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+        {/* Main Content with Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="users" className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Users className="h-4 w-4" />
+              <span>المستخدمين</span>
+            </TabsTrigger>
+            <TabsTrigger value="indicators" className="flex items-center space-x-2 rtl:space-x-reverse">
+              <AlertTriangle className="h-4 w-4" />
+              <span>المؤشرات</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Brain className="h-4 w-4" />
+              <span>الذكاء الاصطناعي</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Settings className="h-4 w-4" />
+              <span>الإعدادات</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Users Management Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Shield className="h-5 w-5" />
+                    <span>إدارة المستخدمين</span>
+                  </CardTitle>
+                  <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        إضافة مستخدم
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>إضافة مستخدم جديد</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>الاسم الكامل</Label>
+                          <Input
+                            value={newUser.full_name}
+                            onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label>البريد الإلكتروني</Label>
+                          <Input
+                            type="email"
+                            value={newUser.email}
+                            onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label>الدور</Label>
+                          <Select value={newUser.role} onValueChange={(value: any) => setNewUser({...newUser, role: value})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="therapist">معالج</SelectItem>
+                              <SelectItem value="supervisor">مشرف</SelectItem>
+                              <SelectItem value="accountant">محاسب</SelectItem>
+                              <SelectItem value="admin">مدير</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button onClick={handleAddUser} className="w-full">إضافة المستخدم</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{user.full_name}</div>
+                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                      </div>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        {getRoleBadge(user.role)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setIsEditUserDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Relapse Indicators Tab */}
+          <TabsContent value="indicators" className="space-y-6">
+            <Card>
+              <CardHeader>
                 <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Shield className="h-5 w-5" />
-                  <span>إدارة المستخدمين</span>
+                  <AlertTriangle className="h-5 w-5" />
+                  <span>مؤشرات الانتكاس</span>
                 </CardTitle>
-                <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      إضافة مستخدم
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>إضافة مستخدم جديد</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>الاسم الكامل</Label>
-                        <Input
-                          value={newUser.full_name}
-                          onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
-                        />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {relapseIndicators.map((indicator) => (
+                    <div key={indicator.id} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{indicator.patient_name}</div>
+                        {getSeverityBadge(indicator.severity)}
                       </div>
-                      <div>
-                        <Label>البريد الإلكتروني</Label>
-                        <Input
-                          type="email"
-                          value={newUser.email}
-                          onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                        />
+                      <div className="text-sm text-muted-foreground mb-2">
+                        {indicator.indicator_name}
                       </div>
-                      <div>
-                        <Label>الدور</Label>
-                        <Select value={newUser.role} onValueChange={(value: any) => setNewUser({...newUser, role: value})}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="therapist">معالج</SelectItem>
-                            <SelectItem value="supervisor">مشرف</SelectItem>
-                            <SelectItem value="accountant">محاسب</SelectItem>
-                            <SelectItem value="admin">مدير</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button onClick={handleAddUser} className="w-full">إضافة المستخدم</Button>
+                      <div className="text-sm">{indicator.description}</div>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{user.full_name}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      {getRoleBadge(user.role)}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setIsEditUserDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          {/* Relapse Indicators */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                <AlertTriangle className="h-5 w-5" />
-                <span>مؤشرات الانتكاس</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {relapseIndicators.map((indicator) => (
-                  <div key={indicator.id} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium">{indicator.patient_name}</div>
-                      {getSeverityBadge(indicator.severity)}
+          {/* AI Management Tab */}
+          <TabsContent value="ai" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AIStatusIndicator />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Brain className="h-5 w-5" />
+                    <span>إحصائيات الذكاء الاصطناعي</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span>الجلسات المحللة</span>
+                      <Badge variant="outline">156</Badge>
                     </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      {indicator.indicator_name}
+                    <div className="flex items-center justify-between">
+                      <span>الخطط العلاجية</span>
+                      <Badge variant="outline">89</Badge>
                     </div>
-                    <div className="text-sm">{indicator.description}</div>
+                    <div className="flex items-center justify-between">
+                      <span>التقارير الذكية</span>
+                      <Badge variant="outline">234</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>دقة التحليل</span>
+                      <Badge variant="outline" className="bg-green-100 text-green-800">94%</Badge>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <AIConfigPanel />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <Settings className="h-5 w-5" />
+                  <span>إعدادات النظام</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Settings className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">إعدادات النظام</h3>
+                  <p className="text-gray-600 mb-4">سيتم إضافة إعدادات النظام هنا قريباً</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Edit User Dialog */}
         <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
