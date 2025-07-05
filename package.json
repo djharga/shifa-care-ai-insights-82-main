@@ -1,6 +1,6 @@
 {
   "name": "shifa-care-ai-insights",
-  "version": "2025.1.0",
+  "version": "2025.1.4",
   "description": "Shifa Care AI Insights - نظام شفاء كير للذكاء الاصطناعي",
   "type": "module",
   "scripts": {
@@ -40,45 +40,45 @@
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-toggle-group": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
-    "@supabase/supabase-js": "^2.21.0",
-    "class-variance-authority": "^0.6.0",
-    "clsx": "^1.2.1",
-    "cmdk": "^1.1.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
     "date-fns": "^4.1.0",
-    "embla-carousel-react": "^8.6.0",
-    "i18next": "^21.8.16",
-    "i18next-browser-languagedetector": "^6.1.4",
-    "lucide-react": "^0.263.1",
-    "react": "^18.2.0",
-    "react-day-picker": "^8.10.0",
-    "react-dom": "^18.2.0",
-    "react-hook-form": "^7.60.0",
-    "react-i18next": "^11.16.9",
-    "react-router-dom": "^6.3.0",
-    "recharts": "^2.8.0",
-    "sonner": "^1.4.0",
-    "tailwind-merge": "^1.13.2",
-    "tailwindcss-animate": "^1.0.6",
+    "embla-carousel-react": "^8.0.0",
+    "i18next": "^24.0.2",
+    "i18next-browser-languagedetector": "^8.0.2",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^9.4.2",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.54.2",
+    "react-i18next": "^15.1.1",
+    "react-router-dom": "^6.28.0",
+    "recharts": "^2.14.2",
+    "sonner": "^1.4.3",
+    "tailwind-merge": "^2.5.4",
+    "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
-    "@vitejs/plugin-react": "^3.1.0",
-    "autoprefixer": "^10.4.14",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.3",
-    "postcss": "^8.4.24",
-    "tailwindcss": "^3.3.2",
-    "typescript": "^4.9.5",
-    "vite": "^4.4.5"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.3"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   },
   "browserslist": {
     "production": [
@@ -91,5 +91,19 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/shifa-care-ai-insights.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "healthcare",
+    "ai",
+    "react",
+    "typescript",
+    "vite",
+    "supabase",
+    "tailwindcss"
+  ]
 }
