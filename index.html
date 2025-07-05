@@ -4,35 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>شفاء كير - نظام إدارة العيادة الطبية</title>
-    <meta name="description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي - إدارة المرضى، الجلسات، التقارير والماليات" />
-    <meta name="author" content="Shifa Care Team" />
-    <meta name="keywords" content="عيادة طبية, إدارة المرضى, الذكاء الاصطناعي, تقارير طبية, إدارة الجلسات" />
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0f172a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Shifa Care" />
-    <link rel="apple-touch-icon" href="/placeholder.svg" />
-
+    <meta name="description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي" />
+    
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="شفاء كير - نظام إدارة العيادة الطبية" />
-    <meta property="og:description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي - إدارة المرضى، الجلسات، التقارير والماليات" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/placeholder.svg" />
-    <meta property="og:locale" content="ar_EG" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="شفاء كير - نظام إدارة العيادة الطبية" />
-    <meta name="twitter:description" content="نظام إدارة العيادة الطبية مع الذكاء الاصطناعي" />
-    <meta name="twitter:image" content="/placeholder.svg" />
-
+    
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -44,22 +20,15 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Loading message -->
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div style="text-align: center;">
+          <h1 style="font-size: 2rem; margin-bottom: 1rem;">شفاء كير</h1>
+          <p>جاري التحميل...</p>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Service Worker Registration -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
-    </script>
   </body>
 </html>
