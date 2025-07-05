@@ -16,16 +16,14 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
-    target: 'es2022',
+    sourcemap: false,
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
-          i18n: ['react-i18next', 'i18next'],
           supabase: ['@supabase/supabase-js'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
         },
       },
     },
@@ -35,12 +33,7 @@ export default defineConfig({
       'react', 
       'react-dom', 
       'react-router-dom',
-      '@supabase/supabase-js',
-      'react-i18next',
-      'i18next'
+      '@supabase/supabase-js'
     ],
-  },
-  define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
 });

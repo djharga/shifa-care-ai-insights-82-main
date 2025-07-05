@@ -1,22 +1,16 @@
+// Service Worker for Shifa Care
 const CACHE_NAME = 'shifa-care-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/manifest.json'
 ];
 
 // Install event
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+      .then((cache) => cache.addAll(urlsToCache))
   );
 });
 
@@ -27,8 +21,7 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         // Return cached version or fetch from network
         return response || fetch(event.request);
-      }
-    )
+      })
   );
 });
 
