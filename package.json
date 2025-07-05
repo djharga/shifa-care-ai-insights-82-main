@@ -18,7 +18,9 @@
     "test": "echo \"No tests specified\" && exit 0",
     "clean": "rm -rf dist",
     "start": "npm run dev",
-    "vercel-build": "vite build"
+    "vercel-build": "vite build",
+    "setup-env": "node setup-env.js",
+    "setup": "npm run setup-env"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
