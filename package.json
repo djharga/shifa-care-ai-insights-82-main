@@ -11,7 +11,8 @@
     "deploy:auto": "powershell -ExecutionPolicy Bypass -File auto-deploy.ps1",
     "deploy:bash": "bash auto-deploy.sh",
     "deploy:check": "git status",
-    "deploy:force": "git add . && git commit -m \"🔄 تحديث إجباري\" && git push origin main --force"
+    "deploy:force": "git add . && git commit -m \"🔄 تحديث إجباري\" && git push origin main --force",
+    "deploy:netlify": "npm run build && netlify deploy --prod --dir=dist"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",

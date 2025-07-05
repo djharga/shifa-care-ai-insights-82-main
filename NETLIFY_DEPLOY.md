@@ -1,226 +1,105 @@
-# دليل النشر على Netlify - شفاء كير
+# 🚀 دليل النشر على Netlify
 
-## 🚀 نشر سريع على Netlify
+## 📋 المتطلبات
+- حساب على [Netlify](https://www.netlify.com/)
+- مشروع على GitHub
+- متغيرات البيئة جاهزة
 
-### الخطوة 1: إعداد GitHub
-1. ارفع المشروع إلى GitHub
-2. تأكد من وجود جميع الملفات المطلوبة
+## 🔧 خطوات النشر
 
-### الخطوة 2: إعداد Netlify
-1. اذهب إلى [netlify.com](https://netlify.com)
+### 1. إنشاء حساب Netlify
+1. اذهب إلى [netlify.com](https://www.netlify.com/)
 2. سجل دخول باستخدام GitHub
-3. اضغط "New site from Git"
-4. اختر GitHub واختر المستودع
+3. اربط حساب GitHub
 
-### الخطوة 3: إعدادات البناء
+### 2. ربط المشروع
+1. في لوحة تحكم Netlify، انقر على **"New site from Git"**
+2. اختر **GitHub**
+3. اختر الريبو: `shifa-care-ai-insights-82-main`
+4. اترك الإعدادات الافتراضية (Netlify سيكتشف التكوين تلقائياً)
+
+### 3. إعداد متغيرات البيئة
+في إعدادات الموقع، اذهب إلى **Site settings > Environment variables** وأضف:
+
 ```bash
-# Build command
-npm run build
-
-# Publish directory
-dist
-
-# Node version
-14
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_OPENAI_API_KEY=your_openai_api_key
 ```
 
-### الخطوة 4: إعداد المتغيرات البيئية
-في إعدادات الموقع على Netlify، أضف:
+### 4. إعدادات إضافية
 
-```env
-VITE_SUPABASE_URL=your-supabase-url
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-VITE_OPENAI_API_KEY=your-openai-api-key
-VITE_APP_NAME=شفاء كير
-VITE_APP_VERSION=2025.1.0
-VITE_APP_ENVIRONMENT=production
+#### دومين مخصص
+1. اذهب إلى **Domain settings**
+2. انقر على **"Add custom domain"**
+3. أضف دومينك
+
+#### SSL
+- Netlify يوفر SSL مجاني تلقائياً
+
+#### التنبيهات
+1. اذهب إلى **Site settings > Notifications**
+2. فعّل تنبيهات النشر
+
+## 🔄 النشر التلقائي
+
+### من GitHub
+- أي push إلى branch `main` سيتم نشره تلقائياً
+- Pull Requests تحصل على Preview URLs
+
+### من Terminal
+```bash
+npm run deploy:netlify
 ```
 
-### الخطوة 5: إعدادات إضافية
-```toml
-# netlify.toml
-[build]
-  command = "npm run build"
-  publish = "dist"
+## 📊 المميزات
 
-[build.environment]
-  NODE_VERSION = "14"
+### ✅ ما تم إعداده
+- ملف `netlify.toml` للتكوين
+- SPA Routing للـ React Router
+- Headers أمان متقدمة
+- Cache optimization للملفات الثابتة
+- Build optimization
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-```
-
-### الخطوة 6: النشر
-1. اضغط "Deploy site"
-2. انتظر حتى يكتمل النشر
-3. احصل على رابط الموقع
+### 🚀 المميزات المتاحة
+- نشر تلقائي من GitHub
+- Preview URLs للـ Pull Requests
+- SSL مجاني
+- CDN عالمي
+- تحليلات مجانية
+- وظائف Serverless (اختياري)
 
 ## 🔧 إعدادات متقدمة
 
-### النطاق المخصص
-1. في إعدادات الموقع
-2. اذهب إلى "Domain settings"
-3. أضف نطاقك المخصص
-4. اتبع تعليمات DNS
-
-### SSL/HTTPS
-- Netlify يوفر SSL تلقائياً
-- لا حاجة لإعداد إضافي
-
-### النسخ الاحتياطية
-- Netlify يحفظ نسخ من كل نشر
-- يمكن العودة لأي نسخة سابقة
-
-## 📊 المراقبة
-
-### Analytics
-- Netlify Analytics مجاني
-- تتبع الزيارات والأداء
-- تحليل السلوك
-
-### Logs
-- مراجعة سجلات البناء
-- تتبع الأخطاء
-- تحليل الأداء
-
-## 🐛 حل المشاكل
-
-### مشكلة: البناء فشل
-**الحل**: تحقق من:
-- إعدادات Node.js
-- المتغيرات البيئية
-- تبعيات المشروع
-
-### مشكلة: الموقع لا يعمل
-**الحل**: تحقق من:
-- إعدادات النشر
-- ملف netlify.toml
-- التوجيه (redirects)
-
-### مشكلة: المتغيرات البيئية لا تعمل
-**الحل**: تحقق من:
-- أسماء المتغيرات
-- إعادة نشر الموقع
-- إعدادات البيئة
-
-## 🔄 النشر المستمر
-
-### GitHub Integration
-- النشر التلقائي عند كل push
-- مراجعة التغييرات قبل النشر
-- إعدادات البيئات المختلفة
-
-### Branch Deployments
-```bash
-# نشر من فرع محدد
-git push origin feature/new-feature
-
-# مراجعة على Netlify
-# ثم دمج مع main
-```
-
-## 📱 PWA Support
-
-### إعداد PWA
-```json
-// public/manifest.json
-{
-  "name": "شفاء كير",
-  "short_name": "شفاء كير",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3B82F6"
-}
-```
-
-### Service Worker
-```javascript
-// public/sw.js
-// Service Worker للعمل بدون إنترنت
-```
-
-## 🔐 الأمان
-
-### Headers الأمان
+### إضافة وظائف Serverless
 ```toml
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'"
+[functions]
+  directory = "netlify/functions"
 ```
 
-### Environment Variables
-- حماية المفاتيح الحساسة
-- استخدام متغيرات بيئية
-- عدم رفع المفاتيح إلى Git
-
-## 📈 الأداء
-
-### تحسينات
-- ضغط الملفات
-- تحسين الصور
-- تحسين الخطوط
-- تحسين JavaScript
-
-### CDN
-- Netlify CDN عالمي
-- تحسين سرعة التحميل
-- تقليل زمن الاستجابة
-
-## 🔍 SEO
-
-### إعدادات SEO
-```html
-<!-- public/index.html -->
-<meta name="description" content="شفاء كير - نظام الذكاء الاصطناعي للعلاج النفسي">
-<meta name="keywords" content="علاج نفسي, ذكاء اصطناعي, مصر">
-<meta name="author" content="شفاء كير">
-```
-
-### Sitemap
-```xml
-<!-- public/sitemap.xml -->
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://your-site.netlify.app/</loc>
-    <lastmod>2025-07-05</lastmod>
-  </url>
-</urlset>
+### إضافة Forms
+```toml
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 ```
 
 ## 📞 الدعم
 
-### Netlify Support
-- [Netlify Docs](https://docs.netlify.com)
-- [Netlify Community](https://community.netlify.com)
-- [Netlify Status](https://status.netlify.com)
+### روابط مفيدة
+- [Netlify Docs](https://docs.netlify.com/)
+- [Build Settings](https://docs.netlify.com/configure-builds/overview/)
+- [Environment Variables](https://docs.netlify.com/environment-variables/get-started/)
 
 ### مشاكل شائعة
-1. **مشكلة البناء**: تحقق من إعدادات Node.js
-2. **مشكلة التوجيه**: تحقق من netlify.toml
-3. **مشكلة المتغيرات**: تحقق من Environment Variables
+1. **Build fails**: تأكد من Node.js 22
+2. **Environment variables**: تأكد من إضافتها في Netlify
+3. **Routing issues**: تأكد من ملف `_redirects`
 
----
+## 🎉 تم النشر!
 
-**شفاء كير** - نشر سريع وآمن على Netlify 🚀 
+بعد النشر، ستحصل على رابط مثل:
+`https://your-site-name.netlify.app`
+
+يمكنك تغيير الاسم في إعدادات الموقع. 
