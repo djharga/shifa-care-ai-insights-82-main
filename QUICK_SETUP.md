@@ -6,6 +6,9 @@
 - **URL**: `https://oyljfpeeckxgfrqwsebk.supabase.co`
 - **Anon Key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95bGpmcGVlY2t4Z2ZycXdzZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MTQxODksImV4cCI6MjA2NzA5MDE4OX0.czWNSZ4vSocds-zInvEAiSS6XcjCmorWwTFsoIcRJnM`
 
+### OpenAI Configuration ✅
+- **API Key**: `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`
+
 ## 🚀 خطوات الإعداد السريع
 
 ### 1. إنشاء ملف .env.local
@@ -17,8 +20,8 @@
 VITE_SUPABASE_URL=https://oyljfpeeckxgfrqwsebk.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95bGpmcGVlY2t4Z2ZycXdzZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MTQxODksImV4cCI6MjA2NzA5MDE4OX0.czWNSZ4vSocds-zInvEAiSS6XcjCmorWwTFsoIcRJnM
 
-# OpenAI Configuration (أضف مفتاحك هنا)
-VITE_OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+# OpenAI Configuration ✅
+VITE_OPENAI_API_KEY=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
 
 # Application Configuration
 VITE_APP_NAME=شفاء كير
@@ -44,14 +47,7 @@ VITE_DEV_MODE=true
 
 3. **اضغط "Run" لإنشاء الجداول الجديدة**
 
-### 3. الحصول على مفتاح OpenAI
-
-1. اذهب إلى [platform.openai.com](https://platform.openai.com)
-2. اضغط على "API Keys"
-3. اضغط "Create new secret key"
-4. انسخ المفتاح واستبدل `sk-proj-your-openai-api-key-here`
-
-### 4. تشغيل التطبيق
+### 3. تشغيل التطبيق
 
 ```bash
 # تثبيت التبعيات
@@ -80,7 +76,7 @@ Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95
 Environment: Production, Preview, Development
 
 VITE_OPENAI_API_KEY
-Value: sk-proj-your-openai-api-key-here
+Value: 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
 Environment: Production, Preview, Development
 ```
 
