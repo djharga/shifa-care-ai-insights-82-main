@@ -2,6 +2,7 @@
   "name": "shifa-care-ai-insights",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/djharga/shifa-care-ai-insights-82-main.git"
@@ -91,6 +92,5 @@
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
-  },
-  "type": "module"
+  }
 }
