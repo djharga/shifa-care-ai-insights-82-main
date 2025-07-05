@@ -3,24 +3,15 @@ import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  server: {
-    host: "::",
-    port: 3000,
-    strictPort: true,
-  },
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": "./src",
     },
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom']
-  },
   build: {
     target: 'es2015',
+    outDir: 'dist',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -28,10 +19,6 @@ export default defineConfig({
           supabase: ['@supabase/supabase-js']
         }
       }
-    },
-    chunkSizeWarningLimit: 1000
-  },
-  define: {
-    global: 'globalThis'
+    }
   }
 });

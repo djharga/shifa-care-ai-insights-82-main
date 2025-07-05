@@ -17,7 +17,8 @@
     "type-check": "tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0",
     "clean": "rm -rf dist",
-    "start": "npm run dev"
+    "start": "npm run dev",
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
