@@ -1,14 +1,2 @@
 # إعادة توجيه جميع الطلبات إلى index.html للـ SPA
-/*    /index.html   200
-
-# إعادة توجيه API calls
-/api/*  https://your-api-domain.com/api/:splat  200
-
-# إعادة توجيه للصفحات المحددة
-/admin  /index.html  200
-/login  /index.html  200
-/dashboard  /index.html  200
-
-# إعادة توجيه للترجمة
-/ar/*  /index.html  200
-/en/*  /index.html  200 
+/*    /index.html   200 
