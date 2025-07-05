@@ -1,14 +1,14 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+
+# منع الوصول للملفات الحساسة
+Disallow: /admin
+Disallow: /api/
+Disallow: /_headers
+Disallow: /_redirects
+
+# خريطة الموقع
+Sitemap: https://your-domain.netlify.app/sitemap.xml
+
+# إعدادات إضافية
+Crawl-delay: 1

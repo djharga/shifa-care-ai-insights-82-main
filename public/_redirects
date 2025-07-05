@@ -1,13 +1,14 @@
-# إعادة التوجيه للـ SPA
+# إعادة توجيه جميع الطلبات إلى index.html للـ SPA
 /*    /index.html   200
 
-# إعادة التوجيه للصفحة الرئيسية
-/     /index.html   200
+# إعادة توجيه API calls
+/api/*  https://your-api-domain.com/api/:splat  200
 
-# إعادة التوجيه للصفحات
-/admin     /index.html   200
-/finance   /index.html   200
-/sessions  /index.html   200
-/reports   /index.html   200
-/rooms     /index.html   200
-/facility-expenses /index.html   200 
+# إعادة توجيه للصفحات المحددة
+/admin  /index.html  200
+/login  /index.html  200
+/dashboard  /index.html  200
+
+# إعادة توجيه للترجمة
+/ar/*  /index.html  200
+/en/*  /index.html  200 
