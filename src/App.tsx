@@ -17,6 +17,7 @@ import Finance from './pages/Finance';
 import FacilityExpenses from './pages/FacilityExpenses';
 import Rooms from './pages/Rooms';
 import TestPage from './pages/TestPage';
+import SimplePage from './pages/SimplePage';
 
 const queryClient = new QueryClient();
 
@@ -27,9 +28,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/simple" element={<SimplePage />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<SimplePage />} />
+          <Route path="/dashboard" element={<Index />} />
           <Route path="/patients" element={
             <ProtectedRoute>
               <Patients />
