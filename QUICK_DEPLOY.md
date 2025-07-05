@@ -1,33 +1,46 @@
-# 🚀 نشر سريع على Vercel
+# 🚀 رفع سريع على GitHub
 
-## خطوات سريعة:
+## ⚡ الطرق السريعة
 
-### 1. رفع الكود
-```bash
-git add .
-git commit -m "Ready for deployment"
-git push origin main
+### 1. PowerShell (Windows)
+```powershell
+.\auto-deploy.ps1
 ```
 
-### 2. النشر على Vercel
-1. اذهب إلى [vercel.com](https://vercel.com)
-2. اضغط "New Project"
-3. اختر المستودع
-4. أضف المتغيرات البيئية:
-   ```
-   VITE_SUPABASE_URL=https://your-project.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-key
-   VITE_OPENAI_API_KEY=sk-proj-your-key
-   ```
-5. اضغط "Deploy"
+### 2. Batch File (Windows)
+```cmd
+auto-deploy.bat
+```
 
-### 3. إعداد قاعدة البيانات
-1. اذهب إلى Supabase SQL Editor
-2. انسخ محتوى `supabase/migrations/20250703040323-complete-system.sql`
-3. نفذ الكود
+### 3. Bash (Linux/macOS)
+```bash
+./auto-deploy.sh
+```
 
-### 4. جاهز! 🎉
-رابط التطبيق: `https://your-project.vercel.app`
+### 4. npm Script
+```bash
+npm run deploy
+```
+
+## 📋 خطوات سريعة
+
+1. **أضف الملفات:**
+   ```bash
+   git add .
+   ```
+
+2. **أنشئ commit:**
+   ```bash
+   git commit -m "تحديث جديد"
+   ```
+
+3. **ارفع على GitHub:**
+   ```bash
+   git push origin main
+   ```
+
+## 🔗 رابط المستودع
+https://github.com/djharga/shifa-care-ai-insights-82-main
 
 ## 📞 للمساعدة
-راجع `DEPLOY.md` للتفاصيل الكاملة 
+راجع ملف `AUTO_DEPLOY_README.md` للحصول على دليل مفصل. 
