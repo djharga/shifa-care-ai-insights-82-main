@@ -1,3 +1,8 @@
+import i18n from 'i18next';
+
+// دالة للحصول على النص المترجم
+const t = (key: string) => i18n.t(key);
+
 // تكوين الذكاء الاصطناعي للنظام العلاجي
 
 export const AI_CONFIG = {
@@ -172,31 +177,31 @@ export const AI_CONFIG = {
 
     // حالات الأهداف
     goalStatus: {
-      pending: 'في الانتظار',
-      in_progress: 'قيد التنفيذ',
-      completed: 'مكتمل',
-      failed: 'فشل'
+      pending: t('ai_goal_status_pending'),
+      in_progress: t('ai_goal_status_in_progress'),
+      completed: t('ai_goal_status_completed'),
+      failed: t('ai_goal_status_failed')
     },
 
     // أنواع الأنشطة
     activityTypes: {
-      individual: 'فردي',
-      group: 'جماعي',
-      family: 'عائلي'
+      individual: t('ai_activity_individual'),
+      group: t('ai_activity_group'),
+      family: t('ai_activity_family')
     },
 
     // تكرار الأنشطة
     activityFrequency: {
-      daily: 'يومي',
-      weekly: 'أسبوعي',
-      monthly: 'شهري'
+      daily: t('ai_frequency_daily'),
+      weekly: t('ai_frequency_weekly'),
+      monthly: t('ai_frequency_monthly')
     },
 
     // حالات الأنشطة
     activityStatus: {
-      planned: 'مخطط',
-      completed: 'مكتمل',
-      cancelled: 'ملغي'
+      planned: t('ai_status_planned'),
+      completed: t('ai_status_completed'),
+      cancelled: t('ai_status_cancelled')
     }
   },
 
@@ -204,19 +209,19 @@ export const AI_CONFIG = {
   analysis: {
     // مستويات شدة المشاعر
     emotionIntensity: {
-      veryLow: { min: 1, max: 2, label: 'منخفضة جداً' },
-      low: { min: 3, max: 4, label: 'منخفضة' },
-      medium: { min: 5, max: 6, label: 'متوسطة' },
-      high: { min: 7, max: 8, label: 'عالية' },
-      veryHigh: { min: 9, max: 10, label: 'عالية جداً' }
+      veryLow: { min: 1, max: 2, label: t('ai_emotion_very_low') },
+      low: { min: 3, max: 4, label: t('ai_emotion_low') },
+      medium: { min: 5, max: 6, label: t('ai_emotion_medium') },
+      high: { min: 7, max: 8, label: t('ai_emotion_high') },
+      veryHigh: { min: 9, max: 10, label: t('ai_emotion_very_high') }
     },
 
     // الحالات العاطفية
     emotionalStates: {
-      positive: { label: 'إيجابية', color: 'green' },
-      negative: { label: 'سلبية', color: 'red' },
-      neutral: { label: 'محايدة', color: 'gray' },
-      mixed: { label: 'مختلطة', color: 'yellow' }
+      positive: { label: t('ai_state_positive'), color: 'green' },
+      negative: { label: t('ai_state_negative'), color: 'red' },
+      neutral: { label: t('ai_state_neutral'), color: 'gray' },
+      mixed: { label: t('ai_state_mixed'), color: 'yellow' }
     }
   },
 
@@ -260,11 +265,11 @@ export const AI_CONFIG = {
 
     // رسائل الخطأ
     errorMessages: {
-      requiredField: 'هذا الحقل مطلوب',
-      invalidDuration: 'المدة يجب أن تكون بين 15 و 180 دقيقة',
-      invalidIntensity: 'الشدة يجب أن تكون بين 1 و 10',
-      invalidProgress: 'التقدم يجب أن يكون بين 0 و 100',
-      invalidRating: 'التقييم يجب أن يكون بين 1 و 10'
+      requiredField: t('validation_required_field'),
+      invalidDuration: t('validation_invalid_duration'),
+      invalidIntensity: t('validation_invalid_intensity'),
+      invalidProgress: t('validation_invalid_progress'),
+      invalidRating: t('validation_invalid_rating')
     }
   }
 };
@@ -303,8 +308,8 @@ export function parseAIResponse(response: string, type: 'emotions' | 'goals' | '
         return response;
     }
   } catch (error) {
-    console.error('خطأ في تحليل استجابة الذكاء الاصطناعي:', error);
-    return AI_CONFIG.responseTemplates[type] || response;
+    console.error(t('ai_parse_error'), error);
+    return response;
   }
 }
 
@@ -312,7 +317,7 @@ export function parseAIResponse(response: string, type: 'emotions' | 'goals' | '
 function parseEmotionsFromText(text: string): any {
   // تحليل بسيط للنص لاستخراج المشاعر
   const emotions = {
-    primary_emotion: 'غير محدد',
+    primary_emotion: t('ai_emotion_undefined'),
     secondary_emotions: [],
     intensity: 5,
     emotional_state: 'neutral' as const
@@ -345,7 +350,7 @@ function parseGoalsFromText(text: string): any[] {
   return [
     {
       id: Date.now().toString(),
-      title: 'هدف علاجي',
+      title: t('ai_goal_therapeutic'),
       description: text.substring(0, 100),
       target_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       progress: 0,
@@ -361,7 +366,7 @@ function parseActivitiesFromText(text: string): any[] {
   return [
     {
       id: Date.now().toString(),
-      title: 'نشاط علاجي',
+      title: t('ai_activity_therapeutic'),
       description: text.substring(0, 100),
       type: 'individual' as const,
       duration: 60,

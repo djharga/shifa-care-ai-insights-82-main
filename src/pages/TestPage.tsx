@@ -1,30 +1,33 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const TestPage = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-foreground mb-4">
-          شفاء كير - صفحة الاختبار
+          {t('test_title')}
         </h1>
         <p className="text-muted-foreground mb-8">
-          هذه صفحة اختبار للتأكد من أن التطبيق يعمل بشكل صحيح
+          {t('test_desc')}
         </p>
         <div className="space-y-4">
           <div className="p-4 bg-card rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">بيانات الدخول الافتراضية:</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('test_login_data')}</h2>
             <p className="text-sm text-muted-foreground">
-              📧 admin@shifacare.com / admin123
+              {t('test_login_admin')}
             </p>
             <p className="text-sm text-muted-foreground">
-              📧 test@shifacare.com / test123456
+              {t('test_login_test')}
             </p>
           </div>
           <div className="p-4 bg-card rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">حالة النظام:</h2>
-            <p className="text-green-600">✅ التطبيق يعمل بشكل صحيح</p>
-            <p className="text-green-600">✅ نظام المصادقة جاهز</p>
-            <p className="text-green-600">✅ PWA جاهز</p>
+            <h2 className="text-xl font-semibold mb-2">{t('test_status')}</h2>
+            <p className="text-green-600">{t('test_status_ok')}</p>
+            <p className="text-green-600">{t('test_status_auth')}</p>
+            <p className="text-green-600">{t('test_status_pwa')}</p>
           </div>
         </div>
       </div>
