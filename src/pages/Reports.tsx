@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Download, TrendingUp, Users, Calendar, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
+import { useTranslation } from 'react-i18next';
 
 const Reports = () => {
   const [timeframe, setTimeframe] = useState('month');
@@ -18,6 +19,7 @@ const Reports = () => {
     relapseRate: 0
   });
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Sample data for charts
   const monthlyData = [
@@ -80,7 +82,7 @@ const Reports = () => {
       */
     } catch (error: any) {
       toast({
-        title: "خطأ في تحميل الإحصائيات",
+        title: t("error_loading_stats"),
         description: error.message,
         variant: "destructive",
       });
@@ -89,8 +91,8 @@ const Reports = () => {
 
   const exportReport = () => {
     toast({
-      title: "جاري تصدير التقرير",
-      description: "سيتم تحميل التقرير قريباً",
+      title: t("exporting_report"),
+      description: t("report_will_be_downloaded_soon"),
     });
   };
 
@@ -101,8 +103,8 @@ const Reports = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">التقارير والإحصائيات</h1>
-            <p className="text-muted-foreground">تابع بياناتك ونتايجك هنا</p>
+            <h1 className="text-3xl font-bold text-foreground">{t('reports_and_stats')}</h1>
+            <p className="text-muted-foreground">{t('track_your_data_and_results_here')}</p>
           </div>
 
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
@@ -120,7 +122,7 @@ const Reports = () => {
 
             <Button onClick={exportReport} className="flex items-center space-x-2 rtl:space-x-reverse">
               <Download className="h-4 w-4" />
-              <span>حمّل التقرير</span>
+              <span>{t('download_report')}</span>
             </Button>
           </div>
         </div>
@@ -129,7 +131,7 @@ const Reports = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">عدد العيانين الكلي</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('total_patients')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -140,7 +142,7 @@ const Reports = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الجلسات الشغالة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('active_sessions')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -151,7 +153,7 @@ const Reports = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">معدل الإكمال</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('completion_rate')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -162,7 +164,7 @@ const Reports = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">معدل الانتكاسة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('relapse_rate')}</CardTitle>
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -176,7 +178,7 @@ const Reports = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle>تطور العيانين والجلسات</CardTitle>
+              <CardTitle>{t('patient_and_session_development')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -185,8 +187,8 @@ const Reports = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="patients" stroke="#8884d8" name="العيانين" />
-                  <Line type="monotone" dataKey="sessions" stroke="#82ca9d" name="الجلسات" />
+                  <Line type="monotone" dataKey="patients" stroke="#8884d8" name={t('patients')} />
+                  <Line type="monotone" dataKey="sessions" stroke="#82ca9d" name={t('sessions')} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -194,7 +196,7 @@ const Reports = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>توزيع أنواع الإدمان</CardTitle>
+              <CardTitle>{t('addiction_type_distribution')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -222,7 +224,7 @@ const Reports = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>معدل الإكمال الشهري</CardTitle>
+              <CardTitle>{t('completion_rate_monthly')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -231,7 +233,7 @@ const Reports = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="completion" fill="#8884d8" name="معدل الإكمال %" />
+                  <Bar dataKey="completion" fill="#8884d8" name={t('completion_rate')} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -239,7 +241,7 @@ const Reports = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>توزيع المرضى حسب العمر</CardTitle>
+              <CardTitle>{t('patient_distribution_by_age')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -248,7 +250,7 @@ const Reports = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="patients" fill="#82ca9d" name="عدد المرضى" />
+                  <Bar dataKey="patients" fill="#82ca9d" name={t('patient_count')} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

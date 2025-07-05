@@ -1,0 +1,13 @@
+# إعادة التوجيه للـ SPA
+/*    /index.html   200
+
+# إعادة التوجيه للصفحة الرئيسية
+/     /index.html   200
+
+# إعادة التوجيه للصفحات
+/admin     /index.html   200
+/finance   /index.html   200
+/sessions  /index.html   200
+/reports   /index.html   200
+/rooms     /index.html   200
+/facility-expenses /index.html   200 

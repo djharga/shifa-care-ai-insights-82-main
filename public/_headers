@@ -1,0 +1,24 @@
+# إعدادات الأمان العامة
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# إعدادات التخزين المؤقت للأصول
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# إعدادات التخزين المؤقت للصفحات
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# إعدادات التخزين المؤقت للصور
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+  Cache-Control: public, max-age=31536000, immutable 

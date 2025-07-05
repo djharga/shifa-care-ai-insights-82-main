@@ -1,73 +1,199 @@
-# Welcome to your Lovable project
+# شفا كير - نظام إدارة المصحة النفسية
 
-## Project info
+نظام شامل لإدارة المصحة النفسية مع دعم الذكاء الاصطناعي والترجمة للهجة المصرية.
 
-**URL**: https://lovable.dev/projects/db2d9003-3623-4cc0-91fa-e8855e266963
+## المميزات الرئيسية
 
-## How can I edit this code?
+### 🔐 نظام إدارة متكامل
+- **المدير الرئيسي**: `djharga@gmail.com` / `metaleslam`
+- نظام صلاحيات متقدم (مدير، مشرف، معالج، محاسب)
+- لوحة تحكم شاملة للمديرين
 
-There are several ways of editing your application.
+### 🌐 دعم متعدد اللغات
+- العربية الفصحى
+- اللهجة المصرية
+- نظام ترجمة متكامل
 
-**Use Lovable**
+### 🤖 مساعد ذكي
+- تكامل مع OpenAI API
+- دعم المحادثة باللهجة المصرية
+- مساعدة في التشخيص والمتابعة
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/db2d9003-3623-4cc0-91fa-e8855e266963) and start prompting.
+### 💰 إدارة مالية شاملة
+- إدارة المدفوعات والمصاريف
+- تتبع مصاريف المصحة
+- إدارة الغرف والأسرّة
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📊 تقارير وإحصائيات
+- تقارير مفصلة عن المرضى
+- مؤشرات الانتكاس
+- إحصائيات مالية
 
-**Use your preferred IDE**
+## المدير الرئيسي
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### بيانات الدخول
+- **الإيميل:** `djharga@gmail.com`
+- **كلمة المرور:** `metaleslam`
+- **الدور:** مدير رئيسي
+- **الصلاحيات:** جميع الصلاحيات
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### الصلاحيات المتاحة
+✅ إدارة المستخدمين والصلاحيات  
+✅ إدارة المرضى والجلسات  
+✅ إدارة المالية والمصاريف  
+✅ إدارة الغرف والأسرّة  
+✅ إدارة إعدادات النظام  
+✅ عرض جميع التقارير  
 
-Follow these steps:
+## التثبيت والتشغيل
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### المتطلبات
+- Node.js 18+
+- npm أو yarn
+- حساب Supabase
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### خطوات التثبيت
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. **استنساخ المشروع**
+```bash
+git clone https://github.com/djharga/shifa-care-ai-insights-82-main.git
+cd shifa-care-ai-insights-82-main
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+2. **تثبيت التبعيات**
+```bash
+npm install
+```
+
+3. **إعداد البيئة**
+```bash
+cp .env.example .env.local
+```
+
+4. **تحديث متغيرات البيئة**
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_OPENAI_API_KEY=your_openai_api_key
+```
+
+5. **إعداد قاعدة البيانات**
+```bash
+# تشغيل schema.sql في Supabase
+# أو استخدام setup-admin.js لإعداد المدير الرئيسي
+```
+
+6. **تشغيل المشروع**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## إعداد المدير الرئيسي
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### الطريقة الأولى: إعداد تلقائي
+```bash
+# تحديث setup-admin.js بمعلومات Supabase
+node setup-admin.js
+```
 
-**Use GitHub Codespaces**
+### الطريقة الثانية: إعداد يدوي
+1. إنشاء حساب في Supabase Auth
+2. إضافة بيانات المدير في جدول `profiles`
+3. تعيين الصلاحيات الكاملة
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## هيكل المشروع
 
-## What technologies are used for this project?
+```
+src/
+├── components/          # المكونات
+├── pages/              # الصفحات
+├── hooks/              # Hooks مخصصة
+├── integrations/       # تكاملات خارجية
+├── locales/            # ملفات الترجمة
+└── utils/              # أدوات مساعدة
+```
 
-This project is built with:
+## الصفحات الرئيسية
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **الرئيسية** (`/`): الصفحة الرئيسية مع المساعد الذكي
+- **الجلسات** (`/sessions`): إدارة جلسات العلاج
+- **التقارير** (`/reports`): تقارير المرضى والتقدم
+- **لوحة التحكم** (`/admin`): إدارة النظام (للمديرين)
+- **المالية** (`/finance`): إدارة المدفوعات والمصاريف
+- **مصاريف المصحة** (`/facility-expenses`): إدارة مصاريف المصحة
+- **الغرف** (`/rooms`): إدارة الغرف والأسرّة
 
-## How can I deploy this project?
+## الأدوار والصلاحيات
 
-Simply open [Lovable](https://lovable.dev/projects/db2d9003-3623-4cc0-91fa-e8855e266963) and click on Share -> Publish.
+### المدير الرئيسي
+- جميع الصلاحيات
+- إدارة شاملة للنظام
 
-## Can I connect a custom domain to my Lovable project?
+### المدير
+- إدارة المستخدمين والمرضى
+- إدارة المالية والإعدادات
 
-Yes, you can!
+### المشرف
+- إدارة المرضى والجلسات
+- عرض التقارير والمالية
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### المعالج
+- إدارة الجلسات
+- عرض بيانات المرضى
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### المحاسب
+- إدارة المالية
+- إدارة المدفوعات والمصاريف
+
+## الترجمة
+
+النظام يدعم ترجمة كاملة للهجة المصرية:
+
+```typescript
+// استخدام الترجمة
+const { t } = useTranslation();
+t('welcome_message'); // مرحباً بيك في شفا كير
+```
+
+## المساعد الذكي
+
+المساعد يدعم المحادثة باللهجة المصرية:
+
+```typescript
+// إرسال رسالة للمساعد
+const response = await sendMessage(message, 'ar-EG');
+```
+
+## قاعدة البيانات
+
+### الجداول الرئيسية
+- `profiles`: بيانات المستخدمين
+- `patients`: بيانات المرضى
+- `sessions`: جلسات العلاج
+- `payments`: المدفوعات
+- `rooms`: الغرف والأسرّة
+- `facility_expenses`: مصاريف المصحة
+
+## المساهمة
+
+1. Fork المشروع
+2. إنشاء branch جديد
+3. إجراء التعديلات
+4. إرسال Pull Request
+
+## الدعم
+
+للدعم التقني أو الاستفسارات:
+- 📧 البريد الإلكتروني: support@shifacare.com
+- 📱 الهاتف: +20 XXX XXX XXXX
+
+## الترخيص
+
+هذا المشروع مرخص تحت رخصة MIT.
+
+---
+
+**شفا كير** - رعاية نفسية ذكية ومتطورة  
+**GitHub:** https://github.com/djharga/shifa-care-ai-insights-82-main.git  
+**الإصدار:** 1.0  
+**التاريخ:** 2024

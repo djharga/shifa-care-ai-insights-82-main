@@ -1,14 +1,24 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "shifa-care-ai-insights",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djharga/shifa-care-ai-insights-82-main.git"
+  },
+  "homepage": "https://github.com/djharga/shifa-care-ai-insights-82-main#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "preview": "vite preview",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"No tests specified\" && exit 0",
+    "clean": "rm -rf dist",
+    "start": "npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -60,7 +70,9 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "react-i18next": "^13.0.0",
+    "i18next": "^23.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

@@ -1,0 +1,40 @@
+# التعامل مع الملفات النصية
+*.md text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# التعامل مع الملفات الثنائية
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+
+# ملفات Git
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.gitkeep text eol=lf
+
+# ملفات التكوين
+.env* text eol=lf
+*.config.* text eol=lf
+
+# ملفات التوثيق
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# ملفات SQL
+*.sql text eol=lf
+
+# ملفات Netlify
+_redirects text eol=lf
+_headers text eol=lf 

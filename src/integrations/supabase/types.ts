@@ -9,7 +9,108 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      patients: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          date_of_birth: string
+          gender: 'male' | 'female'
+          addiction_type: string
+          admission_date: string
+          status: string
+          notes?: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          phone: string
+          date_of_birth: string
+          gender: 'male' | 'female'
+          addiction_type: string
+          admission_date: string
+          status?: string
+          notes?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          phone?: string
+          date_of_birth?: string
+          gender?: 'male' | 'female'
+          addiction_type?: string
+          admission_date?: string
+          status?: string
+          notes?: string
+          created_at?: string
+        }
+      }
+      sessions: {
+        Row: {
+          id: string
+          patient_id: string
+          therapist_id: string
+          session_date: string
+          session_time: string
+          session_type: 'individual' | 'group' | 'family'
+          status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+          duration: number
+          notes?: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          patient_id: string
+          therapist_id: string
+          session_date: string
+          session_time: string
+          session_type: 'individual' | 'group' | 'family'
+          status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+          duration: number
+          notes?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          patient_id?: string
+          therapist_id?: string
+          session_date?: string
+          session_time?: string
+          session_type?: 'individual' | 'group' | 'family'
+          status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+          duration?: number
+          notes?: string
+          created_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          full_name: string
+          email: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          full_name: string
+          email: string
+          role?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          full_name?: string
+          email?: string
+          role?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

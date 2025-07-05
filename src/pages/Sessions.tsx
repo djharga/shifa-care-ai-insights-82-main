@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Calendar, Clock, User } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
+import { useTranslation } from 'react-i18next';
 
 interface Session {
   id: string;
@@ -47,6 +48,8 @@ const Sessions = () => {
     notes: ''
   });
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchSessions();
@@ -148,24 +151,29 @@ const Sessions = () => {
   };
 
   const handleAddSession = async () => {
-    try {
-      // Mock implementation
-      const newSessionWithId: Session = {
-        ...newSession,
-        id: Date.now().toString(),
-        status: 'scheduled',
-        created_at: new Date().toISOString(),
-        patients: { name: patients.find(p => p.id === newSession.patient_id)?.name || 'غير محدد' },
-        profiles: { full_name: therapists.find(t => t.id === newSession.therapist_id)?.full_name || 'غير محدد' }
-      };
-      
-      setSessions(prev => [newSessionWithId, ...prev]);
+    if (!newSession.patient_id || !newSession.therapist_id || !newSession.session_date || !newSession.session_time) {
+      toast({
+        title: "خطأ في البيانات",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .insert([newSession]);
+
+      if (error) throw error;
+      
       toast({
         title: "تم إضافة الجلسة بنجاح",
         description: "تم حفظ موعد الجلسة الجديدة",
       });
-
+      
       setIsAddDialogOpen(false);
       setNewSession({
         patient_id: '',
@@ -173,25 +181,20 @@ const Sessions = () => {
         session_date: '',
         session_time: '',
         session_type: 'individual',
+        status: 'scheduled',
         duration: 60,
         notes: ''
       });
       
-      // Uncomment when database is set up:
-      /*
-      const { error } = await supabase
-        .from('sessions')
-        .insert([newSession]);
-
-      if (error) throw error;
       fetchSessions();
-      */
     } catch (error: any) {
       toast({
         title: "خطأ في إضافة الجلسة",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -223,27 +226,27 @@ const Sessions = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">إدارة الجلسات</h1>
-            <p className="text-muted-foreground">جدولة ومتابعة الجلسات العلاجية</p>
+            <h1 className="text-3xl font-bold text-foreground">{t('manage_sessions')}</h1>
+            <p className="text-muted-foreground">{t('schedule_and_track_therapy_sessions')}</p>
           </div>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center space-x-2 rtl:space-x-reverse">
                 <Plus className="h-4 w-4" />
-                <span>إضافة جلسة جديدة</span>
+                <span>{t('add_new_session')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>إضافة جلسة جديدة</DialogTitle>
+                <DialogTitle>{t('add_new_session')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="patient">المريض</Label>
+                  <Label htmlFor="patient">{t('patient')}</Label>
                   <Select value={newSession.patient_id} onValueChange={(value) => setNewSession({...newSession, patient_id: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر المريض" />
+                      <SelectValue placeholder={t('choose_patient')} />
                     </SelectTrigger>
                     <SelectContent>
                       {patients.map((patient) => (
@@ -256,10 +259,10 @@ const Sessions = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="therapist">المعالج</Label>
+                  <Label htmlFor="therapist">{t('therapist')}</Label>
                   <Select value={newSession.therapist_id} onValueChange={(value) => setNewSession({...newSession, therapist_id: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر المعالج" />
+                      <SelectValue placeholder={t('choose_therapist')} />
                     </SelectTrigger>
                     <SelectContent>
                       {therapists.map((therapist) => (
@@ -272,7 +275,7 @@ const Sessions = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="date">تاريخ الجلسة</Label>
+                  <Label htmlFor="date">{t('session_date')}</Label>
                   <Input
                     id="date"
                     type="date"
@@ -282,7 +285,7 @@ const Sessions = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="time">وقت الجلسة</Label>
+                  <Label htmlFor="time">{t('session_time')}</Label>
                   <Input
                     id="time"
                     type="time"
@@ -292,21 +295,21 @@ const Sessions = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="type">نوع الجلسة</Label>
+                  <Label htmlFor="type">{t('session_type')}</Label>
                   <Select value={newSession.session_type} onValueChange={(value: 'individual' | 'group' | 'family') => setNewSession({...newSession, session_type: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر نوع الجلسة" />
+                      <SelectValue placeholder={t('choose_session_type')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="individual">فردية</SelectItem>
-                      <SelectItem value="group">جماعية</SelectItem>
-                      <SelectItem value="family">عائلية</SelectItem>
+                      <SelectItem value="individual">{t('individual')}</SelectItem>
+                      <SelectItem value="group">{t('group')}</SelectItem>
+                      <SelectItem value="family">{t('family')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="duration">المدة (بالدقائق)</Label>
+                  <Label htmlFor="duration">{t('duration')}</Label>
                   <Input
                     id="duration"
                     type="number"
@@ -318,16 +321,16 @@ const Sessions = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="notes">ملاحظات</Label>
+                  <Label htmlFor="notes">{t('notes')}</Label>
                   <Textarea
                     id="notes"
                     value={newSession.notes}
                     onChange={(e) => setNewSession({...newSession, notes: e.target.value})}
-                    placeholder="أدخل أي ملاحظات حول الجلسة"
+                    placeholder={t('enter_any_notes_about_the_session')}
                   />
                 </div>
 
-                <Button onClick={handleAddSession} className="w-full">
+                <Button onClick={handleAddSession} className="w-full" disabled={isLoading}>
                   إضافة الجلسة
                 </Button>
               </div>
@@ -338,7 +341,7 @@ const Sessions = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">جلسات اليوم</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('sessions_today')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -349,7 +352,7 @@ const Sessions = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الجلسات المكتملة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('completed_sessions')}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -360,7 +363,7 @@ const Sessions = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">معدل الحضور</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('attendance_rate')}</CardTitle>
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -372,19 +375,19 @@ const Sessions = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>الجلسات المجدولة</CardTitle>
+            <CardTitle>{t('scheduled_sessions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>المريض</TableHead>
-                  <TableHead>المعالج</TableHead>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>الوقت</TableHead>
-                  <TableHead>النوع</TableHead>
-                  <TableHead>المدة</TableHead>
-                  <TableHead>الحالة</TableHead>
+                  <TableHead>{t('patient')}</TableHead>
+                  <TableHead>{t('therapist')}</TableHead>
+                  <TableHead>{t('date')}</TableHead>
+                  <TableHead>{t('time')}</TableHead>
+                  <TableHead>{t('type')}</TableHead>
+                  <TableHead>{t('duration')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

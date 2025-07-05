@@ -11,6 +11,11 @@ import Reports from "./pages/Reports";
 import AITreatment from "./pages/AITreatment";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Admin from './pages/Admin';
+import AdminLogin from './pages/AdminLogin';
+import Finance from './pages/Finance';
+import FacilityExpenses from './pages/FacilityExpenses';
+import Rooms from './pages/Rooms';
 
 const queryClient = new QueryClient();
 
@@ -47,6 +52,27 @@ const App = () => (
               <AITreatment />
             </ProtectedRoute>
           } />
+          <Route path="/admin" element={
+            <ProtectedRoute roles={['admin', 'supervisor']}>
+              <Admin />
+            </ProtectedRoute>
+          } />
+          <Route path="/finance" element={
+            <ProtectedRoute roles={['admin', 'accountant']}>
+              <Finance />
+            </ProtectedRoute>
+          } />
+          <Route path="/facility-expenses" element={
+            <ProtectedRoute roles={['admin', 'accountant']}>
+              <FacilityExpenses />
+            </ProtectedRoute>
+          } />
+          <Route path="/rooms" element={
+            <ProtectedRoute roles={['admin', 'accountant']}>
+              <Rooms />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-login" element={<AdminLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

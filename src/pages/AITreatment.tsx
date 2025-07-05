@@ -115,24 +115,40 @@ const AITreatment = () => {
     setIsLoading(true);
 
     try {
-      // استدعاء OpenAI API
       const patient = patients.find((p) => p.id === selectedPatient);
-      const prompt = `معلومات المريض:\nالاسم: ${patient?.name}\nنوع الإدمان: ${patient?.addiction_type}\n\nسؤال الطبيب: ${query}\n\nاقترح خطة علاجية أو نصيحة مناسبة باللهجة المصرية.`;
+      const prompt = `معلومات المريض:
+الاسم: ${patient?.name}
+نوع الإدمان: ${patient?.addiction_type}
+الحالة: ${patient?.status}
+
+سؤال الطبيب: ${query}
+
+اقترح خطة علاجية أو نصيحة مناسبة باللهجة المصرية. كن محدداً وقدم خطوات عملية.`;
+
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
+          "Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
         },
         body: JSON.stringify({
           model: "gpt-3.5-turbo",
           messages: [
-            { role: "system", content: "أنت مساعد طبي محترف متخصص في علاج الإدمان وترد باللهجة المصرية فقط." },
+            { 
+              role: "system", 
+              content: "أنت مساعد طبي محترف متخصص في علاج الإدمان. ترد دائماً باللهجة المصرية فقط. قدم نصائح عملية ومحددة بناءً على حالة المريض." 
+            },
             { role: "user", content: prompt }
           ],
-          max_tokens: 400
+          max_tokens: 500,
+          temperature: 0.7
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       const aiContent = data.choices?.[0]?.message?.content || "لم يتم الحصول على اقتراح من الذكاء الاصطناعي.";
 
@@ -151,9 +167,10 @@ const AITreatment = () => {
         description: "تم تحليل الحالة وإنتاج اقتراح علاجي مخصص باللهجة المصرية",
       });
     } catch (error: any) {
+      console.error('AI Error:', error);
       toast({
         title: "خطأ في الحصول على الاقتراحات",
-        description: "حدث خطأ أثناء معالجة طلبك",
+        description: error.message || "حدث خطأ أثناء معالجة طلبك",
         variant: "destructive",
       });
     } finally {

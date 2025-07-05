@@ -6,8 +6,11 @@ import RecentSessions from "@/components/dashboard/RecentSessions";
 import TreatmentProgress from "@/components/dashboard/TreatmentProgress";
 import TodaySessions from "@/components/dashboard/TodaySessions";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
+import { useTranslation } from 'react-i18next';
+import i18n from '../lib/i18n';
 
 const Index = () => {
+  const { t } = useTranslation();
   const stats = [
     {
       title: "عدد العيانين الكلي",
@@ -65,11 +68,17 @@ const Index = () => {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">لوحة التحكم</h1>
-          <p className="text-muted-foreground">
-            أهلاً بيك في نظام شفا كير - هنا هتلاقي كل جديد عن العيانين والجلسات
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('dashboard')}</h1>
+            <p className="text-muted-foreground">
+              أهلاً بيك في نظام شفا كير - هنا هتلاقي كل جديد عن العيانين والجلسات
+            </p>
+          </div>
+          <div>
+            <button onClick={() => i18n.changeLanguage('ar')}>فصحى</button>
+            <button onClick={() => i18n.changeLanguage('ar-EG')} style={{marginRight: 8}}>مصري</button>
+          </div>
         </div>
 
         {/* Stats Cards */}
