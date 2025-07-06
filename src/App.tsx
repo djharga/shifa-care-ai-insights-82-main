@@ -1,74 +1,81 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useTranslation } from 'react-i18next';
-import BasicPage from './pages/BasicPage';
-import WorkingPage from './pages/WorkingPage';
-import SimplePage from './pages/SimplePage';
-import TestPage from './pages/TestPage';
-import Auth from "./pages/Auth";
-import Index from "./pages/Index";
-import Patients from "./pages/Patients";
-import Sessions from "./pages/Sessions";
-import Reports from "./pages/Reports";
-import AITreatment from "./pages/AITreatment";
-import AdvancedAITreatment from "./pages/AdvancedAITreatment";
-import AdvancedSessions from "./pages/AdvancedSessions";
-import AISessionsHub from "./pages/AISessionsHub";
-import NotFound from "./pages/NotFound";
-import Admin from './pages/Admin';
-import AdminLogin from './pages/AdminLogin';
-import Finance from './pages/Finance';
-import FacilityExpenses from './pages/FacilityExpenses';
-import Rooms from './pages/Rooms';
-import FacilityManagement from './pages/FacilityManagement';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/layout/Navbar';
-import './App.css';
+import React, { Suspense } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import Layout from './components/layout/Layout'
+import SmartAssistant from './components/ai/SmartAssistant'
+import './App.css'
 
-const App = () => {
-  const { i18n } = useTranslation();
+// Lazy load components for better performance
+const Index = React.lazy(() => import('./pages/Index'))
+const Admin = React.lazy(() => import('./pages/Admin'))
+const AdminLogin = React.lazy(() => import('./pages/AdminLogin'))
+const Patients = React.lazy(() => import('./pages/Patients'))
+const Sessions = React.lazy(() => import('./pages/Sessions'))
+const Rooms = React.lazy(() => import('./pages/Rooms'))
+const Finance = React.lazy(() => import('./pages/Finance'))
+const Reports = React.lazy(() => import('./pages/Reports'))
+const AISessionsHub = React.lazy(() => import('./pages/AISessionsHub'))
+const AdvancedAITreatment = React.lazy(() => import('./pages/AdvancedAITreatment'))
+const AITreatment = React.lazy(() => import('./pages/AITreatment'))
+const AdvancedSessions = React.lazy(() => import('./pages/AdvancedSessions'))
+const FacilityManagement = React.lazy(() => import('./pages/FacilityManagement'))
+const FacilityExpenses = React.lazy(() => import('./pages/FacilityExpenses'))
+const StaffManagement = React.lazy(() => import('./pages/StaffManagement'))
+const FamilyCommunication = React.lazy(() => import('./pages/FamilyCommunication'))
+const AIAssistant = React.lazy(() => import('./pages/AIAssistant'))
+const PromoDesignPage = React.lazy(() => import('./pages/PromoDesignPage'))
+const AdvancedPermissions = React.lazy(() => import('./components/admin/AdvancedPermissions'))
+const TestPage = React.lazy(() => import('./pages/TestPage'))
+const NotFound = React.lazy(() => import('./pages/NotFound'))
 
-  useEffect(() => {
-    // تعيين اتجاه النص بناءً على اللغة
-    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = i18n.language;
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+  </div>
+)
 
-    // طلب إذن الإشعارات
-    if ('Notification' in window) {
-      Notification.requestPermission();
-    }
-  }, [i18n.language]);
-
+function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <main className="pt-16">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/working" element={<WorkingPage />} />
-            <Route path="/simple" element={<SimplePage />} />
-            <Route path="/test" element={<TestPage />} />
-            <Route path="/dashboard" element={<Index />} />
-            <Route path="/patients" element={<Patients />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/advanced-sessions" element={<AISessionsHub />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/ai-treatment" element={<AITreatment />} />
-            <Route path="/advanced-ai" element={<AdvancedAITreatment />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/finance" element={<Finance />} />
-            <Route path="/facility-expenses" element={<FacilityExpenses />} />
-            <Route path="/rooms" element={<Rooms />} />
-            <Route path="/facility-management" element={<FacilityManagement />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
-  );
-};
+    <Layout>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/patients" element={<Patients />} />
+          <Route path="/sessions" element={<Sessions />} />
+          <Route path="/rooms" element={<Rooms />} />
+          <Route path="/finance" element={<Finance />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/ai-sessions" element={<AISessionsHub />} />
+          <Route path="/ai-treatment" element={<AITreatment />} />
+          <Route path="/advanced-ai-treatment" element={<AdvancedAITreatment />} />
+          <Route path="/advanced-sessions" element={<AdvancedSessions />} />
+          <Route path="/facility-management" element={<FacilityManagement />} />
+          <Route path="/facility-expenses" element={<FacilityExpenses />} />
+          <Route path="/staff-management" element={<StaffManagement />} />
+          <Route path="/family-communication" element={<FamilyCommunication />} />
+          <Route path="/ai-assistant" element={<AIAssistant />} />
+          <Route path="/promo-design" element={<PromoDesignPage />} />
+          <Route path="/advanced-permissions" element={<AdvancedPermissions />} />
+          <Route path="/test" element={<TestPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+      
+      {/* Toast notifications */}
+      <Toaster 
+        position="top-center"
+        richColors
+        closeButton
+        duration={4000}
+      />
+      
+      {/* Smart Assistant */}
+      <SmartAssistant />
+    </Layout>
+  )
+}
 
-export default App;
+export default App

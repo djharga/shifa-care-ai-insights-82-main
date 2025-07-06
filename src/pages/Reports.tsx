@@ -3,23 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Download, TrendingUp, Users, Calendar, AlertCircle } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
 import { useTranslation } from 'react-i18next';
 
 const Reports = () => {
-  const [timeframe, setTimeframe] = useState('month');
-  const [reportType, setReportType] = useState('overview');
+  const { t } = useTranslation();
+  const { toast } = useToast();
   const [stats, setStats] = useState({
     totalPatients: 0,
     activeSessions: 0,
     completionRate: 0,
     relapseRate: 0
   });
-  const { toast } = useToast();
-  const { t } = useTranslation();
+  const [timeframe, setTimeframe] = useState('month');
 
   // Sample data for charts
   const monthlyData = [
@@ -98,8 +95,6 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <Navbar />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>

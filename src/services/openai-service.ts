@@ -1,6 +1,6 @@
-import { OpenAIConfig, DEFAULT_OPENAI_CONFIG, validateOpenAIConfig, createPrompt, AI_PROMPTS } from '@/config/openai-config';
+import { GoogleAIConfig, DEFAULT_GOOGLE_AI_CONFIG, validateGoogleAIConfig, createPrompt, AI_PROMPTS } from '@/config/openai-config';
 
-export interface OpenAIResponse {
+export interface GoogleAIResponse {
   success: boolean;
   data?: any;
   error?: string;
@@ -11,48 +11,50 @@ export interface OpenAIResponse {
   };
 }
 
-export class OpenAIService {
-  private config: OpenAIConfig;
+export class GoogleAIService {
+  private config: GoogleAIConfig;
   private retryCount: number = 0;
 
-  constructor(config?: Partial<OpenAIConfig>) {
-    this.config = { ...DEFAULT_OPENAI_CONFIG, ...config };
+  constructor(config?: Partial<GoogleAIConfig>) {
+    this.config = { ...DEFAULT_GOOGLE_AI_CONFIG, ...config };
   }
 
-  // استدعاء OpenAI API مع إدارة الأخطاء
-  async callOpenAI(
+  // استدعاء Google AI API مع إدارة الأخطاء
+  async callGoogleAI(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     options?: {
       maxTokens?: number;
       temperature?: number;
       model?: string;
     }
-  ): Promise<OpenAIResponse> {
-    if (!validateOpenAIConfig(this.config)) {
+  ): Promise<GoogleAIResponse> {
+    if (!validateGoogleAIConfig(this.config)) {
       return {
         success: false,
-        error: 'OpenAI API key not configured'
+        error: 'Google AI API key not configured'
       };
     }
-
-    const requestConfig = {
-      model: options?.model || this.config.model,
-      messages,
-      max_tokens: options?.maxTokens || this.config.maxTokens,
-      temperature: options?.temperature || this.config.temperature
-    };
 
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.config.model}:generateContent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.apiKey}`
         },
-        body: JSON.stringify(requestConfig),
+        body: JSON.stringify({
+          contents: messages.map(msg => ({
+            role: msg.role === 'system' ? 'user' : msg.role,
+            parts: [{ text: msg.content }]
+          })),
+          generationConfig: {
+            maxOutputTokens: options?.maxTokens || this.config.maxTokens,
+            temperature: options?.temperature || this.config.temperature
+          }
+        }),
         signal: controller.signal
       });
 
@@ -60,26 +62,30 @@ export class OpenAIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`OpenAI API Error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+        throw new Error(`Google AI API Error: ${response.status} - ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
       
       return {
         success: true,
-        data: data.choices?.[0]?.message?.content || '',
-        usage: data.usage
+        data: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
+        usage: {
+          prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
+          completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
+          total_tokens: data.usageMetadata?.totalTokenCount || 0
+        }
       };
 
     } catch (error: any) {
-      console.error('OpenAI API Error:', error);
+      console.error('Google AI API Error:', error);
       
       // إعادة المحاولة في حالة أخطاء معينة
       if (this.shouldRetry(error) && this.retryCount < this.config.retries) {
         this.retryCount++;
-        console.log(`Retrying OpenAI call (${this.retryCount}/${this.config.retries})...`);
+        console.log(`Retrying Google AI call (${this.retryCount}/${this.config.retries})...`);
         await this.delay(1000 * this.retryCount); // تأخير متزايد
-        return this.callOpenAI(messages, options);
+        return this.callGoogleAI(messages, options);
       }
 
       return {
@@ -90,12 +96,12 @@ export class OpenAIService {
   }
 
   // تحليل الجلسات
-  async analyzeSession(rawNotes: string): Promise<OpenAIResponse> {
+  async analyzeSession(rawNotes: string): Promise<GoogleAIResponse> {
     const prompt = createPrompt(AI_PROMPTS.SESSION_ANALYSIS, {
       rawNotes
     });
 
-    return this.callOpenAI([
+    return this.callGoogleAI([
       { role: 'system', content: AI_PROMPTS.SESSION_ANALYSIS.system },
       { role: 'user', content: prompt }
     ]);
@@ -108,7 +114,7 @@ export class OpenAIService {
     addictionType: string;
     currentStatus: string;
     riskFactors: string[];
-  }): Promise<OpenAIResponse> {
+  }): Promise<GoogleAIResponse> {
     const prompt = createPrompt(AI_PROMPTS.TREATMENT_PLAN, {
       patientName: patientData.name,
       age: patientData.age.toString(),
@@ -117,46 +123,46 @@ export class OpenAIService {
       riskFactors: patientData.riskFactors.join(', ')
     });
 
-    return this.callOpenAI([
+    return this.callGoogleAI([
       { role: 'system', content: AI_PROMPTS.TREATMENT_PLAN.system },
       { role: 'user', content: prompt }
     ]);
   }
 
   // تقييم مخاطر الانتكاس
-  async assessRelapseRisk(patientData: string, sessionsHistory: string): Promise<OpenAIResponse> {
+  async assessRelapseRisk(patientData: string, sessionsHistory: string): Promise<GoogleAIResponse> {
     const prompt = createPrompt(AI_PROMPTS.RELAPSE_RISK, {
       patientData,
       sessionsHistory
     });
 
-    return this.callOpenAI([
+    return this.callGoogleAI([
       { role: 'system', content: AI_PROMPTS.RELAPSE_RISK.system },
       { role: 'user', content: prompt }
     ]);
   }
 
   // إنشاء تقرير ذكي
-  async generateSmartReport(reportType: string, patientId: string): Promise<OpenAIResponse> {
+  async generateSmartReport(reportType: string, patientId: string): Promise<GoogleAIResponse> {
     const prompt = createPrompt(AI_PROMPTS.SMART_REPORT, {
       reportType,
       patientId
     });
 
-    return this.callOpenAI([
+    return this.callGoogleAI([
       { role: 'system', content: AI_PROMPTS.SMART_REPORT.system },
       { role: 'user', content: prompt }
     ]);
   }
 
   // اقتراح أنشطة علاجية
-  async suggestActivities(patientProfile: string, sessionResults: string): Promise<OpenAIResponse> {
+  async suggestActivities(patientProfile: string, sessionResults: string): Promise<GoogleAIResponse> {
     const prompt = createPrompt(AI_PROMPTS.THERAPEUTIC_ACTIVITIES, {
       patientProfile,
       sessionResults
     });
 
-    return this.callOpenAI([
+    return this.callGoogleAI([
       { role: 'system', content: AI_PROMPTS.THERAPEUTIC_ACTIVITIES.system },
       { role: 'user', content: prompt }
     ]);
@@ -171,8 +177,8 @@ export class OpenAIService {
       temperature?: number;
       model?: string;
     }
-  ): Promise<OpenAIResponse> {
-    return this.callOpenAI([
+  ): Promise<GoogleAIResponse> {
+    return this.callGoogleAI([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ], options);
@@ -198,15 +204,16 @@ export class OpenAIService {
   }
 
   // تحديث الإعدادات
-  updateConfig(newConfig: Partial<OpenAIConfig>): void {
+  updateConfig(newConfig: Partial<GoogleAIConfig>): void {
     this.config = { ...this.config, ...newConfig };
+    this.retryCount = 0; // إعادة تعيين عداد المحاولات
   }
 
   // الحصول على الإعدادات الحالية
-  getConfig(): OpenAIConfig {
+  getConfig(): GoogleAIConfig {
     return { ...this.config };
   }
 }
 
-// إنشاء instance افتراضي
-export const openAIService = new OpenAIService(); 
+// تصدير نسخة افتراضية من الخدمة
+export const googleAIService = new GoogleAIService(); 

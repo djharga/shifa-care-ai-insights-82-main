@@ -117,7 +117,59 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+    direction: rtl;
+    text-align: right;
     font-feature-settings: "rlig" 1, "calt" 1;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  /* Arabic Font Support */
+  .arabic-font {
+    font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+  }
+  
+  /* RTL Support */
+  .rtl {
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .ltr {
+    direction: ltr;
+    text-align: left;
+  }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+
+  /* Ensure basic elements are visible */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+  }
+
+  p {
+    @apply text-foreground;
+  }
+
+  div {
+    @apply text-foreground;
   }
 }
 
@@ -141,5 +193,50 @@ All colors MUST be HSL.
   
   .dark .shadow-soft {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Debug styles to ensure visibility */
+  .debug-border {
+    border: 2px solid red !important;
+  }
+
+  .debug-bg {
+    background-color: #f0f0f0 !important;
+  }
+}
+
+@layer components {
+  /* Custom Components */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-lg transition-shadow duration-200;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent;
+  }
+
+  /* Ensure cards are visible */
+  .card {
+    @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm;
+  }
+
+  .card-header {
+    @apply p-6 pb-0;
+  }
+
+  .card-content {
+    @apply p-6 pt-0;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold leading-none tracking-tight;
   }
 }

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/use-theme';
 
 interface MobileLayoutProps {
   children: React.ReactNode;
@@ -16,7 +15,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onBack
 }) => {
   const { t } = useTranslation();
-  const { theme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background">

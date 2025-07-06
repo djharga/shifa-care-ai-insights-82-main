@@ -28,8 +28,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }
     try {
       const unreadNotifications = await notificationService.getUnreadNotifications(userId);
       setNotifications(unreadNotifications);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
+    } catch {
+      console.error('Error loading notifications:');
     }
   };
 
@@ -41,7 +41,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }
         title: "تم تحديث الإشعار",
         description: "تم تحديد الإشعار كمقروء",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "خطأ",
         description: "حدث خطأ أثناء تحديث الإشعار",
@@ -59,7 +59,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }
         title: "تم تحديث جميع الإشعارات",
         description: "تم تحديد جميع الإشعارات كمقروءة",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "خطأ",
         description: "حدث خطأ أثناء تحديث الإشعارات",
@@ -78,7 +78,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }
         title: "تم حذف الإشعار",
         description: "تم حذف الإشعار بنجاح",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "خطأ",
         description: "حدث خطأ أثناء حذف الإشعار",

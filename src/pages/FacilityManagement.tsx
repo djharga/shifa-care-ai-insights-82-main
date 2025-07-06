@@ -1,32 +1,31 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
   Building, 
-  Bed, 
-  Zap, 
-  Droplets, 
-  Utensils, 
-  Wrench, 
+  Users, 
+  Settings, 
   Shield, 
   Wifi, 
   Phone, 
-  DollarSign,
-  Users,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Calculator
+  TrendingUp, 
+  AlertCircle, 
+  Clock, 
+  Plus, 
+  Edit, 
+  Trash2 
 } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calculator } from 'lucide-react';
 
 const FacilityManagement = () => {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
 
   // بيانات وهمية للإحصائيات
@@ -43,30 +42,8 @@ const FacilityManagement = () => {
     netProfit: 40000
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'occupied': return 'bg-red-100 text-red-800';
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800';
-      case 'reserved': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'available': return 'متاح';
-      case 'occupied': return 'مشغول';
-      case 'maintenance': return 'صيانة';
-      case 'reserved': return 'محجوز';
-      default: return status;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <Navbar />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -93,14 +70,14 @@ const FacilityManagement = () => {
             </Card>
             <Card className="text-center">
               <CardContent className="p-4">
-                <Bed className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                <Building className="h-6 w-6 mx-auto mb-2 text-green-600" />
                 <div className="text-2xl font-bold text-green-600">{stats.totalBeds}</div>
                 <div className="text-sm text-gray-600">إجمالي الأسرّة</div>
               </CardContent>
             </Card>
             <Card className="text-center">
               <CardContent className="p-4">
-                <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                <Building className="h-6 w-6 mx-auto mb-2 text-green-600" />
                 <div className="text-2xl font-bold text-green-600">{stats.availableBeds}</div>
                 <div className="text-sm text-gray-600">أسرّة متاحة</div>
               </CardContent>
@@ -114,7 +91,7 @@ const FacilityManagement = () => {
             </Card>
             <Card className="text-center">
               <CardContent className="p-4">
-                <DollarSign className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                <Building className="h-6 w-6 mx-auto mb-2 text-purple-600" />
                 <div className="text-2xl font-bold text-purple-600">{stats.monthlyRevenue.toLocaleString()}</div>
                 <div className="text-sm text-gray-600">إيرادات الشهر</div>
               </CardContent>
@@ -153,7 +130,7 @@ const FacilityManagement = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <Building className="h-5 w-5 text-green-600" />
                         <span>متاحة</span>
                       </div>
                       <Badge className="bg-green-100 text-green-800">18 غرفة</Badge>
@@ -167,7 +144,7 @@ const FacilityManagement = () => {
                     </div>
                     <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                       <div className="flex items-center space-x-2">
-                        <Wrench className="h-5 w-5 text-yellow-600" />
+                        <Building className="h-5 w-5 text-yellow-600" />
                         <span>صيانة</span>
                       </div>
                       <Badge className="bg-yellow-100 text-yellow-800">2 غرف</Badge>
@@ -180,7 +157,7 @@ const FacilityManagement = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <DollarSign className="h-5 w-5" />
+                    <Building className="h-5 w-5" />
                     <span>مصاريف الشهر</span>
                   </CardTitle>
                 </CardHeader>
@@ -188,28 +165,28 @@ const FacilityManagement = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Zap className="h-4 w-4 text-yellow-600" />
+                        <Building className="h-4 w-4 text-yellow-600" />
                         <span>كهرباء</span>
                       </div>
                       <span className="font-medium">2,500 ج.م</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Droplets className="h-4 w-4 text-blue-600" />
+                        <Building className="h-4 w-4 text-blue-600" />
                         <span>مياه</span>
                       </div>
                       <span className="font-medium">800 ج.م</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Utensils className="h-4 w-4 text-orange-600" />
+                        <Building className="h-4 w-4 text-orange-600" />
                         <span>طعام</span>
                       </div>
                       <span className="font-medium">5,000 ج.م</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Wrench className="h-4 w-4 text-gray-600" />
+                        <Building className="h-4 w-4 text-gray-600" />
                         <span>صيانة</span>
                       </div>
                       <span className="font-medium">1,200 ج.م</span>
@@ -239,13 +216,13 @@ const FacilityManagement = () => {
                   </Link>
                   <Link to="/facility-expenses">
                     <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <Zap className="h-6 w-6" />
+                      <Building className="h-6 w-6" />
                       <span>مصاريف المصحة</span>
                     </Button>
                   </Link>
                   <Link to="/finance">
                     <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <DollarSign className="h-6 w-6" />
+                      <Building className="h-6 w-6" />
                       <span>الحسابات المالية</span>
                     </Button>
                   </Link>
@@ -281,13 +258,13 @@ const FacilityManagement = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Zap className="h-5 w-5" />
+                  <Building className="h-5 w-5" />
                   <span>مصاريف المصحة</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <Zap className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">مصاريف المصحة</h3>
                   <p className="text-gray-600 mb-4">يمكنك إدارة مصاريف الكهرباء والمياه والطعام والخدمات</p>
                   <Link to="/facility-expenses">
@@ -303,13 +280,13 @@ const FacilityManagement = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="h-5 w-5" />
+                  <Building className="h-5 w-5" />
                   <span>الحسابات المالية</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">الحسابات المالية</h3>
                   <p className="text-gray-600 mb-4">يمكنك إدارة المدفوعات والمصاريف والإقامة</p>
                   <Link to="/finance">

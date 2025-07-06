@@ -6,7 +6,7 @@ const resources = {
   ar: { 
     translation: {
       "dashboard": "لوحة التحكم",
-      "patients": "المرضى",
+      "patients": "المقيمين",
       "sessions": "الجلسات",
       "reports": "التقارير",
       "ai_assistant": "مساعد الذكاء الاصطناعي",
@@ -43,7 +43,7 @@ const resources = {
   'ar-EG': { 
     translation: {
       "dashboard": "لوحة التحكم",
-      "patients": "المرضى",
+      "patients": "المقيمين",
       "sessions": "الجلسات",
       "reports": "التقارير",
       "ai_assistant": "مساعد الذكاء الاصطناعي",

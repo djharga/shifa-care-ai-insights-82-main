@@ -81,6 +81,20 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			fontFamily: {
+				sans: [
+					'Cairo',
+					'Segoe UI',
+					'Tahoma',
+					'Arial',
+					'sans-serif'
+				],
+				arabic: [
+					'Cairo',
+					'Noto Sans Arabic',
+					'sans-serif'
+				]
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {

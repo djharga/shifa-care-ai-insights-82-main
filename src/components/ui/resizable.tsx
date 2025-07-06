@@ -1,5 +1,4 @@
 import * as React from "react"
-import { GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const ResizablePanel = React.forwardRef<

@@ -112,7 +112,7 @@ export class NotificationService {
     }
   }
 
-  async sendRelapseAlert(patientId: string, riskLevel: string): Promise<void> {
+  async sendRelapseAlert(patientId: string): Promise<void> {
     try {
       // جلب بيانات المريض
       const { data: patient } = await supabase

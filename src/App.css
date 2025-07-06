@@ -1,64 +1,416 @@
-/* إعدادات عامة للتطبيق */
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
+/* =====================================================
+   شفاء كير - ملف الأنماط الرئيسي
+   تاريخ التحديث: 2025-07-05
+   متوافق مع Node.js 22+ فقط
+   ===================================================== */
 
-/* تحسينات للأداء */
+/* =====================================================
+   إعدادات الخطوط العربية
+   ===================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+
+/* =====================================================
+   إعدادات عامة
+   ===================================================== */
 * {
   box-sizing: border-box;
 }
 
-/* إعدادات للخطوط العربية */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
-
-body {
-  font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+html {
+  scroll-behavior: smooth;
 }
 
-/* تحسين عرض النص العربي */
-.rtl {
+body {
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =====================================================
+   إعدادات النص العربي
+   ===================================================== */
+.arabic-text {
+  font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
   direction: rtl;
   text-align: right;
 }
 
-.ltr {
+.arabic-title {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  direction: rtl;
+  text-align: right;
+}
+
+/* =====================================================
+   إعدادات التخطيط
+   ===================================================== */
+.rtl-layout {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr-layout {
   direction: ltr;
   text-align: left;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* =====================================================
+   إعدادات الألوان
+   ===================================================== */
+:root {
+  --primary-color: #3b82f6;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --info-color: #06b6d4;
+  --light-color: #f8fafc;
+  --dark-color: #1e293b;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* =====================================================
+   إعدادات الأزرار
+   ===================================================== */
+.btn {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background-color: #475569;
+  transform: translateY(-1px);
+}
+
+/* =====================================================
+   إعدادات البطاقات
+   ===================================================== */
 .card {
-  padding: 2em;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
 }
 
-.read-the-docs {
-  color: #888;
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* =====================================================
+   إعدادات الجداول
+   ===================================================== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Cairo', sans-serif;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  text-align: right;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* =====================================================
+   إعدادات النماذج
+   ===================================================== */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  font-family: 'Cairo', sans-serif;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* =====================================================
+   إعدادات التنبيهات
+   ===================================================== */
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-family: 'Cairo', sans-serif;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.alert-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.alert-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.alert-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* =====================================================
+   إعدادات التحميل
+   ===================================================== */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =====================================================
+   إعدادات الاستجابة
+   ===================================================== */
+@media (max-width: 768px) {
+  .card {
+    margin: 0.5rem;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* =====================================================
+   إعدادات الطباعة
+   ===================================================== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* =====================================================
+   إعدادات الوضع المظلم
+   ===================================================== */
+.dark {
+  --primary-color: #60a5fa;
+  --secondary-color: #94a3b8;
+  --light-color: #1e293b;
+  --dark-color: #f8fafc;
+}
+
+.dark .card {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dark .table th {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+.dark .table tr:hover {
+  background-color: #475569;
+}
+
+/* =====================================================
+   إعدادات مخصصة للتطبيق
+   ===================================================== */
+.healthcare-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.healthcare-card {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.ai-gradient {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.finance-gradient {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* =====================================================
+   إعدادات الأيقونات
+   ===================================================== */
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.icon-lg {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* =====================================================
+   إعدادات التمرير
+   ===================================================== */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* =====================================================
+   إعدادات الرسوم المتحركة
+   ===================================================== */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* =====================================================
+   إعدادات الأداء
+   ===================================================== */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* =====================================================
+   إعدادات إمكانية الوصول
+   ===================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.focus-visible:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }

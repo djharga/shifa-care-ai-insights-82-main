@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -18,11 +15,10 @@ import {
   Users,
   Target,
   Shield,
-  BarChart3
+  BarChart3,
 } from 'lucide-react';
 import { AIService, PatientData, TreatmentPlan, RelapseRisk } from '@/services/ai-service';
 import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/layout/Navbar';
 
 interface Patient {
   id: string;
@@ -215,9 +211,7 @@ const AdvancedAITreatment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" dir="rtl">
-      <Navbar />
-      
+    <div className="min-h-screen bg-background" dir="rtl">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

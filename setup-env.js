@@ -5,9 +5,9 @@
  * يساعد في إعداد ملف .env.local بسهولة
  */
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+import fs from 'fs';
+import path from 'path';
+import readline from 'readline';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -29,8 +29,8 @@ const questions = [
     required: true
   },
   {
-    name: 'openaiApiKey',
-    question: '🤖 أدخل OpenAI API Key (يبدأ بـ sk-proj-): ',
+    name: 'googleAiApiKey',
+    question: '🤖 أدخل Google AI API Key: ',
     required: true
   },
   {
@@ -76,8 +76,8 @@ function createEnvFile() {
 VITE_SUPABASE_URL=${answers.supabaseUrl}
 VITE_SUPABASE_ANON_KEY=${answers.supabaseAnonKey}
 
-# OpenAI Configuration
-VITE_OPENAI_API_KEY=${answers.openaiApiKey}
+# Google AI Configuration
+VITE_GOOGLE_AI_API_KEY=${answers.googleAiApiKey}
 
 # Application Configuration
 VITE_APP_NAME=${answers.appName}
@@ -101,7 +101,7 @@ VITE_DEV_MODE=true
     console.log('\n📋 ملخص الإعدادات:');
     console.log(`   Supabase URL: ${answers.supabaseUrl}`);
     console.log(`   Supabase Key: ${answers.supabaseAnonKey.substring(0, 20)}...`);
-    console.log(`   OpenAI Key: ${answers.openaiApiKey.substring(0, 20)}...`);
+    console.log(`   Google AI Key: ${answers.googleAiApiKey.substring(0, 20)}...`);
     console.log(`   App Name: ${answers.appName}`);
     console.log(`   App Version: ${answers.appVersion}`);
     

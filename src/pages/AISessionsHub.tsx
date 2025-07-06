@@ -1,29 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { 
   Brain, 
-  Plus, 
+  Lightbulb, 
+  Sparkles, 
   TrendingUp, 
   Users, 
-  Clock,
-  Activity,
-  Target,
-  BarChart3,
-  FileText,
-  Sparkles,
-  Lightbulb,
-  AlertTriangle,
-  CheckCircle
+  Calendar, 
+  Brain
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdvancedSessions from './AdvancedSessions';
 
 const AISessionsHub = () => {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
 
   // بيانات وهمية للإحصائيات

@@ -6,44 +6,47 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
 export default [
-  js.configs.recommended,
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,
-      globals: globals.browser,
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.es2022,
+        ...globals.node
+      },
       parser: tsparser,
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
         ecmaFeatures: {
-          jsx: true,
-        },
-      },
+          jsx: true
+        }
+      }
     },
     plugins: {
       '@typescript-eslint': tseslint,
       'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      'react-refresh': reactRefresh
     },
     rules: {
+      ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        { allowConstantExport: true }
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': 'warn',
       'prefer-const': 'error',
-      'no-var': 'error',
-    },
+      'no-var': 'error'
+    }
   },
   {
-    files: ["**/*.{js,jsx}"],
-    languageOptions: {
-      ecmaVersion: 2022,
-      globals: globals.browser,
-    },
-  },
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts']
+  }
 ];

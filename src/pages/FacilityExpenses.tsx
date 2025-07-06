@@ -1,14 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-  DollarSign, Zap, Droplets, Utensils, Sparkles, Wrench, 
-  Shield, Wifi, Phone, Plus, Edit, Trash2, Calendar, 
-  Receipt, Building, TrendingUp, AlertCircle, CheckCircle,
-  Clock, FileText, Calculator
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/layout/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +10,25 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  DollarSign, 
+  Zap, 
+  Droplets, 
+  Utensils, 
+  Sparkles, 
+  Wrench, 
+  Shield, 
+  Wifi, 
+  Phone, 
+  FileText, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Plus, 
+  Edit, 
+  Trash2 
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FacilityExpense {
   id: string;
@@ -36,7 +46,6 @@ interface FacilityExpense {
 }
 
 const FacilityExpenses = () => {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const [expenses, setExpenses] = useState<FacilityExpense[]>([]);
   const [activeTab, setActiveTab] = useState('all');
@@ -203,9 +212,8 @@ const FacilityExpenses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background" dir="rtl">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">مصاريف المصحة</h1>
@@ -466,7 +474,7 @@ const FacilityExpenses = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

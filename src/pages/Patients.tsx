@@ -1,17 +1,15 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Search, Edit, Eye, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Edit, Eye } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Patient {
   id: string;
@@ -30,8 +28,10 @@ const Patients = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [newPatient, setNewPatient] = useState({
     name: '',
     phone: '',
@@ -144,6 +144,83 @@ const Patients = () => {
     }
   };
 
+  const handleViewPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditPatient = (patient: Patient) => {
+    setEditingPatient(patient);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdatePatient = async () => {
+    if (!editingPatient) return;
+
+    try {
+      // Mock implementation for demonstration
+      setPatients(prev => prev.map(p => 
+        p.id === editingPatient.id ? editingPatient : p
+      ));
+
+      toast({
+        title: "تم تحديث بيانات المريض",
+        description: "تم حفظ التغييرات بنجاح",
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingPatient(null);
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('patients')
+        .update(editingPatient)
+        .eq('id', editingPatient.id);
+
+      if (error) throw error;
+      fetchPatients();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحديث البيانات",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePatient = async (patientId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المريض؟')) return;
+
+    try {
+      // Mock implementation for demonstration
+      setPatients(prev => prev.filter(p => p.id !== patientId));
+
+      toast({
+        title: "تم حذف المريض",
+        description: "تم حذف بيانات المريض بنجاح",
+      });
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', patientId);
+
+      if (error) throw error;
+      fetchPatients();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في حذف المريض",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { label: 'نشط', variant: 'default' as const },
@@ -164,8 +241,6 @@ const Patients = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <Navbar />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -303,11 +378,26 @@ const Patients = () => {
                     <TableCell>{new Date(patient.admission_date).toLocaleDateString('ar-SA')}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewPatient(patient)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditPatient(patient)}
+                        >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeletePatient(patient.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -317,6 +407,166 @@ const Patients = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {/* View Patient Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>تفاصيل المريض</DialogTitle>
+            </DialogHeader>
+            {selectedPatient && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">الاسم الكامل</Label>
+                  <p className="text-sm text-muted-foreground">{selectedPatient.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">رقم الهاتف</Label>
+                  <p className="text-sm text-muted-foreground">{selectedPatient.phone}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">البريد الإلكتروني</Label>
+                  <p className="text-sm text-muted-foreground">{selectedPatient.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">تاريخ الميلاد</Label>
+                  <p className="text-sm text-muted-foreground">{new Date(selectedPatient.date_of_birth).toLocaleDateString('ar-SA')}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">الجنس</Label>
+                  <p className="text-sm text-muted-foreground">{selectedPatient.gender === 'male' ? 'ذكر' : 'أنثى'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">نوع الإدمان</Label>
+                  <p className="text-sm text-muted-foreground">{selectedPatient.addiction_type}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">الحالة</Label>
+                  <div className="mt-1">{getStatusBadge(selectedPatient.status)}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">تاريخ الدخول</Label>
+                  <p className="text-sm text-muted-foreground">{new Date(selectedPatient.admission_date).toLocaleDateString('ar-SA')}</p>
+                </div>
+                {selectedPatient.notes && (
+                  <div>
+                    <Label className="text-sm font-medium">ملاحظات</Label>
+                    <p className="text-sm text-muted-foreground">{selectedPatient.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Patient Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>تعديل بيانات المريض</DialogTitle>
+            </DialogHeader>
+            {editingPatient && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">الاسم الكامل</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingPatient.name}
+                    onChange={(e) => setEditingPatient({...editingPatient, name: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">رقم الهاتف</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editingPatient.phone}
+                    onChange={(e) => setEditingPatient({...editingPatient, phone: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">البريد الإلكتروني</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editingPatient.email}
+                    onChange={(e) => setEditingPatient({...editingPatient, email: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-dob">تاريخ الميلاد</Label>
+                  <Input
+                    id="edit-dob"
+                    type="date"
+                    value={editingPatient.date_of_birth}
+                    onChange={(e) => setEditingPatient({...editingPatient, date_of_birth: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-gender">الجنس</Label>
+                  <Select value={editingPatient.gender} onValueChange={(value: 'male' | 'female') => setEditingPatient({...editingPatient, gender: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">ذكر</SelectItem>
+                      <SelectItem value="female">أنثى</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-addiction">نوع الإدمان</Label>
+                  <Input
+                    id="edit-addiction"
+                    value={editingPatient.addiction_type}
+                    onChange={(e) => setEditingPatient({...editingPatient, addiction_type: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">الحالة</Label>
+                  <Select value={editingPatient.status} onValueChange={(value: 'active' | 'completed' | 'paused' | 'dropped_out') => setEditingPatient({...editingPatient, status: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">نشط</SelectItem>
+                      <SelectItem value="completed">مكتمل</SelectItem>
+                      <SelectItem value="paused">متوقف مؤقتاً</SelectItem>
+                      <SelectItem value="dropped_out">منسحب</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-notes">ملاحظات</Label>
+                  <Textarea
+                    id="edit-notes"
+                    value={editingPatient.notes || ''}
+                    onChange={(e) => setEditingPatient({...editingPatient, notes: e.target.value})}
+                  />
+                </div>
+
+                <div className="flex space-x-2 rtl:space-x-reverse">
+                  <Button onClick={handleUpdatePatient} className="flex-1">
+                    حفظ التغييرات
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditDialogOpen(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

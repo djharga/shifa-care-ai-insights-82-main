@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
-import { openAIService, OpenAIResponse } from '@/services/openai-service';
+import { googleAIService, GoogleAIResponse } from '@/services/openai-service';
 import { useToast } from '@/hooks/use-toast';
 
-export interface UseOpenAIOptions {
-  onSuccess?: (response: OpenAIResponse) => void;
+export interface UseGoogleAIOptions {
+  onSuccess?: (response: GoogleAIResponse) => void;
   onError?: (error: string) => void;
   showToast?: boolean;
 }
 
-export const useOpenAI = (options: UseOpenAIOptions = {}) => {
+export const useGoogleAI = (options: UseGoogleAIOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -25,7 +25,7 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     setError(null);
 
     try {
-      const response = await openAIService.analyzeSession(rawNotes);
+      const response = await googleAIService.analyzeSession(rawNotes);
       
       if (response.success) {
         onSuccess?.(response);
@@ -70,7 +70,7 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     setError(null);
 
     try {
-      const response = await openAIService.generateTreatmentPlan(patientData);
+      const response = await googleAIService.generateTreatmentPlan(patientData);
       
       if (response.success) {
         onSuccess?.(response);
@@ -109,7 +109,7 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     setError(null);
 
     try {
-      const response = await openAIService.assessRelapseRisk(patientData, sessionsHistory);
+      const response = await googleAIService.assessRelapseRisk(patientData, sessionsHistory);
       
       if (response.success) {
         onSuccess?.(response);
@@ -148,7 +148,7 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     setError(null);
 
     try {
-      const response = await openAIService.generateSmartReport(reportType, patientId);
+      const response = await googleAIService.generateSmartReport(reportType, patientId);
       
       if (response.success) {
         onSuccess?.(response);
@@ -187,7 +187,7 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     setError(null);
 
     try {
-      const response = await openAIService.suggestActivities(patientProfile, sessionResults);
+      const response = await googleAIService.suggestActivities(patientProfile, sessionResults);
       
       if (response.success) {
         onSuccess?.(response);
@@ -234,28 +234,28 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     setError(null);
 
     try {
-      const response = await openAIService.customCall(systemPrompt, userPrompt, options);
+      const response = await googleAIService.customCall(systemPrompt, userPrompt, options);
       
       if (response.success) {
         onSuccess?.(response);
         if (showToast) {
           toast({
-            title: "تم تنفيذ الطلب بنجاح",
-            description: "تم معالجة الطلب المخصص",
+            title: "تم الاستدعاء بنجاح",
+            description: "تم معالجة الطلب وتوليد الرد",
           });
         }
         return response;
       } else {
-        throw new Error(response.error || 'فشل في تنفيذ الطلب');
+        throw new Error(response.error || 'فشل في الاستدعاء المخصص');
       }
     } catch (err: any) {
-      const errorMessage = err.message || 'حدث خطأ أثناء تنفيذ الطلب';
+      const errorMessage = err.message || 'حدث خطأ أثناء الاستدعاء المخصص';
       setError(errorMessage);
       onError?.(errorMessage);
       
       if (showToast) {
         toast({
-          title: "خطأ في تنفيذ الطلب",
+          title: "خطأ في الاستدعاء",
           description: errorMessage,
           variant: "destructive",
         });
@@ -267,24 +267,18 @@ export const useOpenAI = (options: UseOpenAIOptions = {}) => {
     }
   }, [onSuccess, onError, showToast, toast]);
 
-  // إعادة تعيين الحالة
-  const reset = useCallback(() => {
-    setError(null);
-    setIsLoading(false);
-  }, []);
-
   return {
-    // الحالة
     isLoading,
     error,
-    
-    // الدوال
     analyzeSession,
     generateTreatmentPlan,
     assessRelapseRisk,
     generateSmartReport,
     suggestActivities,
     customCall,
-    reset
+    clearError: () => setError(null)
   };
-}; 
+};
+
+// تصدير للتوافق مع الكود القديم
+export const useOpenAI = useGoogleAI; 

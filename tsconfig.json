@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
@@ -26,11 +25,11 @@
       "@/*": ["./src/*"]
     },
 
-    /* Additional options for Node.js 14 compatibility */
-    "esModuleInterop": true,
+    /* Node.js 22+ specific */
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"]
 }

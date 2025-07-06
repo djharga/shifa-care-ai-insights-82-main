@@ -10,8 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Calendar, Clock, User } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
+import { Plus, Calendar, Clock, User, Edit, Trash2, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Session {
@@ -38,6 +37,10 @@ const Sessions = () => {
   const [patients, setPatients] = useState<any[]>([]);
   const [therapists, setTherapists] = useState<any[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [newSession, setNewSession] = useState({
     patient_id: '',
     therapist_id: '',
@@ -74,6 +77,20 @@ const Sessions = () => {
           created_at: '2024-07-03T10:00:00Z',
           patients: { name: 'أحمد محمد' },
           profiles: { full_name: 'د. سارة أحمد' }
+        },
+        {
+          id: '2',
+          patient_id: '2',
+          therapist_id: '2',
+          session_date: '2024-07-04',
+          session_time: '14:00',
+          session_type: 'group',
+          status: 'completed',
+          duration: 90,
+          notes: 'جلسة جماعية للدعم النفسي',
+          created_at: '2024-07-02T14:00:00Z',
+          patients: { name: 'فاطمة علي' },
+          profiles: { full_name: 'د. محمد علي' }
         }
       ];
       
@@ -163,12 +180,18 @@ const Sessions = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('sessions')
-        .insert([newSession]);
-
-      if (error) throw error;
+      // Mock implementation for demonstration
+      const newSessionWithId: Session = {
+        ...newSession,
+        id: Date.now().toString(),
+        status: 'scheduled',
+        created_at: new Date().toISOString(),
+        patients: patients.find(p => p.id === newSession.patient_id),
+        profiles: therapists.find(t => t.id === newSession.therapist_id)
+      };
       
+      setSessions(prev => [newSessionWithId, ...prev]);
+
       toast({
         title: "تم إضافة الجلسة بنجاح",
         description: "تم حفظ موعد الجلسة الجديدة",
@@ -181,12 +204,19 @@ const Sessions = () => {
         session_date: '',
         session_time: '',
         session_type: 'individual',
-
         duration: 60,
         notes: ''
       });
       
+      // Uncomment when database is set up:
+      /*
+      const { error } = await supabase
+        .from('sessions')
+        .insert([newSession]);
+
+      if (error) throw error;
       fetchSessions();
+      */
     } catch (error: any) {
       toast({
         title: "خطأ في إضافة الجلسة",
@@ -195,6 +225,83 @@ const Sessions = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleViewSession = (session: Session) => {
+    setSelectedSession(session);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditSession = (session: Session) => {
+    setEditingSession(session);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateSession = async () => {
+    if (!editingSession) return;
+
+    try {
+      // Mock implementation for demonstration
+      setSessions(prev => prev.map(session => 
+        session.id === editingSession.id ? editingSession : session
+      ));
+
+      toast({
+        title: "تم تحديث الجلسة",
+        description: "تم حفظ التغييرات بنجاح",
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingSession(null);
+      
+      // Uncomment when database is set up:
+      /*
+      const { error } = await supabase
+        .from('sessions')
+        .update(editingSession)
+        .eq('id', editingSession.id);
+
+      if (error) throw error;
+      fetchSessions();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحديث الجلسة",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
+
+    try {
+      // Mock implementation for demonstration
+      setSessions(prev => prev.filter(session => session.id !== sessionId));
+
+      toast({
+        title: "تم حذف الجلسة",
+        description: "تم حذف الجلسة بنجاح",
+      });
+      
+      // Uncomment when database is set up:
+      /*
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sessionId);
+
+      if (error) throw error;
+      fetchSessions();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في حذف الجلسة",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -221,8 +328,6 @@ const Sessions = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <Navbar />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -388,6 +493,7 @@ const Sessions = () => {
                   <TableHead>{t('type')}</TableHead>
                   <TableHead>{t('duration')}</TableHead>
                   <TableHead>{t('status')}</TableHead>
+                  <TableHead>الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -402,12 +508,211 @@ const Sessions = () => {
                     <TableCell>{getSessionTypeLabel(session.session_type)}</TableCell>
                     <TableCell>{session.duration} دقيقة</TableCell>
                     <TableCell>{getStatusBadge(session.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewSession(session)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditSession(session)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteSession(session.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
+
+        {/* View Session Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>تفاصيل الجلسة</DialogTitle>
+            </DialogHeader>
+            {selectedSession && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">المريض</Label>
+                  <p className="text-sm text-muted-foreground">{selectedSession.patients?.name || 'غير محدد'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">المعالج</Label>
+                  <p className="text-sm text-muted-foreground">{selectedSession.profiles?.full_name || 'غير محدد'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">التاريخ</Label>
+                  <p className="text-sm text-muted-foreground">{new Date(selectedSession.session_date).toLocaleDateString('ar-SA')}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">الوقت</Label>
+                  <p className="text-sm text-muted-foreground">{selectedSession.session_time}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">نوع الجلسة</Label>
+                  <p className="text-sm text-muted-foreground">{getSessionTypeLabel(selectedSession.session_type)}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">المدة</Label>
+                  <p className="text-sm text-muted-foreground">{selectedSession.duration} دقيقة</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">الحالة</Label>
+                  <div className="mt-1">{getStatusBadge(selectedSession.status)}</div>
+                </div>
+                {selectedSession.notes && (
+                  <div>
+                    <Label className="text-sm font-medium">ملاحظات</Label>
+                    <p className="text-sm text-muted-foreground">{selectedSession.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Session Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>تعديل الجلسة</DialogTitle>
+            </DialogHeader>
+            {editingSession && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-patient">المريض</Label>
+                  <Select value={editingSession.patient_id} onValueChange={(value) => setEditingSession({...editingSession, patient_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-therapist">المعالج</Label>
+                  <Select value={editingSession.therapist_id} onValueChange={(value) => setEditingSession({...editingSession, therapist_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {therapists.map((therapist) => (
+                        <SelectItem key={therapist.id} value={therapist.id}>
+                          {therapist.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">التاريخ</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editingSession.session_date}
+                    onChange={(e) => setEditingSession({...editingSession, session_date: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-time">الوقت</Label>
+                  <Input
+                    id="edit-time"
+                    type="time"
+                    value={editingSession.session_time}
+                    onChange={(e) => setEditingSession({...editingSession, session_time: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-type">نوع الجلسة</Label>
+                  <Select value={editingSession.session_type} onValueChange={(value: 'individual' | 'group' | 'family') => setEditingSession({...editingSession, session_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">فردية</SelectItem>
+                      <SelectItem value="group">جماعية</SelectItem>
+                      <SelectItem value="family">عائلية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-duration">المدة (دقيقة)</Label>
+                  <Input
+                    id="edit-duration"
+                    type="number"
+                    value={editingSession.duration}
+                    onChange={(e) => setEditingSession({...editingSession, duration: parseInt(e.target.value)})}
+                    min="15"
+                    max="180"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">الحالة</Label>
+                  <Select value={editingSession.status} onValueChange={(value: 'scheduled' | 'completed' | 'cancelled' | 'no_show') => setEditingSession({...editingSession, status: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="scheduled">مجدولة</SelectItem>
+                      <SelectItem value="completed">مكتملة</SelectItem>
+                      <SelectItem value="cancelled">ملغية</SelectItem>
+                      <SelectItem value="no_show">لم يحضر</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-notes">ملاحظات</Label>
+                  <Textarea
+                    id="edit-notes"
+                    value={editingSession.notes || ''}
+                    onChange={(e) => setEditingSession({...editingSession, notes: e.target.value})}
+                  />
+                </div>
+
+                <div className="flex space-x-2 rtl:space-x-reverse">
+                  <Button onClick={handleUpdateSession} className="flex-1">
+                    حفظ التغييرات
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditDialogOpen(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

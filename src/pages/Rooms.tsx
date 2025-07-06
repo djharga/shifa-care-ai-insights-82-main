@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   Bed, Building, Users, Plus, Edit, Trash2, 
   CheckCircle, AlertCircle, Clock, X, 
-  Home, Building, DollarSign, User, Calendar
+  Home, DollarSign, User, Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -51,7 +51,10 @@ const Rooms = () => {
   const [activeTab, setActiveTab] = useState('rooms');
   const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
   const [isAddBedOpen, setIsAddBedOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [isEditRoomOpen, setIsEditRoomOpen] = useState(false);
+  const [isEditBedOpen, setIsEditBedOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [editingBed, setEditingBed] = useState<Bed | null>(null);
   
   const [newRoom, setNewRoom] = useState({
     room_number: '',
@@ -78,6 +81,72 @@ const Rooms = () => {
 
   const fetchRooms = async () => {
     try {
+      // Mock data for demonstration
+      const mockRooms: Room[] = [
+        {
+          id: '1',
+          room_number: '101',
+          room_name: 'غرفة فردية',
+          room_type: 'single',
+          floor_number: 1,
+          capacity: 1,
+          daily_rate: 500,
+          status: 'available',
+          description: 'غرفة فردية مريحة',
+          amenities: ['تلفاز', 'مكيف', 'حمام خاص'],
+          beds: [
+            {
+              id: '1',
+              bed_number: 'B101-1',
+              bed_name: 'سرير 1',
+              bed_type: 'single',
+              status: 'available',
+              current_patient_id: null,
+              current_patient_name: null,
+              notes: null
+            }
+          ]
+        },
+        {
+          id: '2',
+          room_number: '201',
+          room_name: 'غرفة مزدوجة',
+          room_type: 'double',
+          floor_number: 2,
+          capacity: 2,
+          daily_rate: 800,
+          status: 'occupied',
+          description: 'غرفة مزدوجة فسيحة',
+          amenities: ['تلفاز', 'مكيف', 'حمام مشترك'],
+          beds: [
+            {
+              id: '2',
+              bed_number: 'B201-1',
+              bed_name: 'سرير 1',
+              bed_type: 'single',
+              status: 'occupied',
+              current_patient_id: '1',
+              current_patient_name: 'أحمد محمد',
+              notes: null
+            },
+            {
+              id: '3',
+              bed_number: 'B201-2',
+              bed_name: 'سرير 2',
+              bed_type: 'single',
+              status: 'available',
+              current_patient_id: null,
+              current_patient_name: null,
+              notes: null
+            }
+          ]
+        }
+      ];
+      
+      setRooms(mockRooms);
+      
+      // Uncomment this when database is properly set up:
+      /*
       // جلب الغرف مع الأسرّة
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
@@ -108,6 +177,7 @@ const Rooms = () => {
       })) || [];
 
       setRooms(roomsWithBeds);
+      */
     } catch (error: any) {
       toast({
         title: "خطأ في تحميل الغرف",
@@ -119,20 +189,18 @@ const Rooms = () => {
 
   const handleAddRoom = async () => {
     try {
-      const { error } = await supabase
-        .from('rooms')
-        .insert([{
-          room_number: newRoom.room_number,
-          room_name: newRoom.room_name,
-          room_type: newRoom.room_type,
+      // Mock implementation for demonstration
+      const newRoomWithId: Room = {
+        ...newRoom,
+        id: Date.now().toString(),
           floor_number: parseInt(newRoom.floor_number),
           capacity: parseInt(newRoom.capacity),
           daily_rate: parseFloat(newRoom.daily_rate),
-          description: newRoom.description || null,
-          amenities: newRoom.amenities
-        }]);
-
-      if (error) throw error;
+        status: 'available',
+        beds: []
+      };
+      
+      setRooms(prev => [newRoomWithId, ...prev]);
 
       toast({
         title: "تم إضافة الغرفة",
@@ -150,7 +218,25 @@ const Rooms = () => {
         description: '',
         amenities: []
       });
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('rooms')
+        .insert([{
+          room_number: newRoom.room_number,
+          room_name: newRoom.room_name,
+          room_type: newRoom.room_type,
+          floor_number: parseInt(newRoom.floor_number),
+          capacity: parseInt(newRoom.capacity),
+          daily_rate: parseFloat(newRoom.daily_rate),
+          description: newRoom.description || null,
+          amenities: newRoom.amenities
+        }]);
+
+      if (error) throw error;
       fetchRooms();
+      */
     } catch (error: any) {
       toast({
         title: "خطأ في إضافة الغرفة",
@@ -162,17 +248,20 @@ const Rooms = () => {
 
   const handleAddBed = async () => {
     try {
-      const { error } = await supabase
-        .from('beds')
-        .insert([{
-          room_id: newBed.room_id,
-          bed_number: newBed.bed_number,
-          bed_name: newBed.bed_name,
-          bed_type: newBed.bed_type,
-          notes: newBed.notes || null
-        }]);
-
-      if (error) throw error;
+      // Mock implementation for demonstration
+      const newBedWithId: Bed = {
+        ...newBed,
+        id: Date.now().toString(),
+        status: 'available',
+        current_patient_id: null,
+        current_patient_name: null
+      };
+      
+      setRooms(prev => prev.map(room => 
+        room.id === newBed.room_id 
+          ? { ...room, beds: [...room.beds, newBedWithId] }
+          : room
+      ));
 
       toast({
         title: "تم إضافة السرير",
@@ -187,7 +276,22 @@ const Rooms = () => {
         bed_type: 'single',
         notes: ''
       });
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('beds')
+        .insert([{
+          room_id: newBed.room_id,
+          bed_number: newBed.bed_number,
+          bed_name: newBed.bed_name,
+          bed_type: newBed.bed_type,
+          notes: newBed.notes || null
+        }]);
+
+      if (error) throw error;
       fetchRooms();
+      */
     } catch (error: any) {
       toast({
         title: "خطأ في إضافة السرير",
@@ -197,129 +301,264 @@ const Rooms = () => {
     }
   };
 
-  const getRoomTypeName = (type: string) => {
-    switch (type) {
-      case 'single': return 'فردية';
-      case 'double': return 'مزدوجة';
-      case 'triple': return 'ثلاثية';
-      case 'family': return 'عائلية';
-      case 'vip': return 'VIP';
-      default: return type;
+  const handleEditRoom = (room: Room) => {
+    setEditingRoom(room);
+    setIsEditRoomOpen(true);
+  };
+
+  const handleUpdateRoom = async () => {
+    if (!editingRoom) return;
+
+    try {
+      // Mock implementation for demonstration
+      setRooms(prev => prev.map(room => 
+        room.id === editingRoom.id ? editingRoom : room
+      ));
+
+      toast({
+        title: "تم تحديث الغرفة",
+        description: "تم حفظ التغييرات بنجاح",
+      });
+
+      setIsEditRoomOpen(false);
+      setEditingRoom(null);
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('rooms')
+        .update(editingRoom)
+        .eq('id', editingRoom.id);
+
+      if (error) throw error;
+      fetchRooms();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحديث الغرفة",
+        description: error.message,
+        variant: "destructive",
+      });
     }
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذه الغرفة؟')) return;
+
+    try {
+      // Mock implementation for demonstration
+      setRooms(prev => prev.filter(room => room.id !== roomId));
+
+      toast({
+        title: "تم حذف الغرفة",
+        description: "تم حذف الغرفة بنجاح",
+      });
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (error) throw error;
+      fetchRooms();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في حذف الغرفة",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditBed = (bed: Bed) => {
+    setEditingBed(bed);
+    setIsEditBedOpen(true);
+  };
+
+  const handleUpdateBed = async () => {
+    if (!editingBed) return;
+
+    try {
+      // Mock implementation for demonstration
+      setRooms(prev => prev.map(room => ({
+        ...room,
+        beds: room.beds.map(bed => 
+          bed.id === editingBed.id ? editingBed : bed
+        )
+      })));
+
+      toast({
+        title: "تم تحديث السرير",
+        description: "تم حفظ التغييرات بنجاح",
+      });
+
+      setIsEditBedOpen(false);
+      setEditingBed(null);
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('beds')
+        .update(editingBed)
+        .eq('id', editingBed.id);
+
+      if (error) throw error;
+      fetchRooms();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحديث السرير",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteBed = async (bedId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا السرير؟')) return;
+
+    try {
+      // Mock implementation for demonstration
+      setRooms(prev => prev.map(room => ({
+        ...room,
+        beds: room.beds.filter(bed => bed.id !== bedId)
+      })));
+
+      toast({
+        title: "تم حذف السرير",
+        description: "تم حذف السرير بنجاح",
+      });
+      
+      // Uncomment this when database is properly set up:
+      /*
+      const { error } = await supabase
+        .from('beds')
+        .delete()
+        .eq('id', bedId);
+
+      if (error) throw error;
+      fetchRooms();
+      */
+    } catch (error: any) {
+      toast({
+        title: "خطأ في حذف السرير",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getRoomTypeName = (type: string) => {
+    const types = {
+      single: 'فردية',
+      double: 'مزدوجة',
+      triple: 'ثلاثية',
+      family: 'عائلية',
+      vip: 'VIP'
+    };
+    return types[type as keyof typeof types] || type;
   };
 
   const getBedTypeName = (type: string) => {
-    switch (type) {
-      case 'single': return 'فردي';
-      case 'double': return 'مزدوج';
-      case 'bunk': return 'طابقية';
-      default: return type;
-    }
+    const types = {
+      single: 'فردي',
+      double: 'مزدوج',
+      bunk: 'طابقية'
+    };
+    return types[type as keyof typeof types] || type;
   };
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      available: 'bg-green-100 text-green-800',
-      occupied: 'bg-red-100 text-red-800',
-      maintenance: 'bg-yellow-100 text-yellow-800',
-      reserved: 'bg-blue-100 text-blue-800'
+    const statusConfig = {
+      available: { label: 'متاح', variant: 'default' as const },
+      occupied: { label: 'مشغول', variant: 'secondary' as const },
+      maintenance: { label: 'صيانة', variant: 'destructive' as const },
+      reserved: { label: 'محجوز', variant: 'outline' as const }
     };
     
-    return (
-      <Badge className={variants[status as keyof typeof variants] || 'bg-gray-100 text-gray-800'}>
-        {status === 'available' && 'متاح'}
-        {status === 'occupied' && 'مشغول'}
-        {status === 'maintenance' && 'صيانة'}
-        {status === 'reserved' && 'محجوز'}
-      </Badge>
-    );
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const calculateTotalRooms = () => {
-    return rooms.length;
-  };
-
-  const calculateTotalBeds = () => {
-    return rooms.reduce((total, room) => total + room.beds.length, 0);
-  };
-
-  const calculateAvailableBeds = () => {
-    return rooms.reduce((total, room) => 
-      total + room.beds.filter(bed => bed.status === 'available').length, 0);
-  };
-
-  const calculateOccupiedBeds = () => {
-    return rooms.reduce((total, room) => 
-      total + room.beds.filter(bed => bed.status === 'occupied').length, 0);
-  };
+  const calculateTotalRooms = () => rooms.length;
+  const calculateTotalBeds = () => rooms.reduce((total, room) => total + room.beds.length, 0);
+  const calculateAvailableBeds = () => rooms.reduce((total, room) => 
+    total + room.beds.filter(bed => bed.status === 'available').length, 0
+  );
+  const calculateOccupiedBeds = () => rooms.reduce((total, room) => 
+    total + room.beds.filter(bed => bed.status === 'occupied').length, 0
+  );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir="rtl">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">إدارة الغرف والأسرّة</h1>
-            <p className="text-muted-foreground">إدارة غرف وأسرّة المصحة مع حالاتها</p>
+            <p className="text-muted-foreground">إدارة غرف العلاج وأسرّة المرضى</p>
           </div>
         </div>
 
         {/* إحصائيات سريعة */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الغرف</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{calculateTotalRooms()}</div>
-              <p className="text-xs text-muted-foreground">غرفة</p>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                <Building className="h-8 w-8 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي الغرف</p>
+                  <p className="text-2xl font-bold">{calculateTotalRooms()}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الأسرّة</CardTitle>
-              <Bed className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{calculateTotalBeds()}</div>
-              <p className="text-xs text-muted-foreground">سرير</p>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                <Bed className="h-8 w-8 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">إجمالي الأسرّة</p>
+                  <p className="text-2xl font-bold">{calculateTotalBeds()}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الأسرّة المتاحة</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{calculateAvailableBeds()}</div>
-              <p className="text-xs text-muted-foreground">متاح</p>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">الأسرّة المتاحة</p>
+                  <p className="text-2xl font-bold">{calculateAvailableBeds()}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الأسرّة المشغولة</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{calculateOccupiedBeds()}</div>
-              <p className="text-xs text-muted-foreground">مشغول</p>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                <Users className="h-8 w-8 text-orange-600" />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">الأسرّة المشغولة</p>
+                  <p className="text-2xl font-bold">{calculateOccupiedBeds()}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* التبويبات */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-between items-center">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList>
               <TabsTrigger value="rooms">الغرف</TabsTrigger>
               <TabsTrigger value="beds">الأسرّة</TabsTrigger>
             </TabsList>
             
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 rtl:space-x-reverse">
               <Dialog open={isAddRoomOpen} onOpenChange={setIsAddRoomOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -348,16 +587,16 @@ const Rooms = () => {
                           id="room-name"
                           value={newRoom.room_name}
                           onChange={(e) => setNewRoom({...newRoom, room_name: e.target.value})}
-                          placeholder="مثال: غرفة 101"
+                          placeholder="مثال: غرفة فردية"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="room-type">نوع الغرفة</Label>
                         <Select value={newRoom.room_type} onValueChange={(value: any) => setNewRoom({...newRoom, room_type: value})}>
                           <SelectTrigger>
-                            <SelectValue placeholder="اختر نوع الغرفة" />
+                            <SelectValue placeholder="اختر النوع" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="single">فردية</SelectItem>
@@ -375,11 +614,9 @@ const Rooms = () => {
                           type="number"
                           value={newRoom.floor_number}
                           onChange={(e) => setNewRoom({...newRoom, floor_number: e.target.value})}
-                          placeholder="مثال: 1"
+                          placeholder="1"
                         />
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="capacity">السعة</Label>
                         <Input
@@ -387,19 +624,19 @@ const Rooms = () => {
                           type="number"
                           value={newRoom.capacity}
                           onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})}
-                          placeholder="مثال: 2"
+                          placeholder="1"
                         />
                       </div>
+                      </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="rate">السعر اليومي</Label>
+                      <Label htmlFor="daily-rate">السعر اليومي (ج.م)</Label>
                         <Input
-                          id="rate"
+                        id="daily-rate"
                           type="number"
                           value={newRoom.daily_rate}
                           onChange={(e) => setNewRoom({...newRoom, daily_rate: e.target.value})}
-                          placeholder="مثال: 500"
+                        placeholder="500"
                         />
-                      </div>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="description">الوصف</Label>
@@ -545,11 +782,21 @@ const Rooms = () => {
                         </div>
                       )}
                       <div className="flex space-x-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleEditRoom(room)}
+                        >
                           <Edit className="w-4 h-4 mr-1" />
                           تعديل
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleDeleteRoom(room.id)}
+                        >
                           <Trash2 className="w-4 h-4 mr-1" />
                           حذف
                         </Button>
@@ -603,10 +850,18 @@ const Rooms = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditBed(bed)}
+                              >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteBed(bed.id)}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -620,7 +875,186 @@ const Rooms = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+
+        {/* Edit Room Dialog */}
+        <Dialog open={isEditRoomOpen} onOpenChange={setIsEditRoomOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>تعديل الغرفة</DialogTitle>
+            </DialogHeader>
+            {editingRoom && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-room-number">رقم الغرفة</Label>
+                    <Input
+                      id="edit-room-number"
+                      value={editingRoom.room_number}
+                      onChange={(e) => setEditingRoom({...editingRoom, room_number: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-room-name">اسم الغرفة</Label>
+                    <Input
+                      id="edit-room-name"
+                      value={editingRoom.room_name}
+                      onChange={(e) => setEditingRoom({...editingRoom, room_name: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-room-type">نوع الغرفة</Label>
+                    <Select value={editingRoom.room_type} onValueChange={(value: any) => setEditingRoom({...editingRoom, room_type: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">فردية</SelectItem>
+                        <SelectItem value="double">مزدوجة</SelectItem>
+                        <SelectItem value="triple">ثلاثية</SelectItem>
+                        <SelectItem value="family">عائلية</SelectItem>
+                        <SelectItem value="vip">VIP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-floor">الطابق</Label>
+                    <Input
+                      id="edit-floor"
+                      type="number"
+                      value={editingRoom.floor_number}
+                      onChange={(e) => setEditingRoom({...editingRoom, floor_number: parseInt(e.target.value)})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-capacity">السعة</Label>
+                    <Input
+                      id="edit-capacity"
+                      type="number"
+                      value={editingRoom.capacity}
+                      onChange={(e) => setEditingRoom({...editingRoom, capacity: parseInt(e.target.value)})}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-daily-rate">السعر اليومي (ج.م)</Label>
+                  <Input
+                    id="edit-daily-rate"
+                    type="number"
+                    value={editingRoom.daily_rate}
+                    onChange={(e) => setEditingRoom({...editingRoom, daily_rate: parseFloat(e.target.value)})}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-status">الحالة</Label>
+                  <Select value={editingRoom.status} onValueChange={(value: any) => setEditingRoom({...editingRoom, status: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">متاح</SelectItem>
+                      <SelectItem value="occupied">مشغول</SelectItem>
+                      <SelectItem value="maintenance">صيانة</SelectItem>
+                      <SelectItem value="reserved">محجوز</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-description">الوصف</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editingRoom.description || ''}
+                    onChange={(e) => setEditingRoom({...editingRoom, description: e.target.value})}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsEditRoomOpen(false)}>
+                    إلغاء
+                  </Button>
+                  <Button onClick={handleUpdateRoom}>
+                    حفظ التغييرات
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Bed Dialog */}
+        <Dialog open={isEditBedOpen} onOpenChange={setIsEditBedOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>تعديل السرير</DialogTitle>
+            </DialogHeader>
+            {editingBed && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-bed-number">رقم السرير</Label>
+                    <Input
+                      id="edit-bed-number"
+                      value={editingBed.bed_number}
+                      onChange={(e) => setEditingBed({...editingBed, bed_number: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-bed-name">اسم السرير</Label>
+                    <Input
+                      id="edit-bed-name"
+                      value={editingBed.bed_name}
+                      onChange={(e) => setEditingBed({...editingBed, bed_name: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-bed-type">نوع السرير</Label>
+                  <Select value={editingBed.bed_type} onValueChange={(value: any) => setEditingBed({...editingBed, bed_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">فردي</SelectItem>
+                      <SelectItem value="double">مزدوج</SelectItem>
+                      <SelectItem value="bunk">طابقية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-bed-status">الحالة</Label>
+                  <Select value={editingBed.status} onValueChange={(value: any) => setEditingBed({...editingBed, status: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">متاح</SelectItem>
+                      <SelectItem value="occupied">مشغول</SelectItem>
+                      <SelectItem value="maintenance">صيانة</SelectItem>
+                      <SelectItem value="reserved">محجوز</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-bed-notes">ملاحظات</Label>
+                  <Textarea
+                    id="edit-bed-notes"
+                    value={editingBed.notes || ''}
+                    onChange={(e) => setEditingBed({...editingBed, notes: e.target.value})}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsEditBedOpen(false)}>
+                    إلغاء
+                  </Button>
+                  <Button onClick={handleUpdateBed}>
+                    حفظ التغييرات
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </main>
     </div>
   );
 };

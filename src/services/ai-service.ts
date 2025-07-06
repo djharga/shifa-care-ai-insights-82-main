@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { googleAIService } from './google-ai-service';
 
 export interface PatientData {
   id: string;
@@ -33,54 +34,22 @@ export interface RelapseRisk {
 }
 
 export class AIService {
-  private openaiApiKey = "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";
 
   async generateTreatmentPlan(patientData: PatientData): Promise<TreatmentPlan> {
     try {
-      const prompt = `معلومات المريض:
-الاسم: ${patientData.name}
-العمر: ${patientData.age}
-نوع الإدمان: ${patientData.addiction_type}
-الحالة الحالية: ${patientData.current_status}
-عوامل الخطر: ${patientData.risk_factors.join(', ')}
-
-قم بإنشاء خطة علاجية شاملة تتضمن:
-1. نوع العلاج (فردي/جماعي/عائلي)
-2. مدة العلاج بالأسابيع
-3. عدد الجلسات أسبوعياً
-4. الأهداف العلاجية
-5. التدخلات المطلوبة
-6. استراتيجيات تقليل المخاطر
-7. مؤشرات النجاح
-
-أجب باللغة العربية وبشكل منظم.`;
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.openaiApiKey}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { 
-              role: "system", 
-              content: "أنت خبير في علاج الإدمان. قدم خطط علاجية شاملة ومخصصة بناءً على حالة المريض." 
-            },
-            { role: "user", content: prompt }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        })
+      const result = await googleAIService.generateTreatmentPlan({
+        name: patientData.name,
+        age: patientData.age,
+        addictionType: patientData.addiction_type,
+        currentStatus: patientData.current_status,
+        riskFactors: patientData.risk_factors
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في إنشاء خطة العلاج');
       }
 
-      const data = await response.json();
-      const aiResponse = data.choices?.[0]?.message?.content || "";
+      const aiResponse = result.data || "";
 
       // تحليل الاستجابة وإنشاء خطة علاجية منظمة
       const treatmentPlan: TreatmentPlan = {
@@ -152,7 +121,8 @@ export class AIService {
 
   async generateSmartReport(patientId: string, reportType: string): Promise<string> {
     try {
-      const prompt = `قم بإنشاء تقرير ${reportType} شامل للمريض رقم ${patientId}.
+      const systemPrompt = `أنت خبير في كتابة التقارير الطبية. اكتب تقارير شاملة ومهنية باللهجة المصرية.`;
+      const userPrompt = `قم بإنشاء تقرير ${reportType} شامل للمقيم رقم ${patientId}.
 التقرير يجب أن يتضمن:
 1. ملخص الحالة
 2. التقدم المحرز
@@ -160,34 +130,15 @@ export class AIService {
 4. التوصيات
 5. الخطوات التالية
 
-أجب باللغة العربية وبشكل منظم ومهني.`;
+أجب باللهجة المصرية وبشكل منظم ومهني.`;
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.openaiApiKey}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { 
-              role: "system", 
-              content: "أنت خبير في كتابة التقارير الطبية. اكتب تقارير شاملة ومهنية." 
-            },
-            { role: "user", content: prompt }
-          ],
-          max_tokens: 800,
-          temperature: 0.5
-        })
-      });
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في إنشاء التقرير');
       }
 
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content || "لم يتم إنشاء التقرير";
+      return result.data || "لم يتم إنشاء التقرير";
     } catch (error) {
       console.error('Error generating report:', error);
       throw error;

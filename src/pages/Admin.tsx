@@ -1,23 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// import { useTranslation } from 'react-i18next'; // unused
 import { 
-  Users, Settings, BarChart3, Shield, UserPlus, 
-  Edit, Trash2, Save, X, Plus, AlertTriangle,
-  TrendingUp, TrendingDown, CheckCircle, Crown,
+  Users, Settings, Shield, UserPlus, 
+  Edit, Trash2, AlertTriangle,
+  CheckCircle, Crown,
   Brain
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/layout/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+// import { Textarea } from '@/components/ui/textarea'; // unused
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // unused
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AIStatusIndicator from '@/components/ai/AIStatusIndicator';
 import AIConfigPanel from '@/components/ai/AIConfigPanel';
@@ -31,13 +30,6 @@ interface User {
   is_active: boolean;
 }
 
-interface SystemSetting {
-  id: string;
-  setting_key: string;
-  setting_value: any;
-  description: string;
-}
-
 interface RelapseIndicator {
   id: string;
   patient_name: string;
@@ -48,14 +40,12 @@ interface RelapseIndicator {
 }
 
 const Admin = () => {
-  const { t } = useTranslation();
+  console.log('Admin component loaded successfully!');
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
-  const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [relapseIndicators, setRelapseIndicators] = useState<RelapseIndicator[]>([]);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
-  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('users');
   const [newUser, setNewUser] = useState({
@@ -67,7 +57,6 @@ const Admin = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetchSettings();
     fetchRelapseIndicators();
   }, []);
 
@@ -83,24 +72,6 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "خطأ في تحميل المستخدمين",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('*')
-        .order('setting_key');
-
-      if (error) throw error;
-      setSettings(data || []);
-    } catch (error: any) {
-      toast({
-        title: "خطأ في تحميل الإعدادات",
         description: error.message,
         variant: "destructive",
       });
@@ -239,12 +210,13 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <Navbar />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">لوحة تحكم المدير</h1>
           <p className="text-muted-foreground">إدارة المستخدمين والإعدادات والمؤشرات</p>
+          <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
+            <p className="text-green-800 font-medium">✅ صفحة الإدارة شغالة بنجاح!</p>
+          </div>
           {users.find(u => u.email === 'djharga@gmail.com')?.email === 'djharga@gmail.com' && (
             <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2">

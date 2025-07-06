@@ -1,14 +1,15 @@
-import { Session, TreatmentGoal, CenterGoal, Activity } from '@/types/session';
+import { Session, TreatmentGoal, Activity } from '@/types/session';
+import { googleAIService } from './google-ai-service';
 
 export class SessionAIService {
-  private openaiApiKey: string;
+  private googleAIKey: string;
 
   constructor() {
-    // الحصول على مفتاح OpenAI من المتغيرات البيئية
-    this.openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+    // الحصول على مفتاح Google AI من المتغيرات البيئية
+    this.googleAIKey = import.meta.env.VITE_GOOGLE_AI_API_KEY || '';
     
-    if (!this.openaiApiKey) {
-      console.warn('OpenAI API key not found. AI features will be limited.');
+    if (!this.googleAIKey) {
+      console.warn('Google AI API key not found. AI features will be limited.');
     }
   }
 
@@ -23,12 +24,13 @@ export class SessionAIService {
       emotional_state: 'positive' | 'negative' | 'neutral' | 'mixed';
     };
   }> {
-    if (!this.openaiApiKey) {
+    if (!this.googleAIKey) {
       // إرجاع تحليل بسيط إذا لم يكن هناك مفتاح API
       return this.getMockAnalysis(rawNotes);
     }
 
-    const prompt = `
+    const systemPrompt = `كمعالج نفسي متخصص، قم بتحليل الجلسات العلاجية وتنظيمها باللهجة المصرية.`;
+    const userPrompt = `
     كمعالج نفسي متخصص، قم بتحليل الجلسة التالية وتنظيمها باللهجة المصرية:
 
     الملاحظات الخام:
@@ -47,13 +49,19 @@ export class SessionAIService {
     `;
 
     try {
-      const response = await this.callOpenAI(prompt);
-      const result = this.parseAIResponse(response);
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في معالجة الجلسة');
+      }
+
+      const response = result.data || '';
+      const parsedResult = this.parseAIResponse(response);
       
       return {
-        processedNotes: result.processedNotes,
-        summary: result.summary,
-        emotions: result.emotions
+        processedNotes: parsedResult.processedNotes,
+        summary: parsedResult.summary,
+        emotions: parsedResult.emotions
       };
     } catch (error) {
       console.error('خطأ في معالجة الجلسة:', error);
@@ -67,19 +75,20 @@ export class SessionAIService {
     sessionData: Session,
     patientHistory: any
   ): Promise<TreatmentGoal[]> {
-    if (!this.openaiApiKey) {
+    if (!this.googleAIKey) {
       return this.getMockTreatmentGoals();
     }
 
-    const prompt = `
-    بناءً على الجلسة التالية وتاريخ المريض، اقترح أهداف علاجية مناسبة:
+    const systemPrompt = `أنت خبير في علاج الإدمان. اقترح أهداف علاجية مناسبة بناءً على حالة المقيم.`;
+    const userPrompt = `
+    بناءً على الجلسة التالية وتاريخ المقيم، اقترح أهداف علاجية مناسبة:
 
     بيانات الجلسة:
     - الملاحظات: ${sessionData.raw_notes}
     - المشاعر: ${JSON.stringify(sessionData.emotions)}
     - التقييم: ${JSON.stringify(sessionData.therapist_assessment)}
 
-    تاريخ المريض:
+    تاريخ المقيم:
     ${JSON.stringify(patientHistory)}
 
     اقترح 3-5 أهداف علاجية مناسبة تشمل:
@@ -99,7 +108,13 @@ export class SessionAIService {
     `;
 
     try {
-      const response = await this.callOpenAI(prompt);
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في اقتراح الأهداف');
+      }
+
+      const response = result.data || '';
       return this.parseTreatmentGoals(response);
     } catch (error) {
       console.error('خطأ في اقتراح الأهداف:', error);
@@ -112,14 +127,15 @@ export class SessionAIService {
     sessionData: Session,
     patientProfile: any
   ): Promise<Activity[]> {
-    if (!this.openaiApiKey) {
+    if (!this.googleAIKey) {
       return this.getMockActivities();
     }
 
-    const prompt = `
-    بناءً على حالة المريض والجلسة، اقترح أنشطة مناسبة للمركز العلاجي:
+    const systemPrompt = `أنت خبير في الأنشطة العلاجية. اقترح أنشطة مناسبة للمركز العلاجي.`;
+    const userPrompt = `
+    بناءً على حالة المقيم والجلسة، اقترح أنشطة مناسبة للمركز العلاجي:
 
-    بيانات المريض:
+    بيانات المقيم:
     ${JSON.stringify(patientProfile)}
 
     نتائج الجلسة:
@@ -133,7 +149,7 @@ export class SessionAIService {
     - أنشطة تعليمية
 
     كل نشاط يجب أن يكون:
-    - مناسب لحالة المريض
+    - مناسب لحالة المقيم
     - له مدة محددة
     - له تكرار محدد
     - يساعد في تحقيق الأهداف العلاجية
@@ -142,7 +158,13 @@ export class SessionAIService {
     `;
 
     try {
-      const response = await this.callOpenAI(prompt);
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في اقتراح الأنشطة');
+      }
+
+      const response = result.data || '';
       return this.parseActivities(response);
     } catch (error) {
       console.error('خطأ في اقتراح الأنشطة:', error);
@@ -155,12 +177,13 @@ export class SessionAIService {
     currentSession: Session,
     patientProgress: any
   ): Promise<string> {
-    if (!this.openaiApiKey) {
+    if (!this.googleAIKey) {
       return this.getMockNextSessionPlan();
     }
 
-    const prompt = `
-    بناءً على الجلسة الحالية وتقدم المريض، اقترح خطة للجلسة القادمة:
+    const systemPrompt = `أنت خبير في التخطيط العلاجي. اقترح خطط مفصلة للجلسات القادمة.`;
+    const userPrompt = `
+    بناءً على الجلسة الحالية وتقدم المقيم، اقترح خطة للجلسة القادمة:
 
     الجلسة الحالية:
     - الملاحظات: ${currentSession.raw_notes}
@@ -168,7 +191,7 @@ export class SessionAIService {
     - التقييم: ${JSON.stringify(currentSession.therapist_assessment)}
     - التقدم: ${currentSession.current_progress}%
 
-    تقدم المريض:
+    تقدم المقيم:
     ${JSON.stringify(patientProgress)}
 
     اقترح خطة مفصلة للجلسة القادمة تشمل:
@@ -182,8 +205,13 @@ export class SessionAIService {
     `;
 
     try {
-      const response = await this.callOpenAI(prompt);
-      return response.trim();
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في اقتراح الخطة');
+      }
+
+      return (result.data || '').trim();
     } catch (error) {
       console.error('خطأ في اقتراح الخطة:', error);
       return this.getMockNextSessionPlan();
@@ -197,11 +225,12 @@ export class SessionAIService {
     riskFactors: string[];
     positiveIndicators: string[];
   }> {
-    if (!this.openaiApiKey) {
+    if (!this.googleAIKey) {
       return this.getMockAnalysis();
     }
 
-    const prompt = `
+    const systemPrompt = `أنت خبير في تحليل الجلسات العلاجية. قدم تحليلاً شاملاً ومفصلاً.`;
+    const userPrompt = `
     قم بتحليل شامل للجلسة التالية:
 
     ${JSON.stringify(sessionData, null, 2)}
@@ -216,7 +245,13 @@ export class SessionAIService {
     `;
 
     try {
-      const response = await this.callOpenAI(prompt);
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في التحليل الشامل');
+      }
+
+      const response = result.data || '';
       return this.parseAnalysisResponse(response);
     } catch (error) {
       console.error('خطأ في التحليل الشامل:', error);
@@ -224,49 +259,21 @@ export class SessionAIService {
     }
   }
 
-  private async callOpenAI(prompt: string): Promise<string> {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.openaiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: 'أنت معالج نفسي متخصص في علاج الإدمان، تتحدث باللهجة المصرية وتقدم نصائح مهنية.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  }
-
   // البيانات الوهمية للاختبار
   private getMockAnalysis(rawNotes?: string): any {
     return {
       processedNotes: rawNotes || 'ملاحظات معالجة بالذكاء الاصطناعي',
-      summary: 'ملخص الجلسة: المريض يظهر تحسناً في التعاون والرغبة في العلاج',
+      summary: 'ملخص الجلسة: المقيم يظهر تحسناً في التعاون والرغبة في العلاج',
       emotions: {
         primary_emotion: 'أمل',
         secondary_emotions: ['تفاؤل', 'تصميم'],
         intensity: 6,
         emotional_state: 'positive'
-      }
+      },
+      insights: ['تحسن في التعاون', 'رغبة قوية في العلاج'],
+      recommendations: ['الاستمرار في نفس النهج', 'زيادة الجلسات الجماعية'],
+      riskFactors: ['خطر الانتكاس منخفض'],
+      positiveIndicators: ['تحسن في المزاج', 'زيادة الثقة بالنفس']
     };
   }
 
@@ -275,7 +282,7 @@ export class SessionAIService {
       {
         id: '1',
         title: 'تحسين الثقة بالنفس',
-        description: 'العمل على بناء ثقة المريض بنفسه من خلال تمارين وتقنيات علاجية',
+        description: 'العمل على بناء ثقة المقيم بنفسه من خلال تمارين وتقنيات علاجية',
         target_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         progress: 0,
         status: 'pending',
@@ -344,7 +351,7 @@ export class SessionAIService {
     1. التركيز على تقنيات الاسترخاء والتنفس العميق
     2. مراجعة التقدم في الأهداف المحددة
     3. العمل على تحسين الثقة بالنفس
-    4. مناقشة التحديات التي تواجه المريض
+    4. مناقشة التحديات التي تواجه المقيم
     5. تحديد أهداف جديدة للجلسة القادمة
     
     الأنشطة المقترحة:
@@ -354,8 +361,6 @@ export class SessionAIService {
     - تحديد خطوات عملية للتحسن
     `;
   }
-
-
 
   private parseAIResponse(response: string): any {
     // تحليل استجابة الذكاء الاصطناعي
@@ -383,6 +388,11 @@ export class SessionAIService {
 
   private parseAnalysisResponse(response: string): any {
     // تحليل الاستجابة الشاملة
-    return this.getMockAnalysis();
+    return {
+      insights: ['تحسن في التعاون', 'رغبة قوية في العلاج'],
+      recommendations: ['الاستمرار في نفس النهج', 'زيادة الجلسات الجماعية'],
+      riskFactors: ['خطر الانتكاس منخفض'],
+      positiveIndicators: ['تحسن في المزاج', 'زيادة الثقة بالنفس']
+    };
   }
 } 

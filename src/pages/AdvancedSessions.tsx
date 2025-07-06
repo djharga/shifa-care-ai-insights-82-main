@@ -15,8 +15,6 @@ import {
   Target, 
   Activity, 
   Calendar, 
-  Clock, 
-  User, 
   FileText,
   Sparkles,
   TrendingUp,
@@ -29,11 +27,11 @@ import {
 import { SessionAIService } from '@/services/session-ai-service';
 import { SupabaseService } from '@/services/supabase-service';
 import { Session, TreatmentGoal, Activity as ActivityType } from '@/types/session';
+import SessionAnalysis from '@/components/ai/SessionAnalysis';
+import SessionReportGenerator from '@/components/ai/SessionReportGenerator';
 
 export default function AdvancedSessions() {
-  const { t } = useTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [aiInsights, setAiInsights] = useState<any>(null);
@@ -163,6 +161,11 @@ export default function AdvancedSessions() {
     }
   };
 
+  // معالجة التقارير المولدة
+  const handleReportGenerated = (reports: { manager: string; family: string }) => {
+    // Implementation needed
+  };
+
   // حفظ الجلسة
   const saveSession = async () => {
     if (!aiInsights) {
@@ -196,7 +199,6 @@ export default function AdvancedSessions() {
 
       const savedSession = await supabaseService.createSession(sessionData);
       setSessions([savedSession, ...sessions]);
-      setCurrentSession(savedSession);
       
       // إعادة تعيين النموذج
       setNewSession({
@@ -253,9 +255,10 @@ export default function AdvancedSessions() {
       )}
 
       <Tabs defaultValue="new-session" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="new-session">جلسة جديدة</TabsTrigger>
           <TabsTrigger value="ai-analysis">تحليل الذكاء الاصطناعي</TabsTrigger>
+          <TabsTrigger value="reports">التقارير المخصصة</TabsTrigger>
           <TabsTrigger value="sessions-history">تاريخ الجلسات</TabsTrigger>
         </TabsList>
 
@@ -593,6 +596,33 @@ export default function AdvancedSessions() {
                 قم بمعالجة جلسة جديدة أولاً لعرض التحليل
               </AlertDescription>
             </Alert>
+          )}
+        </TabsContent>
+
+        {/* التقارير المخصصة */}
+        <TabsContent value="reports" className="space-y-6">
+          {aiInsights ? (
+            <SessionReportGenerator 
+              sessionData={{
+                id: 'temp-session',
+                patient_id: newSession.patient_id,
+                patient_name: `المقيم ${newSession.patient_id}`,
+                session_date: new Date().toLocaleDateString('ar-EG'),
+                session_type: newSession.session_type,
+                raw_notes: newSession.raw_notes,
+                ai_processed_notes: aiInsights.processedData?.processedNotes || '',
+                emotions: aiInsights.processedData?.emotions || {},
+                therapist_assessment: newSession.therapist_assessment
+              }}
+              onReportGenerated={handleReportGenerated}
+            />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">قم بإنشاء جلسة جديدة أولاً لتوليد التقارير المخصصة</p>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
