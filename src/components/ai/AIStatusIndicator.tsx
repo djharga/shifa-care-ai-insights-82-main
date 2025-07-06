@@ -55,6 +55,10 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
     checkStatus: async () => {
       // Mock implementation
       return { status: 'online', responseTime: 150 };
+    },
+    customCall: async (systemPrompt: string, userPrompt: string, options?: any) => {
+      // Mock implementation
+      return { success: true, data: 'مرحباً', error: null };
     }
   };
 
@@ -122,7 +126,7 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
           description: "تم اختبار الاتصال بنجاح",
         });
       } else {
-        throw new Error(response.error);
+        throw new Error(response.error || 'خطأ غير معروف');
       }
     } catch (error: any) {
       setStatusIndicator(prev => ({

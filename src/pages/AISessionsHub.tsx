@@ -10,8 +10,11 @@ import {
   Sparkles, 
   TrendingUp, 
   Users, 
-  Calendar, 
-  Brain
+  Calendar,
+  Plus,
+  Clock,
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdvancedSessions from './AdvancedSessions';

@@ -60,9 +60,9 @@ export default function CenterActivities({
   const [newActivity, setNewActivity] = useState({
     title: '',
     description: '',
-    type: 'individual' as const,
+    type: 'individual' as 'individual' | 'group' | 'family',
     duration: 60,
-    frequency: 'weekly' as const
+    frequency: 'weekly' as 'daily' | 'weekly' | 'monthly'
   });
 
   const handleSaveActivity = (activityId: string, updates: Partial<ActivityType>) => {
@@ -159,7 +159,7 @@ export default function CenterActivities({
               <Label htmlFor="new-activity-type">النوع</Label>
               <Select
                 value={newActivity.type}
-                onValueChange={(value: string) => setNewActivity({...newActivity, type: value})}
+                onValueChange={(value: string) => setNewActivity({...newActivity, type: value as 'individual' | 'group' | 'family'})}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -175,7 +175,7 @@ export default function CenterActivities({
               <Label htmlFor="new-activity-frequency">التكرار</Label>
               <Select
                 value={newActivity.frequency}
-                onValueChange={(value: string) => setNewActivity({...newActivity, frequency: value})}
+                onValueChange={(value: string) => setNewActivity({...newActivity, frequency: value as 'daily' | 'weekly' | 'monthly'})}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -239,7 +239,7 @@ export default function CenterActivities({
                         <Label>النوع</Label>
                         <Select
                           value={activity.type}
-                          onValueChange={(value: string) => handleSaveActivity(activity.id, { type: value })}
+                          onValueChange={(value: string) => handleSaveActivity(activity.id, { type: value as 'individual' | 'group' | 'family' })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -255,7 +255,7 @@ export default function CenterActivities({
                         <Label>الحالة</Label>
                         <Select
                           value={activity.status}
-                          onValueChange={(value: string) => handleSaveActivity(activity.id, { status: value })}
+                          onValueChange={(value: string) => handleSaveActivity(activity.id, { status: value as 'planned' | 'completed' | 'cancelled' })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -271,7 +271,7 @@ export default function CenterActivities({
                         <Label>التكرار</Label>
                         <Select
                           value={activity.frequency}
-                          onValueChange={(value: string) => handleSaveActivity(activity.id, { frequency: value })}
+                          onValueChange={(value: string) => handleSaveActivity(activity.id, { frequency: value as 'daily' | 'weekly' | 'monthly' })}
                         >
                           <SelectTrigger>
                             <SelectValue />
