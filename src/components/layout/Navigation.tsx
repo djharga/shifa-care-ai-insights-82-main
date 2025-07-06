@@ -134,6 +134,12 @@ const Navigation = () => {
       description: 'إدارة الأدوار والصلاحيات والمستخدمين'
     },
     {
+      title: 'إعدادات النظام',
+      href: '/system-settings',
+      icon: Settings,
+      description: 'إعدادات النظام والمركز العلاجي'
+    },
+    {
       title: 'الإدارة',
       href: '/admin',
       icon: Shield,

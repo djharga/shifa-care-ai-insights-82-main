@@ -25,6 +25,7 @@ const FamilyCommunication = React.lazy(() => import('./pages/FamilyCommunication
 const AIAssistant = React.lazy(() => import('./pages/AIAssistant'))
 const PromoDesignPage = React.lazy(() => import('./pages/PromoDesignPage'))
 const AdvancedPermissions = React.lazy(() => import('./components/admin/AdvancedPermissions'))
+const SystemSettings = React.lazy(() => import('./pages/SystemSettings'))
 const TestPage = React.lazy(() => import('./pages/TestPage'))
 const NotFound = React.lazy(() => import('./pages/NotFound'))
 
@@ -59,6 +60,7 @@ function App() {
           <Route path="/ai-assistant" element={<AIAssistant />} />
           <Route path="/promo-design" element={<PromoDesignPage />} />
           <Route path="/advanced-permissions" element={<AdvancedPermissions />} />
+          <Route path="/system-settings" element={<SystemSettings />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
