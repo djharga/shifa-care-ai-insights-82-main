@@ -15,7 +15,6 @@ import {
   Shield
 } from 'lucide-react';
 import { googleAIService } from '@/services/google-ai-service';
-import { useToast } from '@/hooks/use-toast';
 
 interface SessionData {
   id: string;

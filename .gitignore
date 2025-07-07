@@ -129,3 +129,5 @@ public/uploads/
 *.bak
 *.backup
 *.old
+
+.vercel

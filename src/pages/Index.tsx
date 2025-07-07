@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,26 +5,47 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   Calendar, 
-  Building2, 
-  DollarSign, 
-  BarChart3, 
-  Brain, 
-  Settings,
+  TrendingUp, 
   Activity,
+  Brain,
   Heart,
-  Stethoscope,
-  Calculator,
-  TrendingUp,
-  Plus,
-  ArrowRight,
+  Target,
   Clock,
   CheckCircle,
-  AlertCircle,
-  User,
+  AlertTriangle,
+  Plus,
+  Eye,
+  Edit,
+  Download,
+  Share2,
+  Settings,
+  Bell,
+  Search,
+  Filter,
+  RefreshCw,
+  Zap,
+  Star,
+  Award,
+  Trophy,
+  Medal,
+  Crown,
   Shield,
+  Lock,
+  Unlock,
+  Key,
+  UserCheck,
+  UserX,
   UserPlus,
+  UserMinus,
+  UserCog,
+  User,
+  AlertCircle,
+  Building2,
+  DollarSign,
+  BarChart3,
+  Calculator,
   MessageSquare,
-  Bot,
+  ArrowRight,
   Sparkles
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -70,7 +90,7 @@ const Index = () => {
     {
       title: 'إنشاء خطة علاجية',
       description: 'وضع خطة علاجية جديدة',
-      icon: Stethoscope,
+      icon: Shield,
       href: '/ai-treatment',
       color: 'bg-orange-500',
       textColor: 'text-orange-500'
@@ -78,7 +98,7 @@ const Index = () => {
     {
       title: 'المساعد الذكي',
       description: 'احصل على مساعدة فورية',
-      icon: Bot,
+      icon: UserCog,
       href: '/ai-assistant',
       color: 'bg-cyan-500',
       textColor: 'text-cyan-500'
@@ -103,7 +123,7 @@ const Index = () => {
     {
       title: 'تحديث خطة علاجية',
       description: 'تم تحديث خطة العلاج للمريض سارة أحمد',
-      icon: Stethoscope,
+      icon: Shield,
       time: 'منذ ساعة',
       type: 'info'
     },
@@ -176,7 +196,7 @@ const Index = () => {
     {
       title: 'العلاج بالذكاء الاصطناعي',
       description: 'خطط علاجية ذكية ومتطورة',
-      icon: Stethoscope,
+      icon: Shield,
       href: '/ai-treatment',
       stats: `${stats.treatmentPlans} خطة علاجية`,
       color: 'from-cyan-500 to-cyan-600'
@@ -224,7 +244,7 @@ const Index = () => {
     {
       title: 'المساعد الذكي',
       description: 'مساعد ذكي للموظفين باللهجة المصرية',
-      icon: Bot,
+      icon: UserCog,
       href: '/ai-assistant',
       stats: '24/7 متاح',
       color: 'from-cyan-500 to-blue-600'
@@ -245,46 +265,62 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-background overflow-x-hidden" dir="rtl">
+      <main className="w-full max-w-full">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{t('dashboard')}</h1>
-            <p className="text-muted-foreground">
-              أهلاً بيك في نظام شفا كير - هنا هتلاقي كل جديد عن العيانين والجلسات
-            </p>
-          </div>
-          <div>
-            <button onClick={() => i18n.changeLanguage('ar')}>فصحى</button>
-            <button onClick={() => i18n.changeLanguage('ar-EG')} style={{marginRight: 8}}>مصري</button>
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2">{t('dashboard')}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                أهلاً بيك في نظام شفا كير - هنا هتلاقي كل جديد عن العيانين والجلسات
+              </p>
+            </div>
+            <div className="flex space-x-2 space-x-reverse flex-shrink-0">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => i18n.changeLanguage('ar')}
+                className="text-xs sm:text-sm px-2 sm:px-3"
+              >
+                فصحى
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => i18n.changeLanguage('ar-EG')}
+                className="text-xs sm:text-sm px-2 sm:px-3"
+              >
+                مصري
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 space-x-reverse">
-              <TrendingUp className="h-5 w-5" />
+        <Card className="mb-4 sm:mb-6 lg:mb-8">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="flex items-center space-x-2 space-x-reverse text-base sm:text-lg lg:text-xl">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>إجراءات سريعة</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
               {quickActions.map((action, index) => {
                 return (
                   <Link key={index} to={action.href}>
-                    <Card className="hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:border-primary">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-3 space-x-reverse">
-                          <div className={`p-2 rounded-lg ${action.color}`}>
-                            <action.icon className="h-5 w-5 text-white" />
+                    <Card className="hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:border-primary h-full">
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex items-center space-x-2 sm:space-x-3 space-x-reverse">
+                          <div className={`p-2 rounded-lg ${action.color} flex-shrink-0`}>
+                            <action.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{action.title}</h3>
-                            <p className="text-sm text-muted-foreground">{action.description}</p>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm sm:text-base">{action.title}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{action.description}</p>
                           </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         </div>
                       </CardContent>
                     </Card>
@@ -296,20 +332,20 @@ const Index = () => {
         </Card>
 
         {/* Main Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
           {mainModules.map((module, index) => {
             const Icon = module.icon;
             return (
               <Link key={index} to={module.href}>
-                <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4 space-x-reverse mb-4">
-                      <div className={`p-3 rounded-lg bg-gradient-to-r ${module.color}`}>
-                        <Icon className="h-6 w-6 text-white" />
+                <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group h-full">
+                  <CardContent className="p-3 sm:p-4 lg:p-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 space-x-reverse mb-3 sm:mb-4">
+                      <div className={`p-2 sm:p-3 rounded-lg bg-gradient-to-r ${module.color} flex-shrink-0`}>
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{module.title}</h3>
-                        <p className="text-sm text-muted-foreground">{module.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm sm:text-base lg:text-lg">{module.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">{module.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -325,27 +361,27 @@ const Index = () => {
           })}
         </div>
 
-        {/* Recent Activities */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activities & System Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 space-x-reverse">
-                <Activity className="h-5 w-5" />
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center space-x-2 space-x-reverse text-base sm:text-lg lg:text-xl">
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>النشاطات الأخيرة</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {recentActivities.map((activity, index) => {
                   const Icon = activity.icon;
                   return (
-                    <div key={index} className="flex items-start space-x-3 space-x-reverse p-3 rounded-lg hover:bg-muted/50">
-                      <div className="mt-1">
+                    <div key={index} className="flex items-start space-x-2 sm:space-x-3 space-x-reverse p-2 sm:p-3 rounded-lg hover:bg-muted/50">
+                      <div className="mt-1 flex-shrink-0">
                         {getActivityIcon(activity.type)}
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{activity.title}</h4>
-                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm sm:text-base">{activity.title}</h4>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">{activity.description}</p>
                         <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
                       </div>
                     </div>
@@ -357,44 +393,44 @@ const Index = () => {
 
           {/* System Status */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 space-x-reverse">
-                <Shield className="h-5 w-5" />
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center space-x-2 space-x-reverse text-base sm:text-lg lg:text-xl">
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>حالة النظام</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between p-2 sm:p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">قاعدة البيانات</span>
+                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="font-medium text-sm sm:text-base">قاعدة البيانات</span>
                   </div>
-                  <Badge variant="default" className="bg-green-500">متصل</Badge>
+                  <Badge variant="default" className="bg-green-500 text-xs">متصل</Badge>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between p-2 sm:p-3 bg-blue-50 rounded-lg">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <Brain className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">الذكاء الاصطناعي</span>
+                    <Brain className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <span className="font-medium text-sm sm:text-base">الذكاء الاصطناعي</span>
                   </div>
-                  <Badge variant="default" className="bg-blue-500">نشط</Badge>
+                  <Badge variant="default" className="bg-blue-500 text-xs">نشط</Badge>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center justify-between p-2 sm:p-3 bg-purple-50 rounded-lg">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <Users className="h-4 w-4 text-purple-500" />
-                    <span className="font-medium">المستخدمين النشطين</span>
+                    <Users className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                    <span className="font-medium text-sm sm:text-base">المستخدمين النشطين</span>
                   </div>
-                  <Badge variant="default" className="bg-purple-500">3 مستخدمين</Badge>
+                  <Badge variant="default" className="bg-purple-500 text-xs">3 مستخدمين</Badge>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                <div className="flex items-center justify-between p-2 sm:p-3 bg-orange-50 rounded-lg">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <Clock className="h-4 w-4 text-orange-500" />
-                    <span className="font-medium">آخر تحديث</span>
+                    <Clock className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                    <span className="font-medium text-sm sm:text-base">آخر تحديث</span>
                   </div>
-                  <Badge variant="outline">منذ 5 دقائق</Badge>
+                  <Badge variant="outline" className="text-xs">منذ 5 دقائق</Badge>
                 </div>
               </div>
             </CardContent>
@@ -402,25 +438,25 @@ const Index = () => {
         </div>
 
         {/* المساعد الذكي */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6 lg:mb-8">
           <Card className="bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <Bot className="w-6 h-6 text-white" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                <div className="flex items-center space-x-3 sm:space-x-4 space-x-reverse">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <UserCog className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">المساعد الذكي</h3>
-                    <p className="text-gray-600">مساعدك الشخصي في شفا كير - متاح 24/7</p>
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">المساعد الذكي</h3>
+                    <p className="text-sm sm:text-base text-gray-600">مساعدك الشخصي في شفا كير - متاح 24/7</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 sm:space-x-reverse">
+                  <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs">
                     <Sparkles className="w-3 h-3 mr-1" />
                     ذكي
                   </Badge>
-                  <Button asChild>
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Link to="/ai-assistant">
                       ابدأ المحادثة
                       <ArrowRight className="w-4 h-4 mr-2" />

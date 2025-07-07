@@ -50,15 +50,15 @@ const StatsCard = ({
   return (
     <Card className={`${getVariantStyles()} shadow-soft hover:shadow-medium transition-all duration-300`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getIconStyles()}`}>
-          <Icon className="h-5 w-5" />
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${getIconStyles()} flex-shrink-0`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-foreground mb-1">{value}</div>
+      <CardContent className="pt-2">
+        <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mb-2">{description}</p>
         )}

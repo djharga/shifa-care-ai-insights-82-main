@@ -141,7 +141,7 @@ export const useGoogleAI
 ### 2. إعداد متغيرات البيئة
 ```bash
 # في ملف .env.local
-VITE_GOOGLE_AI_API_KEY=your-google-ai-api-key-here
+VITE_GOOGLE_AI_API_KEY=your-google-ai-api-key
 VITE_GOOGLE_AI_MODEL=gemini-1.5-flash
 VITE_GOOGLE_AI_MAX_TOKENS=2000
 VITE_GOOGLE_AI_TEMPERATURE=0.7

@@ -4,7 +4,7 @@
 - Node.js 22+ (مطلوب)
 - حساب Supabase (مجاني)
 - حساب Vercel/Netlify (مجاني)
-- مفتاح OpenAI (مجاني)
+- مفتاح OpenAI (your-openai-api-key)
 
 ---
 
@@ -23,8 +23,8 @@
 ### 1.2 الحصول على بيانات الاتصال
 1. بعد إنشاء المشروع، اذهب إلى Settings → API
 2. انسخ:
-   - **Project URL**: `https://your-project.supabase.co`
-   - **anon public key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+   - **Project URL**: `your-supabase-url`
+   - **anon public key**: `your-supabase-anon-key`
 
 ### 1.3 إنشاء قاعدة البيانات
 1. اذهب إلى SQL Editor
@@ -168,7 +168,7 @@ VITE_AI_RESPONSE_LANGUAGE=egyptian_arabic
 ```bash
 # تأكد من صحة بيانات الاتصال
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 #### 2. خطأ في OpenAI

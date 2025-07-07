@@ -1,15 +1,14 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Minus,
-  Heart,
-  Frown,
-  Smile,
-  Meh
+  Heart, 
+  Smile, 
+  Frown, 
+  Meh,
+  TrendingUp,
+  TrendingDown,
+  Minus
 } from 'lucide-react';
 
 interface EmotionAnalysisProps {
@@ -176,4 +175,4 @@ export default function EmotionAnalysis({ emotions }: EmotionAnalysisProps) {
       </CardContent>
     </Card>
   );
-} 
+}

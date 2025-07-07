@@ -64,6 +64,21 @@ interface PersonalExpense {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+interface FacilityExpense {
+  id: string;
+  expense_category: string;
+  expense_name: string;
+  amount: number;
+  expense_date: string;
+  due_date?: string;
+  payment_status: string;
+  payment_method?: string;
+  receipt_number?: string;
+  vendor_name?: string;
+  vendor_phone?: string;
+  description?: string;
+}
+
 const Finance = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -71,12 +86,14 @@ const Finance = () => {
   const [accommodations, setAccommodations] = useState<AccommodationRecord[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [expenses, setExpenses] = useState<PersonalExpense[]>([]);
+  const [facilityExpenses, setFacilityExpenses] = useState<FacilityExpense[]>([]);
   const [activeTab, setActiveTab] = useState('accommodation');
   
   // Dialog states
   const [isAddAccommodationOpen, setIsAddAccommodationOpen] = useState(false);
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isAddFacilityExpenseOpen, setIsAddFacilityExpenseOpen] = useState(false);
   const [newAccommodation, setNewAccommodation] = useState({
     patient_id: '',
     room_number: '',
@@ -106,8 +123,27 @@ const Finance = () => {
     receipt_number: ''
   });
 
+  const [newFacilityExpense, setNewFacilityExpense] = useState({
+    expense_category: '',
+    expense_name: '',
+    amount: '',
+    expense_date: '',
+    due_date: '',
+    payment_status: 'pending',
+    payment_method: '',
+    receipt_number: '',
+    vendor_name: '',
+    vendor_phone: '',
+    description: ''
+  });
+
+  const [editAccommodation, setEditAccommodation] = useState<AccommodationRecord | null>(null);
+  const [editPayment, setEditPayment] = useState<Payment | null>(null);
+  const [showExtraFields, setShowExtraFields] = useState(false);
+
   useEffect(() => {
     fetchData();
+    fetchFacilityExpenses();
   }, []);
 
   const fetchData = async () => {
@@ -214,6 +250,23 @@ const Finance = () => {
         title: "خطأ في تحميل المصاريف",
         description: error.message,
         variant: "destructive",
+      });
+    }
+  };
+
+  const fetchFacilityExpenses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('facility_expenses')
+        .select('*')
+        .order('expense_date', { ascending: false });
+      if (error) throw error;
+      setFacilityExpenses(data || []);
+    } catch (error: any) {
+      toast({
+        title: 'خطأ في تحميل مصاريف المصحة',
+        description: error.message,
+        variant: 'destructive',
       });
     }
   };
@@ -339,6 +392,54 @@ const Finance = () => {
     }
   };
 
+  const handleAddFacilityExpense = async () => {
+    try {
+      const { error } = await supabase
+        .from('facility_expenses')
+        .insert([
+          {
+            expense_category: newFacilityExpense.expense_category,
+            expense_name: newFacilityExpense.expense_name,
+            amount: parseFloat(newFacilityExpense.amount),
+            expense_date: newFacilityExpense.expense_date,
+            due_date: newFacilityExpense.due_date || null,
+            payment_status: newFacilityExpense.payment_status,
+            payment_method: newFacilityExpense.payment_method,
+            receipt_number: newFacilityExpense.receipt_number,
+            vendor_name: newFacilityExpense.vendor_name,
+            vendor_phone: newFacilityExpense.vendor_phone,
+            description: newFacilityExpense.description
+          }
+        ]);
+      if (error) throw error;
+      toast({
+        title: 'تم إضافة مصروف المصحة',
+        description: 'تمت إضافة المصروف بنجاح',
+      });
+      setIsAddFacilityExpenseOpen(false);
+      setNewFacilityExpense({
+        expense_category: '',
+        expense_name: '',
+        amount: '',
+        expense_date: '',
+        due_date: '',
+        payment_status: 'pending',
+        payment_method: '',
+        receipt_number: '',
+        vendor_name: '',
+        vendor_phone: '',
+        description: ''
+      });
+      fetchFacilityExpenses();
+    } catch (error: any) {
+      toast({
+        title: 'خطأ في إضافة مصروف المصحة',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants = {
       active: 'bg-green-100 text-green-800',
@@ -393,6 +494,116 @@ const Finance = () => {
 
   const calculateActiveAccommodations = () => {
     return accommodations.filter(acc => acc.status === 'active').length;
+  };
+
+  const handleDeleteAccommodation = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('accommodation_records')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم حذف سجل الإقامة",
+        description: "تم حذف سجل الإقامة بنجاح",
+      });
+
+      fetchAccommodations();
+    } catch (error: any) {
+      toast({
+        title: "خطأ في حذف سجل الإقامة",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateAccommodation = async (accommodation: AccommodationRecord) => {
+    try {
+      const { error } = await supabase
+        .from('accommodation_records')
+        .update({
+          room_number: accommodation.room_number,
+          daily_rate: parseFloat(accommodation.daily_rate.toString()),
+          check_in_date: accommodation.check_in_date,
+          notes: accommodation.notes
+        })
+        .eq('id', accommodation.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم تحديث بيانات سجل الإقامة",
+        description: "تم تحديث بيانات سجل الإقامة بنجاح",
+      });
+
+      setEditAccommodation(null);
+      fetchAccommodations();
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحديث بيانات سجل الإقامة",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم حذف المدفوع",
+        description: "تم حذف المدفوع بنجاح",
+      });
+
+      fetchPayments();
+    } catch (error: any) {
+      toast({
+        title: "خطأ في حذف المدفوع",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdatePayment = async (payment: Payment) => {
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          amount: parseFloat(payment.amount.toString()),
+          payment_type: payment.payment_type,
+          payment_date: payment.payment_date,
+          payment_method: payment.payment_method,
+          receipt_number: payment.receipt_number,
+          notes: payment.notes
+        })
+        .eq('id', payment.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم تحديث بيانات المدفوع",
+        description: "تم تحديث بيانات المدفوع بنجاح",
+      });
+
+      setEditPayment(null);
+      fetchPayments();
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحديث بيانات المدفوع",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -454,10 +665,11 @@ const Finance = () => {
 
         {/* التبويبات */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="mb-6">
             <TabsTrigger value="accommodation">الإقامة</TabsTrigger>
             <TabsTrigger value="payments">المدفوعات</TabsTrigger>
             <TabsTrigger value="expenses">المصاريف الشخصية</TabsTrigger>
+            <TabsTrigger value="facility_expenses">مصاريف المصحة</TabsTrigger>
           </TabsList>
 
           {/* تبويب الإقامة */}
@@ -543,39 +755,41 @@ const Finance = () => {
 
             <Card>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>المريض</TableHead>
-                      <TableHead>رقم الغرفة</TableHead>
-                      <TableHead>السعر اليومي</TableHead>
-                      <TableHead>تاريخ الدخول</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {accommodations.map((accommodation) => (
-                      <TableRow key={accommodation.id}>
-                        <TableCell>{accommodation.patient_name}</TableCell>
-                        <TableCell>{accommodation.room_number}</TableCell>
-                        <TableCell>{accommodation.daily_rate.toLocaleString()} ج.م</TableCell>
-                        <TableCell>{new Date(accommodation.check_in_date).toLocaleDateString('ar-EG')}</TableCell>
-                        <TableCell>{getStatusBadge(accommodation.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المريض</TableHead>
+                        <TableHead>رقم الغرفة</TableHead>
+                        <TableHead>السعر اليومي</TableHead>
+                        <TableHead>تاريخ الدخول</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>الإجراءات</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {accommodations.map((accommodation) => (
+                        <TableRow key={accommodation.id}>
+                          <TableCell>{accommodation.patient_name}</TableCell>
+                          <TableCell>{accommodation.room_number}</TableCell>
+                          <TableCell>{accommodation.daily_rate.toLocaleString()} ج.م</TableCell>
+                          <TableCell>{new Date(accommodation.check_in_date).toLocaleDateString('ar-EG')}</TableCell>
+                          <TableCell>{getStatusBadge(accommodation.status)}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" onClick={() => setEditAccommodation(accommodation)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleDeleteAccommodation(accommodation.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -668,49 +882,51 @@ const Finance = () => {
 
             <Card>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>المريض</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                      <TableHead>نوع الدفع</TableHead>
-                      <TableHead>تاريخ الدفع</TableHead>
-                      <TableHead>رقم الإيصال</TableHead>
-                      <TableHead>الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{payment.patient_name}</TableCell>
-                        <TableCell>{payment.amount.toLocaleString()} ج.م</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            {getPaymentTypeIcon(payment.payment_type)}
-                            <span>
-                              {payment.payment_type === 'cash' && 'نقدي'}
-                              {payment.payment_type === 'card' && 'بطاقة ائتمان'}
-                              {payment.payment_type === 'bank_transfer' && 'تحويل بنكي'}
-                              {payment.payment_type === 'insurance' && 'تأمين'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{new Date(payment.payment_date).toLocaleDateString('ar-EG')}</TableCell>
-                        <TableCell>{payment.receipt_number}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المريض</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>نوع الدفع</TableHead>
+                        <TableHead>تاريخ الدفع</TableHead>
+                        <TableHead>رقم الإيصال</TableHead>
+                        <TableHead>الإجراءات</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {payments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>{payment.patient_name}</TableCell>
+                          <TableCell>{payment.amount.toLocaleString()} ج.م</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              {getPaymentTypeIcon(payment.payment_type)}
+                              <span>
+                                {payment.payment_type === 'cash' && 'نقدي'}
+                                {payment.payment_type === 'card' && 'بطاقة ائتمان'}
+                                {payment.payment_type === 'bank_transfer' && 'تحويل بنكي'}
+                                {payment.payment_type === 'insurance' && 'تأمين'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{new Date(payment.payment_date).toLocaleDateString('ar-EG')}</TableCell>
+                          <TableCell>{payment.receipt_number}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm" onClick={() => setEditPayment(payment)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleDeletePayment(payment.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -728,83 +944,180 @@ const Finance = () => {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>إضافة مصروف شخصي جديد</DialogTitle>
+                    <DialogTitle>إضافة مصروف جديد</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">المبلغ <span style={{color: 'red'}}>*</span></Label>
+                      <Input id="amount" type="number" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} placeholder="المبلغ" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="type">نوع المصروف <span style={{color: 'red'}}>*</span></Label>
+                      <Input id="type" value={newExpense.expense_type} onChange={e => setNewExpense({...newExpense, expense_type: e.target.value})} placeholder="نوع المصروف" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="date">تاريخ المصروف <span style={{color: 'red'}}>*</span></Label>
+                      <Input id="date" type="date" value={newExpense.expense_date} onChange={e => setNewExpense({...newExpense, expense_date: e.target.value})} required />
+                    </div>
+                    {!showExtraFields && (
+                      <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
+                        تفاصيل إضافية
+                      </Button>
+                    )}
+                    {showExtraFields && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="receipt">رقم الإيصال</Label>
+                          <Input id="receipt" value={newExpense.receipt_number} onChange={e => setNewExpense({...newExpense, receipt_number: e.target.value})} placeholder="رقم الإيصال" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="vendor">اسم المورد</Label>
+                          <Input id="vendor" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} placeholder="اسم المورد" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="notes">ملاحظات</Label>
+                          <Textarea id="notes" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} placeholder="ملاحظات إضافية" />
+                        </div>
+                      </>
+                    )}
+                    <Button onClick={handleAddExpense} className="w-full">
+                      إضافة المصروف
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المريض</TableHead>
+                        <TableHead>نوع المصروف</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>الإجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.map((expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell>{expense.patient_name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              {getExpenseTypeIcon(expense.expense_type)}
+                              <span>
+                                {expense.expense_type === 'medication' && 'أدوية'}
+                                {expense.expense_type === 'personal_care' && 'رعاية شخصية'}
+                                {expense.expense_type === 'food' && 'طعام'}
+                                {expense.expense_type === 'transportation' && 'مواصلات'}
+                                {expense.expense_type === 'entertainment' && 'ترفيه'}
+                                {expense.expense_type === 'other' && 'أخرى'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{expense.amount.toLocaleString()} ج.م</TableCell>
+                          <TableCell>{new Date(expense.expense_date).toLocaleDateString('ar-EG')}</TableCell>
+                          <TableCell>{getStatusBadge(expense.status)}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* تبويب مصاريف المصحة */}
+          <TabsContent value="facility_expenses" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">مصاريف المصحة</h2>
+              <Dialog open={isAddFacilityExpenseOpen} onOpenChange={setIsAddFacilityExpenseOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    إضافة مصروف مصحة
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>إضافة مصروف مصحة جديد</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="expense-patient">المريض</Label>
-                      <Select value={newExpense.patient_id} onValueChange={(value) => setNewExpense({...newExpense, patient_id: value})}>
+                      <Label htmlFor="facility-expense-category">فئة المصروف</Label>
+                      <Select value={newFacilityExpense.expense_category} onValueChange={(value) => setNewFacilityExpense({ ...newFacilityExpense, expense_category: value })}>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر المريض" />
+                          <SelectValue placeholder="اختر الفئة" />
                         </SelectTrigger>
                         <SelectContent>
-                          {patients.map((patient) => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              {patient.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="expense-type">نوع المصروف</Label>
-                      <Select value={newExpense.expense_type} onValueChange={(value: any) => setNewExpense({...newExpense, expense_type: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع المصروف" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="medication">أدوية</SelectItem>
-                          <SelectItem value="personal_care">رعاية شخصية</SelectItem>
+                          <SelectItem value="electricity">كهرباء</SelectItem>
+                          <SelectItem value="water">مياه</SelectItem>
                           <SelectItem value="food">طعام</SelectItem>
-                          <SelectItem value="transportation">مواصلات</SelectItem>
-                          <SelectItem value="entertainment">ترفيه</SelectItem>
+                          <SelectItem value="cleaning">تنظيف</SelectItem>
+                          <SelectItem value="maintenance">صيانة</SelectItem>
+                          <SelectItem value="security">أمن</SelectItem>
+                          <SelectItem value="internet">إنترنت</SelectItem>
+                          <SelectItem value="phone">هاتف</SelectItem>
                           <SelectItem value="other">أخرى</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="expense-amount">المبلغ</Label>
-                      <Input
-                        id="expense-amount"
-                        type="number"
-                        value={newExpense.amount}
-                        onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
-                        placeholder="مثال: 150"
-                      />
+                      <Label htmlFor="facility-expense-name">اسم المصروف</Label>
+                      <Input id="facility-expense-name" value={newFacilityExpense.expense_name} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, expense_name: e.target.value })} placeholder="مثال: فاتورة كهرباء" />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="expense-date">تاريخ المصروف</Label>
-                      <Input
-                        id="expense-date"
-                        type="date"
-                        value={newExpense.expense_date}
-                        onChange={(e) => setNewExpense({...newExpense, expense_date: e.target.value})}
-                      />
+                      <Label htmlFor="facility-expense-amount">المبلغ</Label>
+                      <Input id="facility-expense-amount" type="number" value={newFacilityExpense.amount} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, amount: e.target.value })} placeholder="مثال: 2000" />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="expense-description">الوصف</Label>
-                      <Textarea
-                        id="expense-description"
-                        value={newExpense.description}
-                        onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
-                        placeholder="وصف المصروف"
-                      />
+                      <Label htmlFor="facility-expense-date">تاريخ المصروف</Label>
+                      <Input id="facility-expense-date" type="date" value={newFacilityExpense.expense_date} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, expense_date: e.target.value })} />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="expense-receipt">رقم الإيصال</Label>
-                      <Input
-                        id="expense-receipt"
-                        value={newExpense.receipt_number}
-                        onChange={(e) => setNewExpense({...newExpense, receipt_number: e.target.value})}
-                        placeholder="مثال: EXP001"
-                      />
+                      <Label htmlFor="facility-expense-due-date">تاريخ الاستحقاق (اختياري)</Label>
+                      <Input id="facility-expense-due-date" type="date" value={newFacilityExpense.due_date} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, due_date: e.target.value })} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="facility-expense-payment-method">طريقة الدفع</Label>
+                      <Input id="facility-expense-payment-method" value={newFacilityExpense.payment_method} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, payment_method: e.target.value })} placeholder="مثال: نقدي/تحويل بنكي" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="facility-expense-receipt">رقم الإيصال</Label>
+                      <Input id="facility-expense-receipt" value={newFacilityExpense.receipt_number} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, receipt_number: e.target.value })} placeholder="مثال: FAC001" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="facility-expense-vendor-name">اسم المورد (اختياري)</Label>
+                      <Input id="facility-expense-vendor-name" value={newFacilityExpense.vendor_name} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, vendor_name: e.target.value })} placeholder="اسم الشركة أو المورد" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="facility-expense-vendor-phone">هاتف المورد (اختياري)</Label>
+                      <Input id="facility-expense-vendor-phone" value={newFacilityExpense.vendor_phone} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, vendor_phone: e.target.value })} placeholder="رقم الهاتف" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="facility-expense-description">الوصف</Label>
+                      <Textarea id="facility-expense-description" value={newFacilityExpense.description} onChange={e => setNewFacilityExpense({ ...newFacilityExpense, description: e.target.value })} placeholder="وصف المصروف" />
                     </div>
                   </div>
                   <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddExpenseOpen(false)}>
+                    <Button variant="outline" onClick={() => setIsAddFacilityExpenseOpen(false)}>
                       إلغاء
                     </Button>
-                    <Button onClick={handleAddExpense}>
+                    <Button onClick={handleAddFacilityExpense}>
                       إضافة
                     </Button>
                   </div>
@@ -814,58 +1127,71 @@ const Finance = () => {
 
             <Card>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>المريض</TableHead>
-                      <TableHead>نوع المصروف</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {expenses.map((expense) => (
-                      <TableRow key={expense.id}>
-                        <TableCell>{expense.patient_name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            {getExpenseTypeIcon(expense.expense_type)}
-                            <span>
-                              {expense.expense_type === 'medication' && 'أدوية'}
-                              {expense.expense_type === 'personal_care' && 'رعاية شخصية'}
-                              {expense.expense_type === 'food' && 'طعام'}
-                              {expense.expense_type === 'transportation' && 'مواصلات'}
-                              {expense.expense_type === 'entertainment' && 'ترفيه'}
-                              {expense.expense_type === 'other' && 'أخرى'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{expense.amount.toLocaleString()} ج.م</TableCell>
-                        <TableCell>{new Date(expense.expense_date).toLocaleDateString('ar-EG')}</TableCell>
-                        <TableCell>{getStatusBadge(expense.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>الفئة</TableHead>
+                        <TableHead>اسم المصروف</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>تاريخ المصروف</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>الإجراءات</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {facilityExpenses.map((expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell>{expense.expense_category}</TableCell>
+                          <TableCell>{expense.expense_name}</TableCell>
+                          <TableCell>{expense.amount} ج.م</TableCell>
+                          <TableCell>{new Date(expense.expense_date).toLocaleDateString('ar-EG')}</TableCell>
+                          <TableCell>{expense.payment_status === 'pending' ? 'في الانتظار' : expense.payment_status === 'paid' ? 'مدفوع' : expense.payment_status === 'overdue' ? 'متأخر' : 'ملغي'}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Dialog التعديل */}
+        <Dialog open={!!editAccommodation} onOpenChange={() => setEditAccommodation(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>تعديل بيانات الإقامة</DialogTitle>
+            </DialogHeader>
+            <Input value={editAccommodation?.room_number || ''} onChange={e => setEditAccommodation({ ...editAccommodation, room_number: e.target.value })} placeholder="رقم الغرفة" />
+            <Button onClick={() => handleUpdateAccommodation(editAccommodation)}>حفظ</Button>
+            <Button variant="outline" onClick={() => setEditAccommodation(null)}>إلغاء</Button>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!editPayment} onOpenChange={() => setEditPayment(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>تعديل بيانات المدفوع</DialogTitle>
+            </DialogHeader>
+            <Input value={editPayment?.amount || ''} onChange={e => setEditPayment({ ...editPayment, amount: e.target.value })} placeholder="المبلغ" />
+            <Button onClick={() => handleUpdatePayment(editPayment)}>حفظ</Button>
+            <Button variant="outline" onClick={() => setEditPayment(null)}>إلغاء</Button>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
 };
 
-export default Finance; 
+export default Finance;

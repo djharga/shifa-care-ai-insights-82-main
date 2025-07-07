@@ -52,9 +52,9 @@ git push -u origin main
 
 3. **إضافة المتغيرات البيئية**
    ```
-   VITE_SUPABASE_URL=https://your-project-id.supabase.co
+   VITE_SUPABASE_URL=your-supabase-url
    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-   VITE_OPENAI_API_KEY=sk-proj-your-openai-api-key
+   VITE_OPENAI_API_KEY=your-openai-api-key
    ```
 
 4. **النشر**

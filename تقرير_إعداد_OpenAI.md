@@ -161,7 +161,7 @@ const activities = await suggestActivities(patientProfile, sessionResults);
 ## 🔒 الأمان والخصوصية
 
 ### أفضل الممارسات المطبقة
-- ✅ مفتاح API محفوظ في متغيرات البيئة
+- ✅ مفتاح API محفوظ في متغيرات البيئة (your-openai-api-key)
 - ✅ لا يتم إرسال المفتاح لأي خادم خارجي
 - ✅ تشفير البيانات الحساسة
 - ✅ مراقبة استخدام API
@@ -235,10 +235,10 @@ const testPlan = await generateTreatmentPlan({
 
 #### 1. "OpenAI API key not configured"
 **السبب**: عدم إضافة مفتاح API
-**الحل**: أضف `VITE_OPENAI_API_KEY` في `.env.local`
+**الحل**: أضف `VITE_OPENAI_API_KEY` في `.env.local` (your-openai-api-key)
 
 #### 2. "Invalid API key"
-**السبب**: مفتاح API غير صحيح
+**السبب**: مفتاح API غير صحيح (your-openai-api-key)
 **الحل**: تحقق من صحة المفتاح في platform.openai.com
 
 #### 3. "Rate limit exceeded"

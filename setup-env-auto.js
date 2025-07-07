@@ -31,7 +31,7 @@ VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 # =====================================================
 # إعدادات Google AI
 # =====================================================
-VITE_GOOGLE_AI_API_KEY=your-google-ai-api-key-here
+VITE_GOOGLE_AI_API_KEY=AIzaSyAISMlZx9Ukfi7QJlog5_e0KJuWyb_Atrk
 VITE_GOOGLE_AI_MODEL=gemini-1.5-flash
 VITE_GOOGLE_AI_MAX_TOKENS=2000
 VITE_GOOGLE_AI_TEMPERATURE=0.7

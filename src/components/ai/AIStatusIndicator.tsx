@@ -1,25 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Brain, 
-  Settings,
   Wifi,
   WifiOff,
-  CheckCircle,
-  AlertTriangle,
-  Zap,
-  Clock,
   RefreshCw,
-  Activity,
-  TrendingUp,
-  TrendingDown,
-  Shield,
-  Eye,
-  EyeOff
+  Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,10 +25,6 @@ interface AIStatusIndicatorProps {
 
 export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
   const { toast } = useToast();
-  const [isChecking, setIsChecking] = useState(false);
-  const [lastCheck, setLastCheck] = useState<Date | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<'online' | 'offline' | 'checking'>('offline');
   const [isTesting, setIsTesting] = useState(false);
   const [statusIndicator, setStatusIndicator] = useState<AIStatus>({
     isConfigured: false,
@@ -56,50 +40,9 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
       // Mock implementation
       return { status: 'online', responseTime: 150 };
     },
-    customCall: async (systemPrompt: string, userPrompt: string, options?: any) => {
+    customCall: async () => {
       // Mock implementation
       return { success: true, data: 'مرحباً', error: null };
-    }
-  };
-
-  useEffect(() => {
-    checkAIStatus();
-  }, []);
-
-  const checkAIStatus = async () => {
-    setIsChecking(true);
-    
-    try {
-      // const config = openAIService.getConfig(); // removed - service doesn't exist
-      
-      // if (!config.apiKey) {
-      //   setStatus('not_configured');
-      //   return;
-      // }
-
-      // const response = await openAIService.customCall( // removed - service doesn't exist
-      //   "أنت مساعد طبي. أجب بـ 'OK' فقط.",
-      //   "قل OK",
-      //   { maxTokens: 10 }
-      // );
-
-      // if (response.success) {
-      //   setStatus('active');
-      //   setLastCheck(new Date());
-      // } else {
-      //   setStatus('error');
-      //   setError(response.error || 'خطأ غير معروف');
-      // }
-      
-      // Placeholder for now
-      setStatus('online');
-      setLastCheck(new Date());
-      
-    } catch (error: any) {
-      setStatus('offline');
-      setError(error.message || 'خطأ في فحص الحالة');
-    } finally {
-      setIsChecking(false);
     }
   };
 
@@ -107,11 +50,7 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
     setIsTesting(true);
     
     try {
-      const response = await openAIService.customCall(
-        "أنت مساعد بسيط. أجب بـ 'مرحباً' فقط.",
-        "قل مرحباً",
-        { maxTokens: 10 }
-      );
+      const response = await openAIService.customCall();
 
       if (response.success) {
         setStatusIndicator(prev => ({
@@ -199,15 +138,14 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
         )}
 
         {/* إحصائيات */}
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="text-center">
-            <div className="text-lg font-bold text-green-600">{statusIndicator.successCount}</div>
-            <div className="text-xs text-gray-600">نجح</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-red-600">{statusIndicator.errorCount}</div>
-            <div className="text-xs text-gray-600">فشل</div>
-          </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm">النجاحات</span>
+          <span className="text-sm text-green-600">{statusIndicator.successCount}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm">الأخطاء</span>
+          <span className="text-sm text-red-600">{statusIndicator.errorCount}</span>
         </div>
 
         {/* أزرار التحكم */}
@@ -215,13 +153,13 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
           <Button
             size="sm"
             onClick={testAIConnection}
-            disabled={!statusIndicator.isConfigured || isTesting}
+            disabled={isTesting}
             className="flex-1"
           >
             {isTesting ? (
               <>
                 <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                اختبار...
+                جاري الاختبار...
               </>
             ) : (
               <>
@@ -231,39 +169,15 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
             )}
           </Button>
           
-          {!statusIndicator.isConfigured && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                toast({
-                  title: "إعداد OpenAI",
-                  description: "يرجى إضافة VITE_OPENAI_API_KEY في ملف .env",
-                });
-              }}
-            >
-              <Settings className="h-3 w-3 mr-1" />
-              إعداد
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1"
+          >
+            <Settings className="h-3 w-3 mr-1" />
+            الإعدادات
+          </Button>
         </div>
-
-        {/* رسائل المساعدة */}
-        {!statusIndicator.isConfigured && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-xs text-yellow-800">
-              ⚠️ لم يتم إعداد مفتاح OpenAI. أضف VITE_OPENAI_API_KEY في ملف .env
-            </p>
-          </div>
-        )}
-
-        {statusIndicator.isConfigured && !statusIndicator.isConnected && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-xs text-red-800">
-              ❌ فشل في الاتصال بـ OpenAI. تحقق من صحة المفتاح
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

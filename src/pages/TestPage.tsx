@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +20,17 @@ import {
   ArrowRight,
   TrendingUp
 } from 'lucide-react';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TestPage = () => {
+  const [patients, setPatients] = useState([]);
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({ name: '' });
+  const [showSession, setShowSession] = useState(false);
+  const [newSession, setNewSession] = useState({ title: '' });
+  const [showAISession, setShowAISession] = useState(false);
+  const [newAISession, setNewAISession] = useState({ topic: '' });
+
   return (
     <div className="min-h-screen bg-background p-8" dir="rtl">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -142,15 +151,51 @@ const TestPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start">
-                      ➕ إضافة مريض جديد
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      📅 جدولة جلسة
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      🧠 جلسة بالذكاء الاصطناعي
-                    </Button>
+                    <Dialog open={showAddPatient} onOpenChange={setShowAddPatient}>
+                      <DialogTrigger asChild>
+                        <Button className="w-full" onClick={() => setShowAddPatient(true)}>
+                          إضافة مريض جديد
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>إضافة مريض جديد</DialogTitle>
+                        </DialogHeader>
+                        <Input value={newPatient.name} onChange={e => setNewPatient({ name: e.target.value })} placeholder="اسم المريض" />
+                        <Button onClick={() => { setPatients([...patients, newPatient]); setShowAddPatient(false); setNewPatient({ name: '' }); }}>حفظ</Button>
+                        <Button variant="outline" onClick={() => setShowAddPatient(false)}>إلغاء</Button>
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog open={showSession} onOpenChange={setShowSession}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start" onClick={() => setShowSession(true)}>
+                          جدولة جلسة
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>جدولة جلسة علاجية</DialogTitle>
+                        </DialogHeader>
+                        <Input value={newSession.title} onChange={e => setNewSession({ title: e.target.value })} placeholder="عنوان الجلسة" />
+                        <Button onClick={() => { setShowSession(false); setNewSession({ title: '' }); }}>حفظ</Button>
+                        <Button variant="outline" onClick={() => setShowSession(false)}>إلغاء</Button>
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog open={showAISession} onOpenChange={setShowAISession}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start" onClick={() => setShowAISession(true)}>
+                          جلسة بالذكاء الاصطناعي
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>بدء جلسة ذكاء اصطناعي</DialogTitle>
+                        </DialogHeader>
+                        <Input value={newAISession.topic} onChange={e => setNewAISession({ topic: e.target.value })} placeholder="موضوع الجلسة" />
+                        <Button onClick={() => { setShowAISession(false); setNewAISession({ topic: '' }); }}>حفظ</Button>
+                        <Button variant="outline" onClick={() => setShowAISession(false)}>إلغاء</Button>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardContent>
               </Card>

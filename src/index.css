@@ -115,6 +115,12 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
@@ -124,6 +130,34 @@ All colors MUST be HSL.
     margin: 0;
     padding: 0;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+    
+    /* Prevent horizontal scroll on mobile */
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    /* Improve touch targets */
+    button, a, input, select, textarea {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better spacing for mobile */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
   }
 
   /* Arabic Font Support */
@@ -144,7 +178,7 @@ All colors MUST be HSL.
   
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   
   ::-webkit-scrollbar-track {
@@ -159,17 +193,36 @@ All colors MUST be HSL.
     @apply bg-primary;
   }
 
+  /* Mobile scrollbar */
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+  }
+
   /* Ensure basic elements are visible */
   h1, h2, h3, h4, h5, h6 {
     @apply text-foreground;
+    line-height: 1.2;
   }
 
   p {
     @apply text-foreground;
+    line-height: 1.6;
   }
 
   div {
     @apply text-foreground;
+  }
+
+  /* Mobile typography improvements */
+  @media (max-width: 768px) {
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.125rem; }
+    h4 { font-size: 1rem; }
+    h5 { font-size: 0.875rem; }
+    h6 { font-size: 0.75rem; }
   }
 }
 
@@ -195,18 +248,60 @@ All colors MUST be HSL.
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
+  /* Mobile-specific utilities */
+  .mobile-padding {
+    padding: 1rem;
+  }
+  
+  .mobile-margin {
+    margin: 1rem;
+  }
+  
+  .mobile-text {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-text-sm {
+    font-size: 0.75rem;
+  }
+  
+  .mobile-text-lg {
+    font-size: 1rem;
+  }
+
+  /* Responsive grid improvements */
+  .mobile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .mobile-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+  }
+
   /* Debug styles to ensure visibility */
   .debug-border {
     border: 2px solid red !important;
   }
-
+  
   .debug-bg {
-    background-color: #f0f0f0 !important;
+    background-color: red !important;
   }
 }
 
+/* Component styles */
 @layer components {
-  /* Custom Components */
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
   }
@@ -216,27 +311,28 @@ All colors MUST be HSL.
   }
   
   .card-hover {
-    @apply hover:shadow-lg transition-shadow duration-200;
+    @apply hover:shadow-md transition-all duration-200;
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-
-  /* Ensure cards are visible */
+  
   .card {
-    @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm;
+    @apply bg-card text-card-foreground rounded-lg border shadow-sm;
   }
-
+  
   .card-header {
-    @apply p-6 pb-0;
+    @apply flex flex-col space-y-1.5 p-4 sm:p-6;
   }
-
+  
   .card-content {
-    @apply p-6 pt-0;
+    @apply p-4 sm:p-6 pt-0;
   }
-
+  
   .card-title {
-    @apply text-lg font-semibold leading-none tracking-tight;
+    @apply text-lg sm:text-xl lg:text-2xl font-semibold leading-none tracking-tight;
   }
 }

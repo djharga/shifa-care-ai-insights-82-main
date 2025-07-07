@@ -2,11 +2,11 @@
 
 ## 🗄️ قاعدة البيانات (Supabase)
 
-### 🔗 معلومات الاتصال:
+### 🗝️ معلومات الاتصال:
 ```
-🌐 URL: https://oyljfpeeckxgfrqwsebk.supabase.co
-🔑 Public Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95bGpmcGVlY2t4Z2ZycXdzZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MTQxODksImV4cCI6MjA2NzA5MDE4OX0.czWNSZ4vSocds-zInvEAiSS6XcjCmorWwTFsoIcRJnM
-🔒 Project ID: oyljfpeeckxgfrqwsebk
+🌐 URL: your-supabase-url
+🔑 Public Key: your-supabase-anon-key
+🔒 Project ID: your-project-id
 ```
 
 ### 📋 جداول قاعدة البيانات (15 جدول):

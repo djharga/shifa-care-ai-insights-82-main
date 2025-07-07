@@ -1,7 +1,7 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { config } from 'dotenv';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// تحميل متغيرات البيئة
-require('dotenv').config();
+config();
 
 const apiKey = process.env.VITE_GOOGLE_AI_API_KEY;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +18,6 @@ import {
   Download,
   Search,
   UserPlus,
-  TrendingUp,
-  BarChart3,
   Calendar,
   FileText,
   Phone,
@@ -99,6 +97,41 @@ const FamilyCommunication = () => {
   const [aiService] = useState(() => new GoogleAIService());
   const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showVisitDialog, setShowVisitDialog] = useState(false);
+  
+  // State for forms
+  const [newFamily, setNewFamily] = useState({
+    name: '',
+    patientName: '',
+    relationship: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
+  
+  const [newMessage, setNewMessage] = useState({
+    familyId: '',
+    type: '',
+    title: '',
+    content: '',
+    priority: 'medium'
+  });
+  
+  const [newVisit, setNewVisit] = useState({
+    familyId: '',
+    date: '',
+    time: '',
+    duration: '',
+    purpose: ''
+  });
+  
+  const [newReport, setNewReport] = useState({
+    familyId: '',
+    type: '',
+    title: '',
+    content: ''
+  });
 
   // Mock data
   useEffect(() => {
@@ -277,16 +310,8 @@ const FamilyCommunication = () => {
   };
 
   const handleAddFamily = () => {
-    // قراءة البيانات من النموذج
-    const familyNameInput = document.getElementById('familyName') as HTMLInputElement;
-    const patientNameInput = document.getElementById('patientName') as HTMLInputElement;
-    const relationshipSelect = document.querySelector('select') as HTMLSelectElement;
-    const phoneInput = document.getElementById('phone') as HTMLInputElement;
-    const emailInput = document.getElementById('email') as HTMLInputElement;
-    const addressTextarea = document.getElementById('address') as HTMLTextAreaElement;
-
     // التحقق من البيانات المطلوبة
-    if (!familyNameInput?.value || !patientNameInput?.value || !phoneInput?.value) {
+    if (!newFamily.name || !newFamily.patientName || !newFamily.phone) {
       toast({
         title: "خطأ",
         description: "يرجى ملء الحقول المطلوبة (اسم العائلة، اسم المريض، رقم الهاتف)",
@@ -296,15 +321,15 @@ const FamilyCommunication = () => {
     }
 
     // إنشاء عائلة جديدة
-    const newFamily: Family = {
+    const family: Family = {
       id: Date.now().toString(),
-      name: familyNameInput.value,
-      phone: phoneInput.value,
-      email: emailInput.value || '',
-      address: addressTextarea?.value || '',
-      patientName: patientNameInput.value,
+      name: newFamily.name,
+      phone: newFamily.phone,
+      email: newFamily.email || '',
+      address: newFamily.address || '',
+      patientName: newFamily.patientName,
       patientId: `P${Date.now()}`,
-      relationship: relationshipSelect?.options[relationshipSelect.selectedIndex]?.text || 'أخرى',
+      relationship: newFamily.relationship || 'أخرى',
       status: 'active',
       lastContact: new Date().toLocaleDateString('ar-EG'),
       preferences: {
@@ -316,7 +341,7 @@ const FamilyCommunication = () => {
     };
 
     // إضافة العائلة للقائمة
-    setFamilies(prev => [newFamily, ...prev]);
+    setFamilies(prev => [family, ...prev]);
 
     // إظهار رسالة نجاح
     toast({
@@ -324,25 +349,20 @@ const FamilyCommunication = () => {
       description: "تم إضافة العائلة بنجاح",
     });
 
-    // إغلاق النموذج (إعادة تعيين الحقول)
-    if (familyNameInput) familyNameInput.value = '';
-    if (patientNameInput) patientNameInput.value = '';
-    if (relationshipSelect) relationshipSelect.value = '';
-    if (phoneInput) phoneInput.value = '';
-    if (emailInput) emailInput.value = '';
-    if (addressTextarea) addressTextarea.value = '';
+    // إعادة تعيين النموذج
+    setNewFamily({
+      name: '',
+      patientName: '',
+      relationship: '',
+      phone: '',
+      email: '',
+      address: ''
+    });
   };
 
   const handleSendMessage = () => {
-    // قراءة البيانات من النموذج
-    const familySelect = document.querySelector('select') as HTMLSelectElement;
-    const messageTypeSelect = document.querySelectorAll('select')[1] as HTMLSelectElement;
-    const titleInput = document.getElementById('title') as HTMLInputElement;
-    const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
-    const prioritySelect = document.querySelectorAll('select')[2] as HTMLSelectElement;
-
     // التحقق من البيانات
-    if (!familySelect?.value || !messageTypeSelect?.value || !titleInput?.value || !contentTextarea?.value) {
+    if (!newMessage.familyId || !newMessage.type || !newMessage.title || !newMessage.content) {
       toast({
         title: "خطأ",
         description: "يرجى ملء جميع الحقول المطلوبة",
@@ -351,21 +371,32 @@ const FamilyCommunication = () => {
       return;
     }
 
+    // الحصول على اسم العائلة
+    const family = families.find(f => f.id === newMessage.familyId);
+    if (!family) {
+      toast({
+        title: "خطأ",
+        description: "العائلة غير موجودة",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // إنشاء رسالة جديدة
-    const newMessage: Message = {
+    const message: Message = {
       id: Date.now().toString(),
-      familyId: familySelect.value,
-      familyName: familySelect.options[familySelect.selectedIndex]?.text || '',
-      type: messageTypeSelect.value as any,
-      title: titleInput.value,
-      content: contentTextarea.value,
+      familyId: newMessage.familyId,
+      familyName: family.name,
+      type: newMessage.type as any,
+      title: newMessage.title,
+      content: newMessage.content,
       status: 'sent',
       sentAt: new Date().toLocaleString('ar-EG'),
-      priority: prioritySelect?.value as any || 'medium'
+      priority: newMessage.priority as any
     };
 
     // إضافة الرسالة للقائمة
-    setMessages(prev => [newMessage, ...prev]);
+    setMessages(prev => [message, ...prev]);
 
     // إظهار رسالة نجاح
     toast({
@@ -373,24 +404,19 @@ const FamilyCommunication = () => {
       description: "تم إرسال الرسالة بنجاح",
     });
 
-    // إغلاق النموذج (إعادة تعيين الحقول)
-    if (familySelect) familySelect.value = '';
-    if (messageTypeSelect) messageTypeSelect.value = '';
-    if (titleInput) titleInput.value = '';
-    if (contentTextarea) contentTextarea.value = '';
-    if (prioritySelect) prioritySelect.value = '';
+    // إعادة تعيين النموذج
+    setNewMessage({
+      familyId: '',
+      type: '',
+      title: '',
+      content: '',
+      priority: 'medium'
+    });
   };
 
   const handleScheduleVisit = () => {
-    // قراءة البيانات من النموذج
-    const familySelect = document.querySelector('select') as HTMLSelectElement;
-    const dateInput = document.getElementById('visitDate') as HTMLInputElement;
-    const timeInput = document.getElementById('visitTime') as HTMLInputElement;
-    const durationSelect = document.querySelectorAll('select')[1] as HTMLSelectElement;
-    const purposeTextarea = document.getElementById('purpose') as HTMLTextAreaElement;
-
     // التحقق من البيانات المطلوبة
-    if (!familySelect?.value || !dateInput?.value || !timeInput?.value || !purposeTextarea?.value) {
+    if (!newVisit.familyId || !newVisit.date || !newVisit.time || !newVisit.purpose) {
       toast({
         title: "خطأ",
         description: "يرجى ملء الحقول المطلوبة (العائلة، التاريخ، الوقت، الغرض)",
@@ -399,22 +425,33 @@ const FamilyCommunication = () => {
       return;
     }
 
+    // الحصول على بيانات العائلة
+    const family = families.find(f => f.id === newVisit.familyId);
+    if (!family) {
+      toast({
+        title: "خطأ",
+        description: "العائلة غير موجودة",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // إنشاء زيارة جديدة
-    const newVisit: Visit = {
+    const visit: Visit = {
       id: Date.now().toString(),
-      familyId: familySelect.value,
-      familyName: familySelect.options[familySelect.selectedIndex]?.text || '',
-      patientName: familySelect.options[familySelect.selectedIndex]?.text.replace('عائلة ', '') || '',
-      date: dateInput.value,
-      time: timeInput.value,
-      duration: durationSelect?.options[durationSelect.selectedIndex]?.text || 'ساعة واحدة',
-      purpose: purposeTextarea.value,
+      familyId: newVisit.familyId,
+      familyName: family.name,
+      patientName: family.patientName,
+      date: newVisit.date,
+      time: newVisit.time,
+      duration: newVisit.duration || 'ساعة واحدة',
+      purpose: newVisit.purpose,
       status: 'scheduled',
       notes: ''
     };
 
     // إضافة الزيارة للقائمة
-    setVisits(prev => [newVisit, ...prev]);
+    setVisits(prev => [visit, ...prev]);
 
     // إظهار رسالة نجاح
     toast({
@@ -422,23 +459,19 @@ const FamilyCommunication = () => {
       description: "تم جدولة الزيارة بنجاح",
     });
 
-    // إغلاق النموذج (إعادة تعيين الحقول)
-    if (familySelect) familySelect.value = '';
-    if (dateInput) dateInput.value = '';
-    if (timeInput) timeInput.value = '';
-    if (durationSelect) durationSelect.value = '';
-    if (purposeTextarea) purposeTextarea.value = '';
+    // إعادة تعيين النموذج
+    setNewVisit({
+      familyId: '',
+      date: '',
+      time: '',
+      duration: '',
+      purpose: ''
+    });
   };
 
   const handleGenerateReport = () => {
-    // قراءة البيانات من النموذج
-    const familySelect = document.querySelectorAll('select')[0] as HTMLSelectElement;
-    const reportTypeSelect = document.querySelectorAll('select')[1] as HTMLSelectElement;
-    const titleInput = document.getElementById('reportTitle') as HTMLInputElement;
-    const contentTextarea = document.getElementById('reportContent') as HTMLTextAreaElement;
-
     // التحقق من البيانات المطلوبة
-    if (!familySelect?.value || !reportTypeSelect?.value || !titleInput?.value || !contentTextarea?.value) {
+    if (!newReport.familyId || !newReport.type || !newReport.title || !newReport.content) {
       toast({
         title: "خطأ",
         description: "يرجى ملء جميع الحقول المطلوبة",
@@ -447,21 +480,32 @@ const FamilyCommunication = () => {
       return;
     }
 
+    // الحصول على بيانات العائلة
+    const family = families.find(f => f.id === newReport.familyId);
+    if (!family) {
+      toast({
+        title: "خطأ",
+        description: "العائلة غير موجودة",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // إنشاء تقرير جديد
-    const newReport: Report = {
+    const report: Report = {
       id: Date.now().toString(),
-      familyId: familySelect.value,
-      familyName: familySelect.options[familySelect.selectedIndex]?.text || '',
-      patientName: familySelect.options[familySelect.selectedIndex]?.text.replace('عائلة ', '') || '',
-      type: reportTypeSelect.value as any,
-      title: titleInput.value,
-      content: contentTextarea.value,
+      familyId: newReport.familyId,
+      familyName: family.name,
+      patientName: family.patientName,
+      type: newReport.type as any,
+      title: newReport.title,
+      content: newReport.content,
       generatedAt: new Date().toLocaleString('ar-EG'),
       status: 'draft'
     };
 
     // إضافة التقرير للقائمة
-    setReports(prev => [newReport, ...prev]);
+    setReports(prev => [report, ...prev]);
 
     // إظهار رسالة نجاح
     toast({
@@ -469,11 +513,13 @@ const FamilyCommunication = () => {
       description: "تم إنشاء التقرير بنجاح",
     });
 
-    // إغلاق النموذج (إعادة تعيين الحقول)
-    if (familySelect) familySelect.value = '';
-    if (reportTypeSelect) reportTypeSelect.value = '';
-    if (titleInput) titleInput.value = '';
-    if (contentTextarea) contentTextarea.value = '';
+    // إعادة تعيين النموذج
+    setNewReport({
+      familyId: '',
+      type: '',
+      title: '',
+      content: ''
+    });
   };
 
   // دالة إنشاء رسالة ذكية باللهجة المصرية
@@ -582,15 +628,25 @@ const FamilyCommunication = () => {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="familyName">اسم العائلة</Label>
-                  <Input id="familyName" placeholder="اسم العائلة" />
+                  <Input 
+                    id="familyName" 
+                    placeholder="اسم العائلة"
+                    value={newFamily.name}
+                    onChange={(e) => setNewFamily(prev => ({ ...prev, name: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="patientName">اسم المريض</Label>
-                  <Input id="patientName" placeholder="اسم المريض" />
+                  <Input 
+                    id="patientName" 
+                    placeholder="اسم المريض"
+                    value={newFamily.patientName}
+                    onChange={(e) => setNewFamily(prev => ({ ...prev, patientName: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="relationship">صلة القرابة</Label>
-                  <Select>
+                  <Select value={newFamily.relationship} onValueChange={(value) => setNewFamily(prev => ({ ...prev, relationship: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="اختر صلة القرابة" />
                     </SelectTrigger>
@@ -606,15 +662,31 @@ const FamilyCommunication = () => {
                 </div>
                 <div>
                   <Label htmlFor="phone">رقم الهاتف</Label>
-                  <Input id="phone" placeholder="0123456789" />
+                  <Input 
+                    id="phone" 
+                    placeholder="0123456789"
+                    value={newFamily.phone}
+                    onChange={(e) => setNewFamily(prev => ({ ...prev, phone: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email">البريد الإلكتروني</Label>
-                  <Input id="email" type="email" placeholder="example@email.com" />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="example@email.com"
+                    value={newFamily.email}
+                    onChange={(e) => setNewFamily(prev => ({ ...prev, email: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="address">العنوان</Label>
-                  <Textarea id="address" placeholder="عنوان العائلة" />
+                  <Textarea 
+                    id="address" 
+                    placeholder="عنوان العائلة"
+                    value={newFamily.address}
+                    onChange={(e) => setNewFamily(prev => ({ ...prev, address: e.target.value }))}
+                  />
                 </div>
                 <Button onClick={handleAddFamily} className="w-full">
                   إضافة العائلة
@@ -779,117 +851,135 @@ const FamilyCommunication = () => {
             <h3 className="text-lg font-semibold">الرسائل والإشعارات</h3>
             <Dialog>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setShowSendDialog(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   إرسال رسالة جديدة
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>إرسال رسالة جديدة</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="recipient">المستقبل</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر العائلة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {families.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="messageType">نوع الرسالة</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر نوع الرسالة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="notification">إشعار</SelectItem>
-                        <SelectItem value="report">تقرير</SelectItem>
-                        <SelectItem value="reminder">تذكير</SelectItem>
-                        <SelectItem value="general">عامة</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="title">العنوان</Label>
-                    <Input id="title" placeholder="عنوان الرسالة" />
-                  </div>
-                  <div>
-                    <Label htmlFor="content">المحتوى</Label>
-                    <div className="space-y-2">
-                      <Textarea id="content" placeholder="محتوى الرسالة" rows={4} />
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            const familySelect = document.querySelector('select') as HTMLSelectElement;
-                            const messageTypeSelect = document.querySelectorAll('select')[1] as HTMLSelectElement;
-                            const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
-                            
-                            if (familySelect && messageTypeSelect && contentTextarea) {
-                              const familyName = familySelect.options[familySelect.selectedIndex]?.text || '';
-                              const messageType = messageTypeSelect.options[messageTypeSelect.selectedIndex]?.text || '';
-                              
-                              const smartMessage = await generateSmartMessage(
-                                familyName,
-                                messageType,
-                                'رسالة عامة للتواصل مع العائلة'
-                              );
-                              
-                              if (smartMessage) {
-                                contentTextarea.value = smartMessage;
-                                toast({
-                                  title: "تم إنشاء الرسالة",
-                                  description: "تم إنشاء رسالة ذكية باللهجة المصرية",
-                                });
+              <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>إرسال رسالة جديدة</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="recipient">المستقبل</Label>
+                      <Select value={newMessage.familyId} onValueChange={(value) => setNewMessage(prev => ({ ...prev, familyId: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر العائلة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {families.map(f => (
+                            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="messageType">نوع الرسالة</Label>
+                      <Select value={newMessage.type} onValueChange={(value) => setNewMessage(prev => ({ ...prev, type: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع الرسالة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="notification">إشعار</SelectItem>
+                          <SelectItem value="report">تقرير</SelectItem>
+                          <SelectItem value="reminder">تذكير</SelectItem>
+                          <SelectItem value="general">عامة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="title">العنوان</Label>
+                      <Input 
+                        id="title" 
+                        placeholder="عنوان الرسالة"
+                        value={newMessage.title}
+                        onChange={(e) => setNewMessage(prev => ({ ...prev, title: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="content">المحتوى</Label>
+                      <div className="space-y-2">
+                        <Textarea 
+                          id="content" 
+                          placeholder="محتوى الرسالة" 
+                          rows={4}
+                          value={newMessage.content}
+                          onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              const family = families.find(f => f.id === newMessage.familyId);
+                              if (family && newMessage.type) {
+                                const smartMessage = await generateSmartMessage(
+                                  family.name,
+                                  newMessage.type,
+                                  'رسالة عامة للتواصل مع العائلة'
+                                );
+                                
+                                if (smartMessage) {
+                                  setNewMessage(prev => ({ ...prev, content: smartMessage }));
+                                  toast({
+                                    title: "تم إنشاء الرسالة",
+                                    description: "تم إنشاء رسالة ذكية باللهجة المصرية",
+                                  });
+                                }
                               }
-                            }
-                          }}
-                          disabled={isGeneratingMessage}
-                          className="flex-1"
-                        >
-                          {isGeneratingMessage ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                              جاري الإنشاء...
-                            </>
-                          ) : (
-                            <>
-                              <Star className="w-4 h-4 mr-2" />
-                              إنشاء رسالة ذكية
-                            </>
-                          )}
-                        </Button>
+                            }}
+                            disabled={isGeneratingMessage}
+                            className="flex-1"
+                          >
+                            {isGeneratingMessage ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                                جاري الإنشاء...
+                              </>
+                            ) : (
+                              <>
+                                <Star className="w-4 h-4 mr-2" />
+                                إنشاء رسالة ذكية
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
+                    <div>
+                      <Label htmlFor="priority">الأولوية</Label>
+                      <Select value={newMessage.priority} onValueChange={(value) => setNewMessage(prev => ({ ...prev, priority: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الأولوية" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">منخفضة</SelectItem>
+                          <SelectItem value="medium">متوسطة</SelectItem>
+                          <SelectItem value="high">عالية</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={() => {
+                      if (!newMessage.familyId || !newMessage.type || !newMessage.title || !newMessage.content) {
+                        toast({
+                          title: "خد بالك!",
+                          description: "لازم تعبي كل البيانات قبل ما تبعت الرسالة.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      handleSendMessage();
+                      setShowSendDialog(false);
+                    }} className="w-full">
+                      <Send className="w-4 h-4 mr-2" />
+                      إرسال الرسالة
+                    </Button>
                   </div>
-                  <div>
-                    <Label htmlFor="priority">الأولوية</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الأولوية" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">منخفضة</SelectItem>
-                        <SelectItem value="medium">متوسطة</SelectItem>
-                        <SelectItem value="high">عالية</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleSendMessage} className="w-full">
-                    <Send className="w-4 h-4 mr-2" />
-                    إرسال الرسالة
-                  </Button>
-                </div>
-              </DialogContent>
+                </DialogContent>
+              </Dialog>
             </Dialog>
           </div>
 
@@ -939,60 +1029,88 @@ const FamilyCommunication = () => {
             <h3 className="text-lg font-semibold">جدول الزيارات</h3>
             <Dialog>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setShowVisitDialog(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   جدولة زيارة جديدة
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>جدولة زيارة جديدة</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="family">العائلة</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر العائلة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {families.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              <Dialog open={showVisitDialog} onOpenChange={setShowVisitDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>جدولة زيارة جديدة</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="family">العائلة</Label>
+                      <Select value={newVisit.familyId} onValueChange={(value) => setNewVisit(prev => ({ ...prev, familyId: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر العائلة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {families.map(f => (
+                            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="visitDate">التاريخ</Label>
+                      <Input 
+                        id="visitDate" 
+                        type="date"
+                        value={newVisit.date}
+                        onChange={(e) => setNewVisit(prev => ({ ...prev, date: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="visitTime">الوقت</Label>
+                      <Input 
+                        id="visitTime" 
+                        type="time"
+                        value={newVisit.time}
+                        onChange={(e) => setNewVisit(prev => ({ ...prev, time: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="duration">المدة</Label>
+                      <Select value={newVisit.duration} onValueChange={(value) => setNewVisit(prev => ({ ...prev, duration: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر المدة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30min">30 دقيقة</SelectItem>
+                          <SelectItem value="45min">45 دقيقة</SelectItem>
+                          <SelectItem value="1hour">ساعة واحدة</SelectItem>
+                          <SelectItem value="1.5hour">ساعة ونصف</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="purpose">الغرض من الزيارة</Label>
+                      <Textarea 
+                        id="purpose" 
+                        placeholder="الغرض من الزيارة"
+                        value={newVisit.purpose}
+                        onChange={(e) => setNewVisit(prev => ({ ...prev, purpose: e.target.value }))}
+                      />
+                    </div>
+                    <Button onClick={() => {
+                      if (!newVisit.familyId || !newVisit.date || !newVisit.time || !newVisit.purpose) {
+                        toast({
+                          title: "خد بالك!",
+                          description: "لازم تعبي كل بيانات الزيارة قبل الجدولة.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      handleScheduleVisit();
+                      setShowVisitDialog(false);
+                    }} className="w-full">
+                      جدولة الزيارة
+                    </Button>
                   </div>
-                  <div>
-                    <Label htmlFor="visitDate">التاريخ</Label>
-                    <Input id="visitDate" type="date" />
-                  </div>
-                  <div>
-                    <Label htmlFor="visitTime">الوقت</Label>
-                    <Input id="visitTime" type="time" />
-                  </div>
-                  <div>
-                    <Label htmlFor="duration">المدة</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر المدة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="30min">30 دقيقة</SelectItem>
-                        <SelectItem value="45min">45 دقيقة</SelectItem>
-                        <SelectItem value="1hour">ساعة واحدة</SelectItem>
-                        <SelectItem value="1.5hour">ساعة ونصف</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="purpose">الغرض من الزيارة</Label>
-                    <Textarea id="purpose" placeholder="الغرض من الزيارة" />
-                  </div>
-                  <Button onClick={handleScheduleVisit} className="w-full">
-                    جدولة الزيارة
-                  </Button>
-                </div>
-              </DialogContent>
+                </DialogContent>
+              </Dialog>
             </Dialog>
           </div>
 
@@ -1062,7 +1180,7 @@ const FamilyCommunication = () => {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="reportFamily">العائلة</Label>
-                    <Select>
+                    <Select value={newReport.familyId} onValueChange={(value) => setNewReport(prev => ({ ...prev, familyId: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر العائلة" />
                       </SelectTrigger>
@@ -1075,7 +1193,7 @@ const FamilyCommunication = () => {
                   </div>
                   <div>
                     <Label htmlFor="reportType">نوع التقرير</Label>
-                    <Select>
+                    <Select value={newReport.type} onValueChange={(value) => setNewReport(prev => ({ ...prev, type: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع التقرير" />
                       </SelectTrigger>
@@ -1089,36 +1207,40 @@ const FamilyCommunication = () => {
                   </div>
                   <div>
                     <Label htmlFor="reportTitle">عنوان التقرير</Label>
-                    <Input id="reportTitle" placeholder="عنوان التقرير" />
+                    <Input 
+                      id="reportTitle" 
+                      placeholder="عنوان التقرير"
+                      value={newReport.title}
+                      onChange={(e) => setNewReport(prev => ({ ...prev, title: e.target.value }))}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="reportContent">محتوى التقرير</Label>
                     <div className="space-y-2">
-                      <Textarea id="reportContent" placeholder="محتوى التقرير" rows={6} />
+                      <Textarea 
+                        id="reportContent" 
+                        placeholder="محتوى التقرير" 
+                        rows={6}
+                        value={newReport.content}
+                        onChange={(e) => setNewReport(prev => ({ ...prev, content: e.target.value }))}
+                      />
                       <div className="flex gap-2">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={async () => {
-                            const familySelect = document.querySelectorAll('select')[0] as HTMLSelectElement;
-                            const reportTypeSelect = document.querySelectorAll('select')[1] as HTMLSelectElement;
-                            const contentTextarea = document.getElementById('reportContent') as HTMLTextAreaElement;
-                            
-                            if (familySelect && reportTypeSelect && contentTextarea) {
-                              const familyName = familySelect.options[familySelect.selectedIndex]?.text || '';
-                              const reportType = reportTypeSelect.options[reportTypeSelect.selectedIndex]?.text || '';
-                              const patientName = familyName.replace('عائلة ', '');
-                              
+                            const family = families.find(f => f.id === newReport.familyId);
+                            if (family && newReport.type) {
                               const smartReport = await generateSmartReport(
-                                familyName,
-                                patientName,
-                                reportType,
+                                family.name,
+                                family.patientName,
+                                newReport.type,
                                 'مريض في مرحلة العلاج، يحتاج تقرير شامل عن التقدم'
                               );
                               
                               if (smartReport) {
-                                contentTextarea.value = smartReport;
+                                setNewReport(prev => ({ ...prev, content: smartReport }));
                                 toast({
                                   title: "تم إنشاء التقرير",
                                   description: "تم إنشاء تقرير ذكي باللهجة المصرية",

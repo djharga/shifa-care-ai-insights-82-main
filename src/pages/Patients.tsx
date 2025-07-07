@@ -41,6 +41,7 @@ const Patients = () => {
     addiction_type: '',
     notes: ''
   });
+  const [showExtraFields, setShowExtraFields] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -261,79 +262,50 @@ const Patients = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">الاسم الكامل</Label>
-                  <Input
-                    id="name"
-                    value={newPatient.name}
-                    onChange={(e) => setNewPatient({...newPatient, name: e.target.value})}
-                    placeholder="أدخل الاسم الكامل"
-                  />
+                  <Label htmlFor="name">الاسم الكامل <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="name" value={newPatient.name} onChange={e => setNewPatient({...newPatient, name: e.target.value})} placeholder="أدخل الاسم الكامل" required />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="phone">رقم الهاتف</Label>
-                  <Input
-                    id="phone"
-                    value={newPatient.phone}
-                    onChange={(e) => setNewPatient({...newPatient, phone: e.target.value})}
-                    placeholder="أدخل رقم الهاتف"
-                  />
+                  <Label htmlFor="phone">رقم الهاتف <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="phone" value={newPatient.phone} onChange={e => setNewPatient({...newPatient, phone: e.target.value})} placeholder="أدخل رقم الهاتف" required />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="email">البريد الإلكتروني</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newPatient.email}
-                    onChange={(e) => setNewPatient({...newPatient, email: e.target.value})}
-                    placeholder="أدخل البريد الإلكتروني"
-                  />
+                  <Label htmlFor="addiction">نوع الإدمان <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="addiction" value={newPatient.addiction_type} onChange={e => setNewPatient({...newPatient, addiction_type: e.target.value})} placeholder="مثال: المخدرات، الكحول، التدخين" required />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dob">تاريخ الميلاد</Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={newPatient.date_of_birth}
-                    onChange={(e) => setNewPatient({...newPatient, date_of_birth: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="gender">الجنس</Label>
-                  <Select value={newPatient.gender} onValueChange={(value: 'male' | 'female') => setNewPatient({...newPatient, gender: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الجنس" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">ذكر</SelectItem>
-                      <SelectItem value="female">أنثى</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="addiction">نوع الإدمان</Label>
-                  <Input
-                    id="addiction"
-                    value={newPatient.addiction_type}
-                    onChange={(e) => setNewPatient({...newPatient, addiction_type: e.target.value})}
-                    placeholder="مثال: المخدرات، الكحول، التدخين"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">ملاحظات</Label>
-                  <Textarea
-                    id="notes"
-                    value={newPatient.notes}
-                    onChange={(e) => setNewPatient({...newPatient, notes: e.target.value})}
-                    placeholder="أدخل أي ملاحظات إضافية"
-                  />
-                </div>
-
+                {!showExtraFields && (
+                  <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
+                    تفاصيل إضافية
+                  </Button>
+                )}
+                {showExtraFields && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">البريد الإلكتروني</Label>
+                      <Input id="email" type="email" value={newPatient.email} onChange={e => setNewPatient({...newPatient, email: e.target.value})} placeholder="أدخل البريد الإلكتروني" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dob">تاريخ الميلاد</Label>
+                      <Input id="dob" type="date" value={newPatient.date_of_birth} onChange={e => setNewPatient({...newPatient, date_of_birth: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">الجنس</Label>
+                      <Select value={newPatient.gender} onValueChange={(value: 'male' | 'female') => setNewPatient({...newPatient, gender: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الجنس" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">ذكر</SelectItem>
+                          <SelectItem value="female">أنثى</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">ملاحظات</Label>
+                      <Textarea id="notes" value={newPatient.notes} onChange={e => setNewPatient({...newPatient, notes: e.target.value})} placeholder="أدخل أي ملاحظات إضافية" />
+                    </div>
+                  </>
+                )}
                 <Button onClick={handleAddPatient} className="w-full">
                   إضافة المريض
                 </Button>
@@ -357,54 +329,56 @@ const Patients = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>الاسم</TableHead>
-                  <TableHead>رقم الهاتف</TableHead>
-                  <TableHead>نوع الإدمان</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>تاريخ الدخول</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPatients.map((patient) => (
-                  <TableRow key={patient.id}>
-                    <TableCell className="font-medium">{patient.name}</TableCell>
-                    <TableCell>{patient.phone}</TableCell>
-                    <TableCell>{patient.addiction_type}</TableCell>
-                    <TableCell>{getStatusBadge(patient.status)}</TableCell>
-                    <TableCell>{new Date(patient.admission_date).toLocaleDateString('ar-SA')}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewPatient(patient)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditPatient(patient)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDeletePatient(patient.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>الاسم</TableHead>
+                    <TableHead>رقم الهاتف</TableHead>
+                    <TableHead>نوع الإدمان</TableHead>
+                    <TableHead>الحالة</TableHead>
+                    <TableHead>تاريخ الدخول</TableHead>
+                    <TableHead>الإجراءات</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredPatients.map((patient) => (
+                    <TableRow key={patient.id}>
+                      <TableCell className="font-medium">{patient.name}</TableCell>
+                      <TableCell>{patient.phone}</TableCell>
+                      <TableCell>{patient.addiction_type}</TableCell>
+                      <TableCell>{getStatusBadge(patient.status)}</TableCell>
+                      <TableCell>{new Date(patient.admission_date).toLocaleDateString('ar-SA')}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewPatient(patient)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditPatient(patient)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDeletePatient(patient.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 

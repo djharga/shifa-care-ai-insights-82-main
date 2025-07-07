@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,8 @@ import {
   Plus,
   Clock,
   Target,
-  BarChart3
+  BarChart3,
+  Activity
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdvancedSessions from './AdvancedSessions';

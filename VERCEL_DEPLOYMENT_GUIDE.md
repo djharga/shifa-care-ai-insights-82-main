@@ -49,21 +49,21 @@
    ```
    VITE_SUPABASE_URL
    ```
-   - **Value**: `https://your-project-id.supabase.co`
+   - **Value**: `your-supabase-url`
    - **Environment**: Production, Preview, Development
    - **Example**: `https://abcdefghijklmnop.supabase.co`
 
    ```
    VITE_SUPABASE_ANON_KEY
    ```
-   - **Value**: `your-anon-key-here`
+   - **Value**: `your-supabase-anon-key`
    - **Environment**: Production, Preview, Development
    - **Example**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
 
    ```
    VITE_OPENAI_API_KEY
    ```
-   - **Value**: `sk-proj-your-openai-key-here`
+   - **Value**: `your-openai-api-key`
    - **Environment**: Production, Preview, Development
    - **Example**: `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`
 
@@ -125,9 +125,9 @@
 ### Environment Variables في Development
 ```bash
 # في ملف .env.local
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_OPENAI_API_KEY=sk-proj-your-openai-key-here
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_OPENAI_API_KEY=your-openai-api-key
 ```
 
 ### Troubleshooting

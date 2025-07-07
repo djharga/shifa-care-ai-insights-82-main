@@ -27,6 +27,7 @@ import {
   Search
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Staff {
   id: string;
@@ -71,6 +72,15 @@ const StaffManagement = () => {
   const [selectedTab, setSelectedTab] = useState('staff');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
+  const [showExtraFields, setShowExtraFields] = useState(false);
+  const [newStaff, setNewStaff] = useState({
+    name: '',
+    position: '',
+    phone: '',
+    email: '',
+    hire_date: '',
+    notes: '',
+  });
 
   // Mock data
   useEffect(() => {
@@ -244,36 +254,39 @@ const StaffManagement = () => {
                 <DialogTitle>إضافة موظف جديد</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">الاسم</Label>
-                  <Input id="name" placeholder="اسم الموظف" />
+                <div className="space-y-2">
+                  <Label htmlFor="name">اسم الموظف <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="name" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} placeholder="اسم الموظف" required />
                 </div>
-                <div>
-                  <Label htmlFor="position">الوظيفة</Label>
-                  <Input id="position" placeholder="الوظيفة" />
+                <div className="space-y-2">
+                  <Label htmlFor="position">الوظيفة <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="position" value={newStaff.position} onChange={e => setNewStaff({...newStaff, position: e.target.value})} placeholder="الوظيفة" required />
                 </div>
-                <div>
-                  <Label htmlFor="email">البريد الإلكتروني</Label>
-                  <Input id="email" type="email" placeholder="example@shifa.com" />
+                <div className="space-y-2">
+                  <Label htmlFor="phone">رقم الهاتف <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="phone" value={newStaff.phone} onChange={e => setNewStaff({...newStaff, phone: e.target.value})} placeholder="رقم الهاتف" required />
                 </div>
-                <div>
-                  <Label htmlFor="phone">رقم الهاتف</Label>
-                  <Input id="phone" placeholder="0123456789" />
-                </div>
-                <div>
-                  <Label htmlFor="department">القسم</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر القسم" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="psychiatry">الطب النفسي</SelectItem>
-                      <SelectItem value="nursing">التمريض</SelectItem>
-                      <SelectItem value="therapy">العلاج النفسي</SelectItem>
-                      <SelectItem value="admin">الإدارة</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!showExtraFields && (
+                  <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
+                    تفاصيل إضافية
+                  </Button>
+                )}
+                {showExtraFields && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">البريد الإلكتروني</Label>
+                      <Input id="email" type="email" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} placeholder="البريد الإلكتروني" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="hire_date">تاريخ التعيين</Label>
+                      <Input id="hire_date" type="date" value={newStaff.hire_date} onChange={e => setNewStaff({...newStaff, hire_date: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">ملاحظات</Label>
+                      <Textarea id="notes" value={newStaff.notes} onChange={e => setNewStaff({...newStaff, notes: e.target.value})} placeholder="ملاحظات إضافية" />
+                    </div>
+                  </>
+                )}
                 <Button onClick={handleAddStaff} className="w-full">
                   إضافة الموظف
                 </Button>

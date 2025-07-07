@@ -59,7 +59,7 @@
 2. أضف مفتاح API:
 
 ```bash
-VITE_OPENAI_API_KEY=sk-your-api-key-here
+VITE_OPENAI_API_KEY=sk-your-openai-api-key
 ```
 
 3. (اختياري) اضبط الإعدادات المتقدمة:

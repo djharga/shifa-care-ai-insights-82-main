@@ -53,6 +53,7 @@ const Sessions = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [showExtraFields, setShowExtraFields] = useState(false);
 
   useEffect(() => {
     fetchSessions();
@@ -344,98 +345,39 @@ const Sessions = () => {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{t('add_new_session')}</DialogTitle>
+                <DialogTitle>إضافة جلسة جديدة</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="patient">{t('patient')}</Label>
-                  <Select value={newSession.patient_id} onValueChange={(value) => setNewSession({...newSession, patient_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('choose_patient')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="title">عنوان الجلسة <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="title" value={newSession.title} onChange={e => setNewSession({...newSession, title: e.target.value})} placeholder="عنوان الجلسة" required />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="therapist">{t('therapist')}</Label>
-                  <Select value={newSession.therapist_id} onValueChange={(value) => setNewSession({...newSession, therapist_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('choose_therapist')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {therapists.map((therapist) => (
-                        <SelectItem key={therapist.id} value={therapist.id}>
-                          {therapist.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="patient">اسم المريض <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="patient" value={newSession.patient_name} onChange={e => setNewSession({...newSession, patient_name: e.target.value})} placeholder="اسم المريض" required />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="date">{t('session_date')}</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={newSession.session_date}
-                    onChange={(e) => setNewSession({...newSession, session_date: e.target.value})}
-                  />
+                  <Label htmlFor="date">تاريخ الجلسة <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="date" type="date" value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} required />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="time">{t('session_time')}</Label>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={newSession.session_time}
-                    onChange={(e) => setNewSession({...newSession, session_time: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="type">{t('session_type')}</Label>
-                  <Select value={newSession.session_type} onValueChange={(value: 'individual' | 'group' | 'family') => setNewSession({...newSession, session_type: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('choose_session_type')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="individual">{t('individual')}</SelectItem>
-                      <SelectItem value="group">{t('group')}</SelectItem>
-                      <SelectItem value="family">{t('family')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="duration">{t('duration')}</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={newSession.duration}
-                    onChange={(e) => setNewSession({...newSession, duration: parseInt(e.target.value)})}
-                    min="15"
-                    max="180"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">{t('notes')}</Label>
-                  <Textarea
-                    id="notes"
-                    value={newSession.notes}
-                    onChange={(e) => setNewSession({...newSession, notes: e.target.value})}
-                    placeholder={t('enter_any_notes_about_the_session')}
-                  />
-                </div>
-
-                <Button onClick={handleAddSession} className="w-full" disabled={isLoading}>
+                {!showExtraFields && (
+                  <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
+                    تفاصيل إضافية
+                  </Button>
+                )}
+                {showExtraFields && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">ملاحظات</Label>
+                      <Textarea id="notes" value={newSession.notes} onChange={e => setNewSession({...newSession, notes: e.target.value})} placeholder="ملاحظات الجلسة" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="type">نوع الجلسة</Label>
+                      <Input id="type" value={newSession.type} onChange={e => setNewSession({...newSession, type: e.target.value})} placeholder="نوع الجلسة (فردية/جماعية)" />
+                    </div>
+                  </>
+                )}
+                <Button onClick={handleAddSession} className="w-full">
                   إضافة الجلسة
                 </Button>
               </div>
@@ -483,60 +425,62 @@ const Sessions = () => {
             <CardTitle>{t('scheduled_sessions')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('patient')}</TableHead>
-                  <TableHead>{t('therapist')}</TableHead>
-                  <TableHead>{t('date')}</TableHead>
-                  <TableHead>{t('time')}</TableHead>
-                  <TableHead>{t('type')}</TableHead>
-                  <TableHead>{t('duration')}</TableHead>
-                  <TableHead>{t('status')}</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sessions.map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell className="font-medium">
-                      {session.patients?.name || 'غير محدد'}
-                    </TableCell>
-                    <TableCell>{session.profiles?.full_name || 'غير محدد'}</TableCell>
-                    <TableCell>{new Date(session.session_date).toLocaleDateString('ar-SA')}</TableCell>
-                    <TableCell>{session.session_time}</TableCell>
-                    <TableCell>{getSessionTypeLabel(session.session_type)}</TableCell>
-                    <TableCell>{session.duration} دقيقة</TableCell>
-                    <TableCell>{getStatusBadge(session.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewSession(session)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditSession(session)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDeleteSession(session.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('patient')}</TableHead>
+                    <TableHead>{t('therapist')}</TableHead>
+                    <TableHead>{t('date')}</TableHead>
+                    <TableHead>{t('time')}</TableHead>
+                    <TableHead>{t('type')}</TableHead>
+                    <TableHead>{t('duration')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead>الإجراءات</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sessions.map((session) => (
+                    <TableRow key={session.id}>
+                      <TableCell className="font-medium">
+                        {session.patients?.name || 'غير محدد'}
+                      </TableCell>
+                      <TableCell>{session.profiles?.full_name || 'غير محدد'}</TableCell>
+                      <TableCell>{new Date(session.session_date).toLocaleDateString('ar-SA')}</TableCell>
+                      <TableCell>{session.session_time}</TableCell>
+                      <TableCell>{getSessionTypeLabel(session.session_type)}</TableCell>
+                      <TableCell>{session.duration} دقيقة</TableCell>
+                      <TableCell>{getStatusBadge(session.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewSession(session)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditSession(session)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDeleteSession(session.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 

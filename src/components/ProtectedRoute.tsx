@@ -32,7 +32,7 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user as User);
         setUserRole(session.user.role || 'admin');

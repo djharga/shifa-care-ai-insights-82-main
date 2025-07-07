@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,20 +31,18 @@ const Navigation = () => {
   const location = useLocation();
 
   const navigationItems = [
+    // المرضى
+    { section: 'المرضى' },
     {
-      title: 'الرئيسية',
-      href: '/',
-      icon: Home,
-      description: 'لوحة التحكم الرئيسية'
-    },
-    {
-      title: 'المرضى',
+      title: 'كل المرضى',
       href: '/patients',
       icon: Users,
       description: 'إدارة المرضى والمقيمين'
     },
+    // الجلسات
+    { section: 'الجلسات' },
     {
-      title: 'الجلسات',
+      title: 'كل الجلسات',
       href: '/sessions',
       icon: Calendar,
       description: 'إدارة الجلسات العلاجية'
@@ -54,24 +52,6 @@ const Navigation = () => {
       href: '/advanced-sessions',
       icon: Activity,
       description: 'جلسات علاجية متقدمة'
-    },
-    {
-      title: 'الغرف',
-      href: '/rooms',
-      icon: Building2,
-      description: 'إدارة الغرف والمرافق'
-    },
-    {
-      title: 'المالية',
-      href: '/finance',
-      icon: DollarSign,
-      description: 'إدارة الشؤون المالية'
-    },
-    {
-      title: 'التقارير',
-      href: '/reports',
-      icon: BarChart3,
-      description: 'التقارير والإحصائيات'
     },
     {
       title: 'جلسات الذكاء الاصطناعي',
@@ -91,11 +71,13 @@ const Navigation = () => {
       icon: Heart,
       description: 'علاج متقدم بالذكاء الاصطناعي'
     },
+    // الغرف
+    { section: 'الغرف' },
     {
-      title: 'إدارة المرافق',
-      href: '/facility-management',
-      icon: Settings,
-      description: 'إدارة المرافق والتجهيزات'
+      title: 'كل الغرف',
+      href: '/rooms',
+      icon: Building2,
+      description: 'إدارة الغرف والمرافق'
     },
     {
       title: 'مصاريف المرافق',
@@ -104,16 +86,58 @@ const Navigation = () => {
       description: 'إدارة مصاريف المرافق'
     },
     {
-      title: 'إدارة الموظفين والورديات',
+      title: 'إدارة المرافق',
+      href: '/facility-management',
+      icon: Settings,
+      description: 'إدارة المرافق والتجهيزات'
+    },
+    // المالية
+    { section: 'المالية' },
+    {
+      title: 'الحسابات',
+      href: '/finance',
+      icon: DollarSign,
+      description: 'إدارة الشؤون المالية'
+    },
+    {
+      title: 'التقارير المالية',
+      href: '/reports',
+      icon: BarChart3,
+      description: 'التقارير والإحصائيات'
+    },
+    // الإدارة
+    { section: 'الإدارة' },
+    {
+      title: 'إدارة الموظفين',
       href: '/staff-management',
       icon: UserPlus,
       description: 'إدارة الموظفين والورديات والإجازات'
+    },
+    {
+      title: 'إدارة الصلاحيات',
+      href: '/advanced-permissions',
+      icon: Key,
+      description: 'إدارة الأدوار والصلاحيات والمستخدمين'
     },
     {
       title: 'التواصل مع الأسر',
       href: '/family-communication',
       icon: MessageSquare,
       description: 'إدارة التواصل مع أسر المرضى والتقارير'
+    },
+    {
+      title: 'لوحة الإدارة',
+      href: '/admin',
+      icon: Shield,
+      description: 'لوحة الإدارة'
+    },
+    // النظام
+    { section: 'النظام' },
+    {
+      title: 'إعدادات النظام',
+      href: '/system-settings',
+      icon: Settings,
+      description: 'إعدادات النظام والمركز العلاجي'
     },
     {
       title: 'المساعد الذكي',
@@ -128,29 +152,11 @@ const Navigation = () => {
       description: 'تصميمات دعائية للمساعد الذكي'
     },
     {
-      title: 'إدارة الصلاحيات المتقدمة',
-      href: '/advanced-permissions',
-      icon: Key,
-      description: 'إدارة الأدوار والصلاحيات والمستخدمين'
-    },
-    {
-      title: 'إعدادات النظام',
-      href: '/system-settings',
-      icon: Settings,
-      description: 'إعدادات النظام والمركز العلاجي'
-    },
-    {
-      title: 'الإدارة',
-      href: '/admin',
-      icon: Shield,
-      description: 'لوحة الإدارة'
-    },
-    {
       title: 'صفحة الاختبار',
       href: '/test',
       icon: FileText,
       description: 'اختبار النظام والواجهة'
-    }
+    },
   ];
 
   const isActive = (href: string) => {
@@ -168,43 +174,79 @@ const Navigation = () => {
           variant="outline"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="bg-background/80 backdrop-blur-sm"
+          className="bg-background/90 backdrop-blur-sm border-2 shadow-lg hover:bg-background/95"
         >
-          {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm">
+        <div className="lg:hidden fixed inset-0 z-40 bg-background/98 backdrop-blur-md">
           <div className="flex flex-col h-full p-4 pt-20">
-            <div className="space-y-2">
-              {navigationItems.map((item) => {
+            {/* Mobile Header */}
+            <div className="mb-6 pb-4 border-b border-border">
+              <div className="flex items-center space-x-3 space-x-reverse mb-3">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                  <Heart className="h-7 w-7 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">شفاء كير</h1>
+                  <p className="text-sm text-muted-foreground">نظام إدارة مراكز العلاج</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                النسخة 2025.2.1
+              </Badge>
+            </div>
+
+            {/* Mobile Navigation Items */}
+            <div className="flex-1 overflow-y-auto space-y-1">
+              {navigationItems.map((item, idx) => {
+                if (item.section) {
+                  return (
+                    <div key={item.section + idx} className="py-2 px-2 text-xs font-bold text-muted-foreground/80 border-b border-border mb-2 mt-4">
+                      {item.section}
+                    </div>
+                  );
+                }
+                // Type guard: skip if item doesn't have href or icon
+                if (!item.href || !item.icon) return null;
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 space-x-reverse p-3 rounded-lg transition-colors ${
+                    className={`flex items-center space-x-3 space-x-reverse p-4 rounded-xl transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted'
+                        ? 'bg-primary text-primary-foreground shadow-lg'
+                        : 'hover:bg-muted/50 active:bg-muted'
                     }`}
                   >
-                    <Icon className="h-5 w-5" />
-                    <div className="flex-1">
-                      <div className="font-medium">{item.title}</div>
-                      <div className="text-sm opacity-70">{item.description}</div>
+                    <Icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.href) ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{item.title}</div>
+                      <div className={`text-xs mt-1 ${isActive(item.href) ? 'opacity-80' : 'opacity-60'}`}>
+                        {item.description}
+                      </div>
                     </div>
                     {isActive(item.href) && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs flex-shrink-0">
                         نشط
                       </Badge>
                     )}
                   </Link>
                 );
               })}
+            </div>
+
+            {/* Mobile Footer */}
+            <div className="pt-4 border-t border-border">
+              <div className="text-center text-xs text-muted-foreground">
+                <p>شفاء كير للذكاء الاصطناعي</p>
+                <p className="mt-1">نظام متكامل لإدارة مراكز علاج الإدمان</p>
+              </div>
             </div>
           </div>
         </div>
@@ -230,7 +272,16 @@ const Navigation = () => {
 
         {/* Navigation Items */}
         <nav className="space-y-2">
-          {navigationItems.map((item) => {
+          {navigationItems.map((item, idx) => {
+            if (item.section) {
+              return (
+                <div key={item.section + idx} className="py-2 px-2 text-xs font-bold text-muted-foreground/80 border-b border-border mb-2 mt-4">
+                  {item.section}
+                </div>
+              );
+            }
+            // Type guard: skip if item doesn't have href or icon
+            if (!item.href || !item.icon) return null;
             const Icon = item.icon;
             return (
               <Link

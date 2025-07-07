@@ -12,18 +12,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Brain, 
-  Target, 
+  Heart, 
   Activity, 
-  Calendar, 
-  FileText,
-  Sparkles,
-  TrendingUp,
-  AlertTriangle,
+  TrendingUp, 
+  Clock,
   CheckCircle,
-  Lightbulb,
+  AlertTriangle,
+  Zap,
+  Target,
+  Users,
+  Calendar,
+  FileText,
+  Download,
+  Share2,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  RefreshCw,
   Save,
-  Loader2
+  Send,
+  Loader2,
+  Sparkles,
+  Lightbulb
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { SessionAIService } from '@/services/session-ai-service';
 import { SupabaseService } from '@/services/supabase-service';
 import { Session, TreatmentGoal, Activity as ActivityType } from '@/types/session';
@@ -162,7 +175,7 @@ export default function AdvancedSessions() {
   };
 
   // معالجة التقارير المولدة
-  const handleReportGenerated = (reports: { manager: string; family: string }) => {
+  const handleReportGenerated = (_reports: { manager: string; family: string }) => {
     // Implementation needed
   };
 

@@ -108,9 +108,9 @@ src/
 ## 🔧 الإعدادات
 
 ### متغيرات البيئة
-```env
+```
 # Supabase
-VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
 
 # Google AI

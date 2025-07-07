@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Bed, Building, Users, Plus, Edit, Trash2, 
-  CheckCircle, AlertCircle, Clock, X, 
+  CheckCircle, Clock, X, 
   Home, DollarSign, User, Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,6 +74,8 @@ const Rooms = () => {
     bed_type: 'single' as const,
     notes: ''
   });
+
+  const [showExtraFields, setShowExtraFields] = useState(false);
 
   useEffect(() => {
     fetchRooms();
@@ -570,90 +572,38 @@ const Rooms = () => {
                   <DialogHeader>
                     <DialogTitle>إضافة غرفة جديدة</DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="room-number">رقم الغرفة</Label>
-                        <Input
-                          id="room-number"
-                          value={newRoom.room_number}
-                          onChange={(e) => setNewRoom({...newRoom, room_number: e.target.value})}
-                          placeholder="مثال: 101"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="room-name">اسم الغرفة</Label>
-                        <Input
-                          id="room-name"
-                          value={newRoom.room_name}
-                          onChange={(e) => setNewRoom({...newRoom, room_name: e.target.value})}
-                          placeholder="مثال: غرفة فردية"
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="room_name">اسم الغرفة <span style={{color: 'red'}}>*</span></Label>
+                      <Input id="room_name" value={newRoom.room_name} onChange={e => setNewRoom({...newRoom, room_name: e.target.value})} placeholder="اسم الغرفة" required />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="room-type">نوع الغرفة</Label>
-                        <Select value={newRoom.room_type} onValueChange={(value: any) => setNewRoom({...newRoom, room_type: value})}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="اختر النوع" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="single">فردية</SelectItem>
-                            <SelectItem value="double">مزدوجة</SelectItem>
-                            <SelectItem value="triple">ثلاثية</SelectItem>
-                            <SelectItem value="family">عائلية</SelectItem>
-                            <SelectItem value="vip">VIP</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="floor">الطابق</Label>
-                        <Input
-                          id="floor"
-                          type="number"
-                          value={newRoom.floor_number}
-                          onChange={(e) => setNewRoom({...newRoom, floor_number: e.target.value})}
-                          placeholder="1"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="capacity">السعة</Label>
-                        <Input
-                          id="capacity"
-                          type="number"
-                          value={newRoom.capacity}
-                          onChange={(e) => setNewRoom({...newRoom, capacity: e.target.value})}
-                          placeholder="1"
-                        />
-                      </div>
-                      </div>
-                      <div className="grid gap-2">
-                      <Label htmlFor="daily-rate">السعر اليومي (ج.م)</Label>
-                        <Input
-                        id="daily-rate"
-                          type="number"
-                          value={newRoom.daily_rate}
-                          onChange={(e) => setNewRoom({...newRoom, daily_rate: e.target.value})}
-                        placeholder="500"
-                        />
+                    <div className="space-y-2">
+                      <Label htmlFor="room_number">رقم الغرفة <span style={{color: 'red'}}>*</span></Label>
+                      <Input id="room_number" value={newRoom.room_number} onChange={e => setNewRoom({...newRoom, room_number: e.target.value})} placeholder="رقم الغرفة" required />
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">الوصف</Label>
-                      <Textarea
-                        id="description"
-                        value={newRoom.description}
-                        onChange={(e) => setNewRoom({...newRoom, description: e.target.value})}
-                        placeholder="وصف الغرفة والمرافق"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddRoomOpen(false)}>
-                      إلغاء
-                    </Button>
-                    <Button onClick={handleAddRoom}>
-                      إضافة
+                    {!showExtraFields && (
+                      <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
+                        تفاصيل إضافية
+                      </Button>
+                    )}
+                    {showExtraFields && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="beds">عدد الأسرة</Label>
+                          <Input id="beds" type="number" value={newRoom.beds} onChange={e => setNewRoom({...newRoom, beds: e.target.value})} placeholder="عدد الأسرة" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="status">الحالة</Label>
+                          <Input id="status" value={newRoom.status} onChange={e => setNewRoom({...newRoom, status: e.target.value})} placeholder="الحالة (متاحة/مشغولة)" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="notes">ملاحظات</Label>
+                          <Textarea id="notes" value={newRoom.notes} onChange={e => setNewRoom({...newRoom, notes: e.target.value})} placeholder="ملاحظات إضافية" />
+                        </div>
+                      </>
+                    )}
+                    <Button onClick={handleAddRoom} className="w-full">
+                      إضافة الغرفة
                     </Button>
                   </div>
                 </DialogContent>
@@ -812,65 +762,67 @@ const Rooms = () => {
           <TabsContent value="beds" className="space-y-6">
             <Card>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>رقم السرير</TableHead>
-                      <TableHead>اسم السرير</TableHead>
-                      <TableHead>الغرفة</TableHead>
-                      <TableHead>النوع</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>المريض الحالي</TableHead>
-                      <TableHead>الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rooms.flatMap(room => 
-                      room.beds.map(bed => (
-                        <TableRow key={bed.id}>
-                          <TableCell>{bed.bed_number}</TableCell>
-                          <TableCell>{bed.bed_name}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Building className="w-4 h-4" />
-                              <span>{room.room_number}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{getBedTypeName(bed.bed_type)}</TableCell>
-                          <TableCell>{getStatusBadge(bed.status)}</TableCell>
-                          <TableCell>
-                            {bed.current_patient_name ? (
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>رقم السرير</TableHead>
+                        <TableHead>اسم السرير</TableHead>
+                        <TableHead>الغرفة</TableHead>
+                        <TableHead>النوع</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>المريض الحالي</TableHead>
+                        <TableHead>الإجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rooms.flatMap(room => 
+                        room.beds.map(bed => (
+                          <TableRow key={bed.id}>
+                            <TableCell>{bed.bed_number}</TableCell>
+                            <TableCell>{bed.bed_name}</TableCell>
+                            <TableCell>
                               <div className="flex items-center space-x-2">
-                                <User className="w-4 h-4" />
-                                <span>{bed.current_patient_name}</span>
+                                <Building className="w-4 h-4" />
+                                <span>{room.room_number}</span>
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditBed(bed)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleDeleteBed(bed.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                            </TableCell>
+                            <TableCell>{getBedTypeName(bed.bed_type)}</TableCell>
+                            <TableCell>{getStatusBadge(bed.status)}</TableCell>
+                            <TableCell>
+                              {bed.current_patient_name ? (
+                                <div className="flex items-center space-x-2">
+                                  <User className="w-4 h-4" />
+                                  <span>{bed.current_patient_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleEditBed(bed)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleDeleteBed(bed.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

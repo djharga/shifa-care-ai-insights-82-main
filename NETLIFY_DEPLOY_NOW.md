@@ -37,10 +37,8 @@
 
 ## 🔐 بيانات الدخول الجاهزة:
 
-```
-📧 admin@shifacare.com / admin123
-📧 test@shifacare.com / test123456
-```
+**📧 admin@shifacare.com / your-admin-password**
+**📧 test@shifacare.com / your-test-password**
 
 ## 📱 الصفحات المتاحة:
 
