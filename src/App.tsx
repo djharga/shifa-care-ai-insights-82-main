@@ -27,6 +27,7 @@ const PromoDesignPage = React.lazy(() => import('./pages/PromoDesignPage'))
 const AdvancedPermissions = React.lazy(() => import('./components/admin/AdvancedPermissions'))
 const SystemSettings = React.lazy(() => import('./pages/SystemSettings'))
 const TestPage = React.lazy(() => import('./pages/TestPage'))
+const SimpleTestPage = React.lazy(() => import('./pages/SimpleTestPage'))
 const NotFound = React.lazy(() => import('./pages/NotFound'))
 
 // Loading component
@@ -62,6 +63,7 @@ function App() {
           <Route path="/advanced-permissions" element={<AdvancedPermissions />} />
           <Route path="/system-settings" element={<SystemSettings />} />
           <Route path="/test" element={<TestPage />} />
+          <Route path="/simple-test" element={<SimpleTestPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
