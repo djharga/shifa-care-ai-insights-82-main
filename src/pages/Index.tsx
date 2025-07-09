@@ -104,6 +104,14 @@ const Index = () => {
       textColor: 'text-cyan-500'
     },
     {
+      title: 'الشات الداخلي',
+      description: 'تواصل مع المعالجين والمشرفين',
+      icon: MessageSquare,
+      href: '/internal-chat',
+      color: 'bg-pink-500',
+      textColor: 'text-pink-500'
+    },
+    {
       title: 'اختبار التوجيه',
       description: 'اختبار جميع الروابط',
       icon: Settings,
@@ -256,6 +264,14 @@ const Index = () => {
       href: '/ai-assistant',
       stats: '24/7 متاح',
       color: 'from-cyan-500 to-blue-600'
+    },
+    {
+      title: 'الشات الداخلي',
+      description: 'تواصل المعالجين والمشرفين والمدير',
+      icon: MessageSquare,
+      href: '/internal-chat',
+      stats: 'تواصل فوري',
+      color: 'from-pink-500 to-rose-600'
     }
   ];
 

@@ -23,6 +23,7 @@ const FacilityExpenses = React.lazy(() => import('./pages/FacilityExpenses'))
 const StaffManagement = React.lazy(() => import('./pages/StaffManagement'))
 const FamilyCommunication = React.lazy(() => import('./pages/FamilyCommunication'))
 const AIAssistant = React.lazy(() => import('./pages/AIAssistant'))
+const InternalChat = React.lazy(() => import('./pages/InternalChat'))
 const PromoDesignPage = React.lazy(() => import('./pages/PromoDesignPage'))
 const AdvancedPermissions = React.lazy(() => import('./components/admin/AdvancedPermissions'))
 const SystemSettings = React.lazy(() => import('./pages/SystemSettings'))
@@ -59,6 +60,7 @@ function App() {
           <Route path="/staff-management" element={<StaffManagement />} />
           <Route path="/family-communication" element={<FamilyCommunication />} />
           <Route path="/ai-assistant" element={<AIAssistant />} />
+          <Route path="/internal-chat" element={<InternalChat />} />
           <Route path="/promo-design" element={<PromoDesignPage />} />
           <Route path="/advanced-permissions" element={<AdvancedPermissions />} />
           <Route path="/system-settings" element={<SystemSettings />} />

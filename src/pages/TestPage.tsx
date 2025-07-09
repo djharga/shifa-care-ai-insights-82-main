@@ -18,7 +18,8 @@ import {
   Activity,
   DollarSign,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  MessageSquare
 } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -126,7 +127,8 @@ const TestPage = () => {
                 { icon: Brain, title: 'الذكاء الاصطناعي', href: '/ai-sessions' },
                 { icon: Settings, title: 'الإعدادات', href: '/admin' },
                 { icon: Activity, title: 'الجلسات المتقدمة', href: '/advanced-sessions' },
-                { icon: DollarSign, title: 'المالية', href: '/finance' }
+                { icon: DollarSign, title: 'المالية', href: '/finance' },
+                { icon: MessageSquare, title: 'الشات الداخلي', href: '/internal-chat' }
               ].map((item, index) => {
                 const Icon = item.icon;
                 return (

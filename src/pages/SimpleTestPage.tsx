@@ -53,6 +53,7 @@ const SimpleTestPage = () => {
     { icon: UserPlus, title: 'إدارة الموظفين', href: '/staff-management', color: 'bg-cyan-500', category: 'الإدارة' },
     { icon: Key, title: 'إدارة الصلاحيات', href: '/advanced-permissions', color: 'bg-sky-500', category: 'الإدارة' },
     { icon: MessageSquare, title: 'التواصل مع الأسر', href: '/family-communication', color: 'bg-blue-500', category: 'الإدارة' },
+    { icon: MessageSquare, title: 'الشات الداخلي', href: '/internal-chat', color: 'bg-pink-500', category: 'الإدارة' },
     { icon: Shield, title: 'لوحة الإدارة', href: '/admin', color: 'bg-violet-500', category: 'الإدارة' },
     { icon: Settings, title: 'إعدادات النظام', href: '/system-settings', color: 'bg-slate-500', category: 'النظام' },
     { icon: Bot, title: 'المساعد الذكي', href: '/ai-assistant', color: 'bg-gray-500', category: 'النظام' },

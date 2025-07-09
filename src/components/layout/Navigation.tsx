@@ -136,6 +136,12 @@ const Navigation = () => {
       description: 'إدارة التواصل مع أسر المرضى والتقارير'
     },
     {
+      title: 'الشات الداخلي',
+      href: '/internal-chat',
+      icon: MessageSquare,
+      description: 'شات داخلي للمعالجين والمشرفين والمدير'
+    },
+    {
       title: 'لوحة الإدارة',
       href: '/admin',
       icon: Shield,
