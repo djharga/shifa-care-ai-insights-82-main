@@ -25,6 +25,9 @@ const FacilityExpenses = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isEditExpensesOpen, setIsEditExpensesOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   // بيانات وهمية للمصاريف
   const expenses = [
@@ -57,6 +60,115 @@ const FacilityExpenses = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  // وظائف الأزرار
+  const handleAddExpense = () => {
+    setIsAddExpenseOpen(true);
+    toast({
+      title: "إضافة مصروف جديد",
+      description: "سيتم فتح نموذج إضافة المصروف",
+    });
+  };
+
+  const handleEditExpenses = () => {
+    setIsEditExpensesOpen(true);
+    toast({
+      title: "تعديل المصاريف",
+      description: "سيتم فتح قائمة المصاريف للتعديل",
+    });
+  };
+
+  const handleExpenseReport = () => {
+    setIsReportOpen(true);
+    toast({
+      title: "تقرير المصاريف",
+      description: "سيتم إنشاء تقرير المصاريف",
+    });
+  };
+
+  const handleDownloadReport = () => {
+    toast({
+      title: "تحميل التقرير",
+      description: "جاري تحميل تقرير المصاريف...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم التحميل",
+        description: "تم تحميل تقرير المصاريف بنجاح",
+      });
+    }, 2000);
+  };
+
+  const handleCreateReport = () => {
+    toast({
+      title: "إنشاء التقرير",
+      description: "جاري إنشاء تقرير المصاريف...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء تقرير المصاريف بنجاح",
+      });
+    }, 2500);
+  };
+
+  const handleAddCategory = () => {
+    toast({
+      title: "إضافة فئة جديدة",
+      description: "سيتم فتح نموذج إضافة فئة المصاريف",
+    });
+  };
+
+  const handleEditCategories = () => {
+    toast({
+      title: "تعديل الفئات",
+      description: "سيتم فتح قائمة فئات المصاريف للتعديل",
+    });
+  };
+
+  const handleMonthlyReport = () => {
+    toast({
+      title: "تقرير شهري",
+      description: "جاري إنشاء التقرير الشهري...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء التقرير الشهري بنجاح",
+      });
+    }, 2000);
+  };
+
+  const handleYearlyReport = () => {
+    toast({
+      title: "تقرير سنوي",
+      description: "جاري إنشاء التقرير السنوي...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء التقرير السنوي بنجاح",
+      });
+    }, 3000);
+  };
+
+  const handleEditExpense = (expenseId: number) => {
+    toast({
+      title: "تعديل المصروف",
+      description: `سيتم فتح نموذج تعديل المصروف رقم ${expenseId}`,
+    });
+  };
+
+  const handleDeleteExpense = (expenseId: number) => {
+    toast({
+      title: "حذف المصروف",
+      description: `سيتم حذف المصروف رقم ${expenseId}`,
+    });
   };
 
   return (
@@ -236,15 +348,15 @@ const FacilityExpenses = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleAddExpense}>
                     <Plus className="h-6 w-6" />
                     <span>إضافة مصروف جديد</span>
                   </Button>
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleEditExpenses}>
                     <Edit className="h-6 w-6" />
                     <span>تعديل المصاريف</span>
                   </Button>
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleExpenseReport}>
                     <DollarSign className="h-6 w-6" />
                     <span>تقرير المصاريف</span>
                   </Button>
@@ -282,10 +394,10 @@ const FacilityExpenses = () => {
                           {expense.status}
                         </Badge>
                         <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleEditExpense(expense.id)}>
                             <Edit className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleDeleteExpense(expense.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
@@ -308,11 +420,11 @@ const FacilityExpenses = () => {
                   يمكنك إدارة فئات المصاريف المختلفة
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button>
+                  <Button onClick={handleAddCategory}>
                     <Plus className="h-4 w-4 mr-2" />
                     إضافة فئة جديدة
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleEditCategories}>
                     <Edit className="h-4 w-4 mr-2" />
                     تعديل الفئات
                   </Button>
@@ -332,11 +444,11 @@ const FacilityExpenses = () => {
                   يمكنك إنشاء وعرض تقارير المصاريف المختلفة
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button>
+                  <Button onClick={handleMonthlyReport}>
                     <DollarSign className="h-4 w-4 mr-2" />
                     تقرير شهري
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleYearlyReport}>
                     <TrendingDown className="h-4 w-4 mr-2" />
                     تقرير سنوي
                   </Button>

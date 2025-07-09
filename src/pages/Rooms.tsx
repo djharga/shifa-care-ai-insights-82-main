@@ -22,6 +22,9 @@ const Rooms = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
+  const [isEditRoomsOpen, setIsEditRoomsOpen] = useState(false);
+  const [isManageBookingsOpen, setIsManageBookingsOpen] = useState(false);
 
   // بيانات وهمية للغرف
   const rooms = [
@@ -54,6 +57,73 @@ const Rooms = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  // وظائف الأزرار
+  const handleAddRoom = () => {
+    setIsAddRoomOpen(true);
+    toast({
+      title: "إضافة غرفة جديدة",
+      description: "سيتم فتح نموذج إضافة الغرفة",
+    });
+  };
+
+  const handleEditRooms = () => {
+    setIsEditRoomsOpen(true);
+    toast({
+      title: "تعديل الغرف",
+      description: "سيتم فتح قائمة الغرف للتعديل",
+    });
+  };
+
+  const handleManageBookings = () => {
+    setIsManageBookingsOpen(true);
+    toast({
+      title: "إدارة الحجوزات",
+      description: "سيتم فتح صفحة إدارة الحجوزات",
+    });
+  };
+
+  const handleEditRoom = (roomId: number) => {
+    toast({
+      title: "تعديل الغرفة",
+      description: `سيتم فتح نموذج تعديل الغرفة رقم ${roomId}`,
+    });
+  };
+
+  const handleViewRoomDetails = (roomId: number) => {
+    toast({
+      title: "تفاصيل الغرفة",
+      description: `سيتم فتح تفاصيل الغرفة رقم ${roomId}`,
+    });
+  };
+
+  const handleDownloadReport = () => {
+    toast({
+      title: "تحميل التقرير",
+      description: "جاري تحميل تقرير الغرف...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم التحميل",
+        description: "تم تحميل تقرير الغرف بنجاح",
+      });
+    }, 2000);
+  };
+
+  const handleCreateReport = () => {
+    toast({
+      title: "إنشاء التقرير",
+      description: "جاري إنشاء تقرير الغرف...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء تقرير الغرف بنجاح",
+      });
+    }, 2500);
   };
 
   return (
@@ -225,15 +295,15 @@ const Rooms = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleAddRoom}>
                     <Plus className="h-6 w-6" />
                     <span>إضافة غرفة جديدة</span>
                   </Button>
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleEditRooms}>
                     <Edit className="h-6 w-6" />
                     <span>تعديل الغرف</span>
                   </Button>
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleManageBookings}>
                     <Building className="h-6 w-6" />
                     <span>إدارة الحجوزات</span>
                   </Button>
@@ -277,11 +347,11 @@ const Rooms = () => {
                           </div>
                         </div>
                         <div className="mt-4 flex space-x-2">
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditRoom(room.id)}>
                             <Edit className="h-3 w-3 mr-1" />
                             تعديل
                           </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleViewRoomDetails(room.id)}>
                             <Users className="h-3 w-3 mr-1" />
                             تفاصيل
                           </Button>
@@ -304,14 +374,18 @@ const Rooms = () => {
                 <p className="text-muted-foreground mb-4">
                   يمكنك إضافة وتعديل وحذف الغرف
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button onClick={handleAddRoom}>
                     <Plus className="h-4 w-4 mr-2" />
                     إضافة غرفة جديدة
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleEditRooms}>
                     <Edit className="h-4 w-4 mr-2" />
                     تعديل الغرف
+                  </Button>
+                  <Button variant="outline" onClick={handleDownloadReport}>
+                    <Building className="h-4 w-4 mr-2" />
+                    تحميل التقرير
                   </Button>
                 </div>
               </CardContent>

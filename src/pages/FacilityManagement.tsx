@@ -21,6 +21,9 @@ const FacilityManagement = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
+  const [isEditRoomsOpen, setIsEditRoomsOpen] = useState(false);
+  const [isExpensesOpen, setIsExpensesOpen] = useState(false);
 
   // بيانات وهمية للإحصائيات
   const stats = {
@@ -48,6 +51,90 @@ const FacilityManagement = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  // وظائف الأزرار
+  const handleManageRooms = () => {
+    navigate('/rooms');
+    toast({
+      title: "إدارة الغرف",
+      description: "سيتم نقلك إلى صفحة إدارة الغرف",
+    });
+  };
+
+  const handleFacilityExpenses = () => {
+    navigate('/facility-expenses');
+    toast({
+      title: "مصاريف المرافق",
+      description: "سيتم نقلك إلى صفحة مصاريف المرافق",
+    });
+  };
+
+  const handleFinance = () => {
+    navigate('/finance');
+    toast({
+      title: "الحسابات المالية",
+      description: "سيتم نقلك إلى صفحة الحسابات المالية",
+    });
+  };
+
+  const handleAddRoom = () => {
+    setIsAddRoomOpen(true);
+    toast({
+      title: "إضافة غرفة جديدة",
+      description: "سيتم فتح نموذج إضافة الغرفة",
+    });
+  };
+
+  const handleEditRooms = () => {
+    setIsEditRoomsOpen(true);
+    toast({
+      title: "تعديل الغرف",
+      description: "سيتم فتح قائمة الغرف للتعديل",
+    });
+  };
+
+  const handleManageBookings = () => {
+    toast({
+      title: "إدارة الحجوزات",
+      description: "سيتم فتح صفحة إدارة الحجوزات",
+    });
+  };
+
+  const handleViewExpenses = () => {
+    setIsExpensesOpen(true);
+    toast({
+      title: "عرض المصاريف",
+      description: "سيتم فتح تفاصيل مصاريف المرافق",
+    });
+  };
+
+  const handleDownloadReport = () => {
+    toast({
+      title: "تحميل التقرير",
+      description: "جاري تحميل تقرير المرافق...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم التحميل",
+        description: "تم تحميل تقرير المرافق بنجاح",
+      });
+    }, 2000);
+  };
+
+  const handleCreateReport = () => {
+    toast({
+      title: "إنشاء التقرير",
+      description: "جاري إنشاء تقرير المرافق...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء تقرير المرافق بنجاح",
+      });
+    }, 2500);
   };
 
   return (
@@ -227,24 +314,18 @@ const FacilityManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Link to="/rooms">
-                    <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <Building className="h-6 w-6" />
-                      <span>إدارة الغرف</span>
-                    </Button>
-                  </Link>
-                  <Link to="/facility-expenses">
-                    <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <Calculator className="h-6 w-6" />
-                      <span>مصاريف المرافق</span>
-                    </Button>
-                  </Link>
-                  <Link to="/finance">
-                    <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <Calculator className="h-6 w-6" />
-                      <span>الحسابات المالية</span>
-                    </Button>
-                  </Link>
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleManageRooms}>
+                    <Building className="h-6 w-6" />
+                    <span>إدارة الغرف</span>
+                  </Button>
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleFacilityExpenses}>
+                    <Calculator className="h-6 w-6" />
+                    <span>مصاريف المرافق</span>
+                  </Button>
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleFinance}>
+                    <Calculator className="h-6 w-6" />
+                    <span>الحسابات المالية</span>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -260,12 +341,20 @@ const FacilityManagement = () => {
                 <p className="text-muted-foreground mb-4">
                   يمكنك إدارة الغرف والأسرّة من صفحة الغرف المخصصة
                 </p>
-                <Link to="/rooms">
-                  <Button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button onClick={handleManageRooms}>
                     <Building className="h-4 w-4 mr-2" />
                     الذهاب لإدارة الغرف
                   </Button>
-                </Link>
+                  <Button variant="outline" onClick={handleAddRoom}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    إضافة غرفة جديدة
+                  </Button>
+                  <Button variant="outline" onClick={handleEditRooms}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    تعديل الغرف
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -280,12 +369,20 @@ const FacilityManagement = () => {
                 <p className="text-muted-foreground mb-4">
                   يمكنك إدارة مصاريف المصحة من صفحة المصاريف المخصصة
                 </p>
-                <Link to="/facility-expenses">
-                  <Button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button onClick={handleFacilityExpenses}>
                     <Calculator className="h-4 w-4 mr-2" />
                     الذهاب لمصاريف المرافق
                   </Button>
-                </Link>
+                  <Button variant="outline" onClick={handleViewExpenses}>
+                    <Building className="h-4 w-4 mr-2" />
+                    عرض المصاريف
+                  </Button>
+                  <Button variant="outline" onClick={handleDownloadReport}>
+                    <Calculator className="h-4 w-4 mr-2" />
+                    تحميل التقرير
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -300,12 +397,20 @@ const FacilityManagement = () => {
                 <p className="text-muted-foreground mb-4">
                   يمكنك إدارة الحسابات المالية من صفحة المالية المخصصة
                 </p>
-                <Link to="/finance">
-                  <Button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button onClick={handleFinance}>
                     <Calculator className="h-4 w-4 mr-2" />
                     الذهاب للحسابات المالية
                   </Button>
-                </Link>
+                  <Button variant="outline" onClick={handleCreateReport}>
+                    <Calculator className="h-4 w-4 mr-2" />
+                    إنشاء التقرير
+                  </Button>
+                  <Button variant="outline" onClick={handleDownloadReport}>
+                    <Calculator className="h-4 w-4 mr-2" />
+                    تحميل التقرير
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

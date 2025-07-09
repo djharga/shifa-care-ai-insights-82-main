@@ -24,6 +24,9 @@ const Finance = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
+  const [isEditPaymentsOpen, setIsEditPaymentsOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   // بيانات وهمية للإحصائيات المالية
   const stats = {
@@ -49,6 +52,117 @@ const Finance = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  // وظائف الأزرار
+  const handleAddPayment = () => {
+    setIsAddPaymentOpen(true);
+    toast({
+      title: "إضافة دفعة جديدة",
+      description: "سيتم فتح نموذج إضافة الدفعة",
+    });
+  };
+
+  const handleEditPayments = () => {
+    setIsEditPaymentsOpen(true);
+    toast({
+      title: "تعديل المدفوعات",
+      description: "سيتم فتح قائمة المدفوعات للتعديل",
+    });
+  };
+
+  const handleFinancialReport = () => {
+    setIsReportOpen(true);
+    toast({
+      title: "تقرير مالي",
+      description: "سيتم إنشاء التقرير المالي",
+    });
+  };
+
+  const handleDownloadReport = () => {
+    // محاكاة تحميل التقرير
+    toast({
+      title: "تحميل التقرير",
+      description: "جاري تحميل التقرير المالي...",
+    });
+    
+    // محاكاة تأخير التحميل
+    setTimeout(() => {
+      toast({
+        title: "تم التحميل",
+        description: "تم تحميل التقرير المالي بنجاح",
+      });
+    }, 2000);
+  };
+
+  const handleSendMessage = () => {
+    toast({
+      title: "إرسال رسالة",
+      description: "سيتم فتح نموذج إرسال الرسالة",
+    });
+  };
+
+  const handleScheduleVisit = () => {
+    toast({
+      title: "جدولة زيارة",
+      description: "سيتم فتح نموذج جدولة الزيارة",
+    });
+  };
+
+  const handleCreateSmartReport = () => {
+    toast({
+      title: "إنشاء تقرير ذكي",
+      description: "جاري إنشاء التقرير الذكي...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء التقرير الذكي بنجاح",
+      });
+    }, 3000);
+  };
+
+  const handleCreateReport = () => {
+    toast({
+      title: "إنشاء التقرير",
+      description: "جاري إنشاء التقرير...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم الإنشاء",
+        description: "تم إنشاء التقرير بنجاح",
+      });
+    }, 2000);
+  };
+
+  const handleViewReport = () => {
+    toast({
+      title: "عرض التقرير",
+      description: "سيتم فتح التقرير للعرض",
+    });
+  };
+
+  const handleDownload = () => {
+    toast({
+      title: "تحميل",
+      description: "جاري تحميل الملف...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "تم التحميل",
+        description: "تم تحميل الملف بنجاح",
+      });
+    }, 1500);
+  };
+
+  const handleScheduleVisitAction = () => {
+    toast({
+      title: "جدولة الزيارة",
+      description: "سيتم فتح نموذج جدولة الزيارة",
+    });
   };
 
   return (
@@ -214,15 +328,15 @@ const Finance = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleAddPayment}>
                     <Plus className="h-6 w-6" />
                     <span>إضافة دفعة جديدة</span>
                   </Button>
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleEditPayments}>
                     <Edit className="h-6 w-6" />
                     <span>تعديل المدفوعات</span>
                   </Button>
-                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleFinancialReport}>
                     <DollarSign className="h-6 w-6" />
                     <span>تقرير مالي</span>
                   </Button>
@@ -242,11 +356,11 @@ const Finance = () => {
                   يمكنك إدارة جميع المدفوعات والمدفوعات المعلقة
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button>
+                  <Button onClick={handleAddPayment}>
                     <Plus className="h-4 w-4 mr-2" />
                     إضافة دفعة جديدة
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleEditPayments}>
                     <Edit className="h-4 w-4 mr-2" />
                     تعديل المدفوعات
                   </Button>
@@ -266,11 +380,11 @@ const Finance = () => {
                   يمكنك إدارة جميع مصاريف المصحة
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button>
+                  <Button onClick={handleAddPayment}>
                     <Plus className="h-4 w-4 mr-2" />
                     إضافة مصروف جديد
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleEditPayments}>
                     <Edit className="h-4 w-4 mr-2" />
                     تعديل المصاريف
                   </Button>
@@ -290,13 +404,13 @@ const Finance = () => {
                   يمكنك إنشاء وعرض التقارير المالية المختلفة
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button>
+                  <Button onClick={handleFinancialReport}>
                     <DollarSign className="h-4 w-4 mr-2" />
                     تقرير الإيرادات
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleDownloadReport}>
                     <TrendingDown className="h-4 w-4 mr-2" />
-                    تقرير المصاريف
+                    تحميل التقرير
                   </Button>
                 </div>
               </CardContent>
