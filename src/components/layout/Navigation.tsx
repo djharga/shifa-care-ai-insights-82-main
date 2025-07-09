@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -23,14 +23,24 @@ import {
   MessageSquare,
   Bot,
   Palette,
-  Key
+  Key,
+  ArrowLeft
 } from 'lucide-react';
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navigationItems = [
+    // الصفحة الرئيسية
+    { section: 'الرئيسية' },
+    {
+      title: 'الصفحة الرئيسية',
+      href: '/',
+      icon: Home,
+      description: 'العودة للصفحة الرئيسية'
+    },
     // المرضى
     { section: 'المرضى' },
     {
@@ -157,6 +167,12 @@ const Navigation = () => {
       icon: FileText,
       description: 'اختبار النظام والواجهة'
     },
+    {
+      title: 'اختبار التوجيه',
+      href: '/simple-test',
+      icon: FileText,
+      description: 'اختبار التوجيه البسيط'
+    },
   ];
 
   const isActive = (href: string) => {
@@ -164,6 +180,10 @@ const Navigation = () => {
       return location.pathname === '/';
     }
     return location.pathname.startsWith(href);
+  };
+
+  const handleBackToHome = () => {
+    navigate('/');
   };
 
   return (
@@ -179,6 +199,20 @@ const Navigation = () => {
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
+
+      {/* Back to Home Button - Mobile */}
+      {location.pathname !== '/' && (
+        <div className="lg:hidden fixed top-4 left-4 z-50">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleBackToHome}
+            className="bg-background/90 backdrop-blur-sm border-2 shadow-lg hover:bg-background/95"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
@@ -269,6 +303,20 @@ const Navigation = () => {
             النسخة 2025.2.1
           </Badge>
         </div>
+
+        {/* Back to Home Button - Desktop */}
+        {location.pathname !== '/' && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={handleBackToHome}
+              className="w-full justify-start"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              العودة للصفحة الرئيسية
+            </Button>
+          </div>
+        )}
 
         {/* Navigation Items */}
         <nav className="space-y-2">

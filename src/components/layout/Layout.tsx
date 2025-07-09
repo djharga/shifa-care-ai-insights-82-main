@@ -23,6 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div>Layout: Active</div>
         <div>Navigation: Loaded</div>
         <div>Content: Ready</div>
+        <div>Screen: {window.innerWidth}px</div>
       </div>
     </div>
   );
