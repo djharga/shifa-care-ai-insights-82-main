@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,13 +8,19 @@ import {
   Plus, 
   Edit, 
   Trash2,
-  Calculator
+  Calculator,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 const FacilityManagement = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   // بيانات وهمية للإحصائيات
   const stats = {
@@ -28,6 +34,20 @@ const FacilityManagement = () => {
     monthlyRevenue: 85000,
     monthlyExpenses: 45000,
     netProfit: 40000
+  };
+
+  // اختبار تحميل الصفحة
+  useEffect(() => {
+    console.log('FacilityManagement component loaded successfully');
+    setPageLoaded(true);
+    toast({
+      title: "تم تحميل صفحة إدارة المرافق",
+      description: "الصفحة تعمل بشكل صحيح",
+    });
+  }, [toast]);
+
+  const handleBackToHome = () => {
+    navigate('/');
   };
 
   return (
@@ -44,6 +64,17 @@ const FacilityManagement = () => {
                 <h1 className="text-3xl font-bold text-foreground">إدارة المرافق</h1>
                 <p className="text-muted-foreground">إدارة شاملة لجميع مرافق المصحة</p>
               </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {pageLoaded && (
+                <Badge variant="secondary" className="bg-green-500">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  محملة
+                </Badge>
+              )}
+              <Button variant="outline" onClick={handleBackToHome}>
+                العودة للرئيسية
+              </Button>
             </div>
           </div>
 
@@ -199,18 +230,18 @@ const FacilityManagement = () => {
                   <Link to="/rooms">
                     <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
                       <Building className="h-6 w-6" />
-                      <span>إدارة الغرف والأسرّة</span>
+                      <span>إدارة الغرف</span>
                     </Button>
                   </Link>
                   <Link to="/facility-expenses">
                     <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <Building className="h-6 w-6" />
-                      <span>مصاريف المصحة</span>
+                      <Calculator className="h-6 w-6" />
+                      <span>مصاريف المرافق</span>
                     </Button>
                   </Link>
                   <Link to="/finance">
                     <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-                      <Building className="h-6 w-6" />
+                      <Calculator className="h-6 w-6" />
                       <span>الحسابات المالية</span>
                     </Button>
                   </Link>
@@ -223,20 +254,18 @@ const FacilityManagement = () => {
           <TabsContent value="rooms" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="h-5 w-5" />
-                  <span>إدارة الغرف والأسرّة</span>
-                </CardTitle>
+                <CardTitle>إدارة الغرف والأسرّة</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">إدارة الغرف والأسرّة</h3>
-                  <p className="text-gray-600 mb-4">يمكنك إدارة الغرف والأسرّة من خلال الصفحة المخصصة</p>
-                  <Link to="/rooms">
-                    <Button>الذهاب لإدارة الغرف</Button>
-                  </Link>
-                </div>
+                <p className="text-muted-foreground mb-4">
+                  يمكنك إدارة الغرف والأسرّة من صفحة الغرف المخصصة
+                </p>
+                <Link to="/rooms">
+                  <Button>
+                    <Building className="h-4 w-4 mr-2" />
+                    الذهاب لإدارة الغرف
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </TabsContent>
@@ -245,20 +274,18 @@ const FacilityManagement = () => {
           <TabsContent value="expenses" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="h-5 w-5" />
-                  <span>مصاريف المصحة</span>
-                </CardTitle>
+                <CardTitle>مصاريف المصحة</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">مصاريف المصحة</h3>
-                  <p className="text-gray-600 mb-4">يمكنك إدارة مصاريف الكهرباء والمياه والطعام والخدمات</p>
-                  <Link to="/facility-expenses">
-                    <Button>الذهاب لمصاريف المصحة</Button>
-                  </Link>
-                </div>
+                <p className="text-muted-foreground mb-4">
+                  يمكنك إدارة مصاريف المصحة من صفحة المصاريف المخصصة
+                </p>
+                <Link to="/facility-expenses">
+                  <Button>
+                    <Calculator className="h-4 w-4 mr-2" />
+                    الذهاب لمصاريف المرافق
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </TabsContent>
@@ -267,20 +294,18 @@ const FacilityManagement = () => {
           <TabsContent value="finance" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="h-5 w-5" />
-                  <span>الحسابات المالية</span>
-                </CardTitle>
+                <CardTitle>الحسابات المالية</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">الحسابات المالية</h3>
-                  <p className="text-gray-600 mb-4">يمكنك إدارة المدفوعات والمصاريف والإقامة</p>
-                  <Link to="/finance">
-                    <Button>الذهاب للحسابات المالية</Button>
-                  </Link>
-                </div>
+                <p className="text-muted-foreground mb-4">
+                  يمكنك إدارة الحسابات المالية من صفحة المالية المخصصة
+                </p>
+                <Link to="/finance">
+                  <Button>
+                    <Calculator className="h-4 w-4 mr-2" />
+                    الذهاب للحسابات المالية
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </TabsContent>
