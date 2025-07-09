@@ -953,7 +953,19 @@ const Finance = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="type">نوع المصروف <span style={{color: 'red'}}>*</span></Label>
-                      <Input id="type" value={newExpense.expense_type} onChange={e => setNewExpense({...newExpense, expense_type: e.target.value})} placeholder="نوع المصروف" required />
+                      <Select id="type" value={newExpense.expense_type} onValueChange={value => setNewExpense({...newExpense, expense_type: value as PersonalExpense['expense_type']})} required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="نوع المصروف" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="medication">أدوية</SelectItem>
+                          <SelectItem value="personal_care">رعاية شخصية</SelectItem>
+                          <SelectItem value="food">طعام</SelectItem>
+                          <SelectItem value="transportation">مواصلات</SelectItem>
+                          <SelectItem value="entertainment">ترفيه</SelectItem>
+                          <SelectItem value="other">أخرى</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="date">تاريخ المصروف <span style={{color: 'red'}}>*</span></Label>
@@ -1173,8 +1185,8 @@ const Finance = () => {
             <DialogHeader>
               <DialogTitle>تعديل بيانات الإقامة</DialogTitle>
             </DialogHeader>
-            <Input value={editAccommodation?.room_number || ''} onChange={e => setEditAccommodation({ ...editAccommodation, room_number: e.target.value })} placeholder="رقم الغرفة" />
-            <Button onClick={() => handleUpdateAccommodation(editAccommodation)}>حفظ</Button>
+            <Input value={editAccommodation?.room_number || ''} onChange={e => editAccommodation && setEditAccommodation({ ...editAccommodation, room_number: e.target.value })} placeholder="رقم الغرفة" />
+            <Button onClick={() => editAccommodation && handleUpdateAccommodation(editAccommodation)}>حفظ</Button>
             <Button variant="outline" onClick={() => setEditAccommodation(null)}>إلغاء</Button>
           </DialogContent>
         </Dialog>
@@ -1184,8 +1196,8 @@ const Finance = () => {
             <DialogHeader>
               <DialogTitle>تعديل بيانات المدفوع</DialogTitle>
             </DialogHeader>
-            <Input value={editPayment?.amount || ''} onChange={e => setEditPayment({ ...editPayment, amount: e.target.value })} placeholder="المبلغ" />
-            <Button onClick={() => handleUpdatePayment(editPayment)}>حفظ</Button>
+            <Input value={editPayment?.amount || ''} onChange={e => editPayment && setEditPayment({ ...editPayment, amount: Number(e.target.value) })} placeholder="المبلغ" />
+            <Button onClick={() => editPayment && handleUpdatePayment(editPayment)}>حفظ</Button>
             <Button variant="outline" onClick={() => setEditPayment(null)}>إلغاء</Button>
           </DialogContent>
         </Dialog>

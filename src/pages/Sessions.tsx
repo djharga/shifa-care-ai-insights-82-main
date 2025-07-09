@@ -349,34 +349,42 @@ const Sessions = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">عنوان الجلسة <span style={{color: 'red'}}>*</span></Label>
-                  <Input id="title" value={newSession.title} onChange={e => setNewSession({...newSession, title: e.target.value})} placeholder="عنوان الجلسة" required />
+                  <Label htmlFor="patient">اسم المريض <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="patient" value={newSession.patient_id} onChange={e => setNewSession({...newSession, patient_id: e.target.value})} placeholder="اسم المريض" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="patient">اسم المريض <span style={{color: 'red'}}>*</span></Label>
-                  <Input id="patient" value={newSession.patient_name} onChange={e => setNewSession({...newSession, patient_name: e.target.value})} placeholder="اسم المريض" required />
+                  <Label htmlFor="therapist">المعالج <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="therapist" value={newSession.therapist_id} onChange={e => setNewSession({...newSession, therapist_id: e.target.value})} placeholder="المعالج" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date">تاريخ الجلسة <span style={{color: 'red'}}>*</span></Label>
-                  <Input id="date" type="date" value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} required />
+                  <Input id="date" type="date" value={newSession.session_date} onChange={e => setNewSession({...newSession, session_date: e.target.value})} required />
                 </div>
-                {!showExtraFields && (
-                  <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
-                    تفاصيل إضافية
-                  </Button>
-                )}
-                {showExtraFields && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">ملاحظات</Label>
-                      <Textarea id="notes" value={newSession.notes} onChange={e => setNewSession({...newSession, notes: e.target.value})} placeholder="ملاحظات الجلسة" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="type">نوع الجلسة</Label>
-                      <Input id="type" value={newSession.type} onChange={e => setNewSession({...newSession, type: e.target.value})} placeholder="نوع الجلسة (فردية/جماعية)" />
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="time">الوقت <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="time" type="time" value={newSession.session_time} onChange={e => setNewSession({...newSession, session_time: e.target.value})} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">نوع الجلسة <span style={{color: 'red'}}>*</span></Label>
+                  <Select value={newSession.session_type} onValueChange={(value: 'individual' | 'group' | 'family') => setNewSession({...newSession, session_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">فردية</SelectItem>
+                      <SelectItem value="group">جماعية</SelectItem>
+                      <SelectItem value="family">عائلية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duration">المدة (دقيقة) <span style={{color: 'red'}}>*</span></Label>
+                  <Input id="duration" type="number" value={newSession.duration} onChange={e => setNewSession({...newSession, duration: parseInt(e.target.value)})} required min="15" max="180" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">ملاحظات</Label>
+                  <Textarea id="notes" value={newSession.notes} onChange={e => setNewSession({...newSession, notes: e.target.value})} placeholder="ملاحظات الجلسة" />
+                </div>
                 <Button onClick={handleAddSession} className="w-full">
                   إضافة الجلسة
                 </Button>

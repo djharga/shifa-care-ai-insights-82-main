@@ -56,6 +56,7 @@ const Rooms = () => {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [editingBed, setEditingBed] = useState<Bed | null>(null);
   
+  // Update newRoom state to include all required Room properties
   const [newRoom, setNewRoom] = useState({
     room_number: '',
     room_name: '',
@@ -63,8 +64,9 @@ const Rooms = () => {
     floor_number: '',
     capacity: '',
     daily_rate: '',
+    status: 'available' as const,
     description: '',
-    amenities: [] as string[]
+    amenities: [] as string[],
   });
 
   const [newBed, setNewBed] = useState({
@@ -192,14 +194,15 @@ const Rooms = () => {
   const handleAddRoom = async () => {
     try {
       // Mock implementation for demonstration
+      // When creating a Room object from newRoom, convert number fields and remove notes if not needed
       const newRoomWithId: Room = {
         ...newRoom,
         id: Date.now().toString(),
-          floor_number: parseInt(newRoom.floor_number),
-          capacity: parseInt(newRoom.capacity),
-          daily_rate: parseFloat(newRoom.daily_rate),
-        status: 'available',
-        beds: []
+        floor_number: parseInt(newRoom.floor_number),
+        capacity: parseInt(newRoom.capacity),
+        daily_rate: parseFloat(newRoom.daily_rate),
+        description: newRoom.description || null,
+        beds: [], // or handle as needed
       };
       
       setRooms(prev => [newRoomWithId, ...prev]);
@@ -217,8 +220,9 @@ const Rooms = () => {
         floor_number: '',
         capacity: '',
         daily_rate: '',
+        status: 'available',
         description: '',
-        amenities: []
+        amenities: [],
       });
       
       // Uncomment this when database is properly set up:
@@ -589,16 +593,18 @@ const Rooms = () => {
                     {showExtraFields && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="beds">عدد الأسرة</Label>
-                          <Input id="beds" type="number" value={newRoom.beds} onChange={e => setNewRoom({...newRoom, beds: e.target.value})} placeholder="عدد الأسرة" />
-                        </div>
-                        <div className="space-y-2">
                           <Label htmlFor="status">الحالة</Label>
-                          <Input id="status" value={newRoom.status} onChange={e => setNewRoom({...newRoom, status: e.target.value})} placeholder="الحالة (متاحة/مشغولة)" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="notes">ملاحظات</Label>
-                          <Textarea id="notes" value={newRoom.notes} onChange={e => setNewRoom({...newRoom, notes: e.target.value})} placeholder="ملاحظات إضافية" />
+                          <Select id="status" value={newRoom.status} onValueChange={value => setNewRoom({...newRoom, status: value as Room['status']})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="الحالة (متاحة/مشغولة)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="available">متاحة</SelectItem>
+                              <SelectItem value="occupied">مشغولة</SelectItem>
+                              <SelectItem value="maintenance">صيانة</SelectItem>
+                              <SelectItem value="reserved">محجوزة</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </>
                     )}
