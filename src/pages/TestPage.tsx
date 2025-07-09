@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,8 +21,10 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const TestPage = () => {
+  const { toast } = useToast();
   const [patients, setPatients] = useState<Array<{name: string}>>([]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [newPatient, setNewPatient] = useState({ name: '' });
@@ -30,6 +32,17 @@ const TestPage = () => {
   const [newSession, setNewSession] = useState({ title: '' });
   const [showAISession, setShowAISession] = useState(false);
   const [newAISession, setNewAISession] = useState({ topic: '' });
+  const [pageLoaded, setPageLoaded] = useState(false);
+
+  // اختبار تحميل الصفحة
+  useEffect(() => {
+    console.log('TestPage component loaded successfully');
+    setPageLoaded(true);
+    toast({
+      title: "تم تحميل صفحة الاختبار",
+      description: "صفحة الاختبار تعمل بشكل صحيح",
+    });
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-background p-8" dir="rtl">
@@ -50,6 +63,11 @@ const TestPage = () => {
             <Badge variant="outline">
               النسخة 2025.2.1
             </Badge>
+            {pageLoaded && (
+              <Badge variant="secondary" className="bg-blue-500">
+                ✅ الصفحة محملة
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -91,6 +109,34 @@ const TestPage = () => {
                   <div className="text-sm text-muted-foreground">العربية</div>
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Navigation Test */}
+        <Card>
+          <CardHeader>
+            <CardTitle>اختبار التنقل</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { icon: Users, title: 'المرضى', href: '/patients' },
+                { icon: Calendar, title: 'الجلسات', href: '/sessions' },
+                { icon: Brain, title: 'الذكاء الاصطناعي', href: '/ai-sessions' },
+                { icon: Settings, title: 'الإعدادات', href: '/admin' },
+                { icon: Activity, title: 'الجلسات المتقدمة', href: '/advanced-sessions' },
+                { icon: DollarSign, title: 'المالية', href: '/finance' }
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={index} className="flex items-center space-x-3 space-x-reverse p-3 border rounded-lg hover:bg-muted cursor-pointer">
+                    <Icon className="h-5 w-5 text-primary" />
+                    <span className="font-medium">{item.title}</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground mr-auto" />
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -199,7 +245,6 @@ const TestPage = () => {
                   </div>
                 </CardContent>
               </Card>
-
             </div>
 
             {/* Alerts Test */}
@@ -357,7 +402,7 @@ const TestPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">معدل النجاح</p>
-                      <p className="text-2xl font-bold">85%</p>
+                      <p className="text-2xl font-bold">92%</p>
                     </div>
                   </div>
                 </CardContent>
