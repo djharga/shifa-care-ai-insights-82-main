@@ -102,6 +102,14 @@ const Index = () => {
       href: '/ai-assistant',
       color: 'bg-cyan-500',
       textColor: 'text-cyan-500'
+    },
+    {
+      title: 'اختبار التوجيه',
+      description: 'اختبار جميع الروابط',
+      icon: Settings,
+      href: '/simple-test',
+      color: 'bg-red-500',
+      textColor: 'text-red-500'
     }
   ];
 
