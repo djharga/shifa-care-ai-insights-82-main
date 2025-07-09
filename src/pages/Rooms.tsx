@@ -60,11 +60,11 @@ const Rooms = () => {
   const [newRoom, setNewRoom] = useState({
     room_number: '',
     room_name: '',
-    room_type: 'single' as const,
+    room_type: 'single' as Room['room_type'],
     floor_number: '',
     capacity: '',
     daily_rate: '',
-    status: 'available' as const,
+    status: 'available' as Room['status'],
     description: '',
     amenities: [] as string[],
   });
@@ -594,7 +594,7 @@ const Rooms = () => {
                       <>
                         <div className="space-y-2">
                           <Label htmlFor="status">الحالة</Label>
-                          <Select id="status" value={newRoom.status} onValueChange={value => setNewRoom({...newRoom, status: value as Room['status']})}>
+                          <Select value={newRoom.status} onValueChange={value => setNewRoom({...newRoom, status: value as Room['status']})}>
                             <SelectTrigger>
                               <SelectValue placeholder="الحالة (متاحة/مشغولة)" />
                             </SelectTrigger>

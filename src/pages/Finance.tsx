@@ -115,7 +115,7 @@ const Finance = () => {
   
   const [newExpense, setNewExpense] = useState({
     patient_id: '',
-    expense_type: 'medication' as const,
+    expense_type: 'medication' as PersonalExpense['expense_type'],
     amount: '',
     expense_date: '',
     description: '',
@@ -953,7 +953,7 @@ const Finance = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="type">نوع المصروف <span style={{color: 'red'}}>*</span></Label>
-                      <Select id="type" value={newExpense.expense_type} onValueChange={value => setNewExpense({...newExpense, expense_type: value as PersonalExpense['expense_type']})} required>
+                      <Select value={newExpense.expense_type} onValueChange={value => setNewExpense({...newExpense, expense_type: value as PersonalExpense['expense_type']})}>
                         <SelectTrigger>
                           <SelectValue placeholder="نوع المصروف" />
                         </SelectTrigger>

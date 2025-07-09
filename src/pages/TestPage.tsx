@@ -23,7 +23,7 @@ import {
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TestPage = () => {
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState<Array<{name: string}>>([]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [newPatient, setNewPatient] = useState({ name: '' });
   const [showSession, setShowSession] = useState(false);
