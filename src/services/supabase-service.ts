@@ -325,6 +325,184 @@ export class SupabaseService {
     };
   }
 
+  // إدارة التقييمات
+  async createRating(ratingData: {
+    rating: number;
+    user_agent: string;
+    page: string;
+    feedback?: string | null;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('ratings')
+      .insert([{
+        ...ratingData,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('خطأ في حفظ التقييم:', error);
+      throw new Error(`فشل في حفظ التقييم: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getRatings(page?: string): Promise<any[]> {
+    let query = supabase.from('ratings').select('*').order('created_at', { ascending: false });
+    
+    if (page) {
+      query = query.eq('page', page);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('خطأ في جلب التقييمات:', error);
+      throw new Error(`فشل في جلب التقييمات: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  // إدارة إعدادات الذكاء الاصطناعي
+  async updateAISettings(settings: {
+    language: string;
+    voice_enabled: boolean;
+    auto_response: boolean;
+    notifications: boolean;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .upsert([{
+        ...settings,
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('خطأ في حفظ إعدادات الذكاء الاصطناعي:', error);
+      throw new Error(`فشل في حفظ الإعدادات: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getAISettings(): Promise<any> {
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .select('*')
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('خطأ في جلب إعدادات الذكاء الاصطناعي:', error);
+      throw new Error(`فشل في جلب الإعدادات: ${error.message}`);
+    }
+
+    return data || {
+      language: 'ar',
+      voice_enabled: false,
+      auto_response: false,
+      notifications: true
+    };
+  }
+
+  // إدارة البيانات المالية
+  async getFinancialData(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('financial_transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('خطأ في جلب البيانات المالية:', error);
+      throw new Error(`فشل في جلب البيانات المالية: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  async createFinancialTransaction(transactionData: {
+    type: 'revenue' | 'expense';
+    amount: number;
+    description: string;
+    category: string;
+    date: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('financial_transactions')
+      .insert([{
+        ...transactionData,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('خطأ في إنشاء المعاملة المالية:', error);
+      throw new Error(`فشل في إنشاء المعاملة المالية: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getFinancialStats(): Promise<{
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    monthlyRevenue: number;
+    monthlyExpenses: number;
+    monthlyProfit: number;
+  }> {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // إجمالي الإيرادات
+    const { data: revenueData } = await supabase
+      .from('financial_transactions')
+      .select('amount')
+      .eq('type', 'revenue');
+
+    const totalRevenue = revenueData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+
+    // إجمالي المصاريف
+    const { data: expenseData } = await supabase
+      .from('financial_transactions')
+      .select('amount')
+      .eq('type', 'expense');
+
+    const totalExpenses = expenseData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+
+    // إيرادات الشهر
+    const { data: monthlyRevenueData } = await supabase
+      .from('financial_transactions')
+      .select('amount')
+      .eq('type', 'revenue')
+      .gte('created_at', monthStart.toISOString());
+
+    const monthlyRevenue = monthlyRevenueData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+
+    // مصاريف الشهر
+    const { data: monthlyExpenseData } = await supabase
+      .from('financial_transactions')
+      .select('amount')
+      .eq('type', 'expense')
+      .gte('created_at', monthStart.toISOString());
+
+    const monthlyExpenses = monthlyExpenseData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+
+    return {
+      totalRevenue,
+      totalExpenses,
+      netProfit: totalRevenue - totalExpenses,
+      monthlyRevenue,
+      monthlyExpenses,
+      monthlyProfit: monthlyRevenue - monthlyExpenses
+    };
+  }
+
   // بيانات وهمية للاختبار (إذا لم تكن قاعدة البيانات متاحة)
   getMockData() {
     return {

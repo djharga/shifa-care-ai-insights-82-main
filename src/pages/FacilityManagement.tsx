@@ -15,6 +15,20 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface FacilityStats {
+  totalRooms: number;
+  totalBeds: number;
+  availableBeds: number;
+  occupiedBeds: number;
+  totalExpenses: number;
+  paidExpenses: number;
+  pendingExpenses: number;
+  monthlyRevenue: number;
+  monthlyExpenses: number;
+  netProfit: number;
+}
 
 const FacilityManagement = () => {
   const { toast } = useToast();
@@ -24,23 +38,22 @@ const FacilityManagement = () => {
   const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
   const [isEditRoomsOpen, setIsEditRoomsOpen] = useState(false);
   const [isExpensesOpen, setIsExpensesOpen] = useState(false);
+  const [stats, setStats] = useState<FacilityStats>({
+    totalRooms: 0,
+    totalBeds: 0,
+    availableBeds: 0,
+    occupiedBeds: 0,
+    totalExpenses: 0,
+    paidExpenses: 0,
+    pendingExpenses: 0,
+    monthlyRevenue: 0,
+    monthlyExpenses: 0,
+    netProfit: 0
+  });
+  const [loading, setLoading] = useState(false);
 
-  // بيانات وهمية للإحصائيات
-  const stats = {
-    totalRooms: 24,
-    totalBeds: 48,
-    availableBeds: 32,
-    occupiedBeds: 16,
-    totalExpenses: 45000,
-    paidExpenses: 38000,
-    pendingExpenses: 7000,
-    monthlyRevenue: 85000,
-    monthlyExpenses: 45000,
-    netProfit: 40000
-  };
-
-  // اختبار تحميل الصفحة
   useEffect(() => {
+    fetchFacilityStats();
     console.log('FacilityManagement component loaded successfully');
     setPageLoaded(true);
     toast({
@@ -49,11 +62,73 @@ const FacilityManagement = () => {
     });
   }, [toast]);
 
+  const fetchFacilityStats = async () => {
+    try {
+      setLoading(true);
+      
+      // جلب إحصائيات الغرف
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('rooms')
+        .select('*');
+
+      if (roomsError) throw roomsError;
+
+      // جلب إحصائيات المصاريف
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*');
+
+      if (expensesError) throw expensesError;
+
+      // جلب إحصائيات الإيرادات
+      const { data: revenueData, error: revenueError } = await supabase
+        .from('revenue')
+        .select('*');
+
+      if (revenueError) throw revenueError;
+
+      // حساب الإحصائيات
+      const totalRooms = roomsData?.length || 0;
+      const totalBeds = roomsData?.reduce((sum, room) => sum + room.beds, 0) || 0;
+      const occupiedBeds = roomsData?.reduce((sum, room) => sum + room.occupied_beds, 0) || 0;
+      const availableBeds = totalBeds - occupiedBeds;
+
+      const totalExpenses = expensesData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+      const paidExpenses = expensesData?.filter(e => e.status === 'paid').reduce((sum, expense) => sum + expense.amount, 0) || 0;
+      const pendingExpenses = totalExpenses - paidExpenses;
+
+      const monthlyRevenue = revenueData?.reduce((sum, revenue) => sum + revenue.amount, 0) || 0;
+      const monthlyExpenses = totalExpenses;
+      const netProfit = monthlyRevenue - monthlyExpenses;
+
+      setStats({
+        totalRooms,
+        totalBeds,
+        availableBeds,
+        occupiedBeds,
+        totalExpenses,
+        paidExpenses,
+        pendingExpenses,
+        monthlyRevenue,
+        monthlyExpenses,
+        netProfit
+      });
+    } catch (error: any) {
+      console.error('Error fetching facility stats:', error);
+      toast({
+        title: "خطأ في تحميل إحصائيات المرافق",
+        description: error.message || "حدث خطأ أثناء تحميل إحصائيات المرافق",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBackToHome = () => {
     navigate('/');
   };
 
-  // وظائف الأزرار
   const handleManageRooms = () => {
     navigate('/rooms');
     toast({
@@ -78,12 +153,44 @@ const FacilityManagement = () => {
     });
   };
 
-  const handleAddRoom = () => {
-    setIsAddRoomOpen(true);
-    toast({
-      title: "إضافة غرفة جديدة",
-      description: "سيتم فتح نموذج إضافة الغرفة",
-    });
+  const handleAddRoom = async () => {
+    try {
+      setLoading(true);
+      const newRoom = {
+        number: `F${Date.now()}`,
+        type: 'عادي' as const,
+        status: 'متاحة' as const,
+        beds: 2,
+        occupied_beds: 0,
+        price: 500,
+        floor: '1',
+        notes: 'غرفة مرافق جديدة'
+      };
+
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert([newRoom])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "تم إضافة غرفة جديدة",
+        description: "تم إضافة الغرفة بنجاح",
+      });
+
+      fetchFacilityStats();
+    } catch (error: any) {
+      console.error('Error adding room:', error);
+      toast({
+        title: "خطأ في إضافة الغرفة",
+        description: error.message || "حدث خطأ أثناء إضافة الغرفة",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditRooms = () => {
@@ -109,32 +216,80 @@ const FacilityManagement = () => {
     });
   };
 
-  const handleDownloadReport = () => {
-    toast({
-      title: "تحميل التقرير",
-      description: "جاري تحميل تقرير المرافق...",
-    });
-    
-    setTimeout(() => {
+  const handleDownloadReport = async () => {
+    try {
       toast({
-        title: "تم التحميل",
-        description: "تم تحميل تقرير المرافق بنجاح",
+        title: "تحميل التقرير",
+        description: "جاري تحميل تقرير المرافق...",
       });
-    }, 2000);
+      
+      const reportData = {
+        facility_stats: stats,
+        generated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'facility_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم التحميل",
+          description: "تم تحميل تقرير المرافق بنجاح",
+        });
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error downloading report:', error);
+      toast({
+        title: "خطأ في تحميل التقرير",
+        description: error.message || "حدث خطأ أثناء تحميل التقرير",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleCreateReport = () => {
-    toast({
-      title: "إنشاء التقرير",
-      description: "جاري إنشاء تقرير المرافق...",
-    });
-    
-    setTimeout(() => {
+  const handleCreateReport = async () => {
+    try {
       toast({
-        title: "تم الإنشاء",
-        description: "تم إنشاء تقرير المرافق بنجاح",
+        title: "إنشاء التقرير",
+        description: "جاري إنشاء تقرير المرافق...",
       });
-    }, 2500);
+      
+      const reportData = {
+        facility_summary: stats,
+        generated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'detailed_facility_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم الإنشاء",
+          description: "تم إنشاء تقرير المرافق بنجاح",
+        });
+      }, 2500);
+    } catch (error: any) {
+      console.error('Error creating report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -315,17 +470,17 @@ const FacilityManagement = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleManageRooms}>
-                    <Building className="h-6 w-6" />
+                      <Building className="h-6 w-6" />
                     <span>إدارة الغرف</span>
-                  </Button>
+                    </Button>
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleFacilityExpenses}>
                     <Calculator className="h-6 w-6" />
                     <span>مصاريف المرافق</span>
-                  </Button>
+                    </Button>
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2" onClick={handleFinance}>
                     <Calculator className="h-6 w-6" />
-                    <span>الحسابات المالية</span>
-                  </Button>
+                      <span>الحسابات المالية</span>
+                    </Button>
                 </div>
               </CardContent>
             </Card>

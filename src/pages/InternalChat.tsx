@@ -27,12 +27,17 @@ import {
   Plus,
   Filter,
   Archive,
-  Trash2,
-  Block,
-  Report
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import {
+  getUsers,
+  getGroups,
+  getMessages,
+  sendMessage
+} from '@/services/internal-chat-service';
+import { createClient } from '@supabase/supabase-js';
 
 interface Message {
   id: string;
@@ -69,66 +74,9 @@ interface ChatGroup {
 const InternalChat = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: '1',
-      name: 'د. أحمد محمد',
-      role: 'معالج نفسي',
-      avatar: '/avatars/ahmed.jpg',
-      status: 'online',
-      unreadCount: 2,
-      lastMessage: 'هل تم مراجعة جلسة المريض الجديد؟',
-      lastMessageTime: new Date(Date.now() - 1000 * 60 * 30)
-    },
-    {
-      id: '2',
-      name: 'د. فاطمة علي',
-      role: 'معالجة سلوكية',
-      avatar: '/avatars/fatima.jpg',
-      status: 'busy',
-      unreadCount: 0,
-      lastMessage: 'سأرسل التقرير خلال ساعة',
-      lastMessageTime: new Date(Date.now() - 1000 * 60 * 60)
-    },
-    {
-      id: '3',
-      name: 'محمد حسن',
-      role: 'مدير علاجي',
-      avatar: '/avatars/mohamed.jpg',
-      status: 'online',
-      unreadCount: 1,
-      lastMessage: 'مطلوب اجتماع غداً',
-      lastMessageTime: new Date(Date.now() - 1000 * 60 * 15)
-    },
-    {
-      id: '4',
-      name: 'سارة أحمد',
-      role: 'مشرفة إدارية',
-      avatar: '/avatars/sara.jpg',
-      status: 'offline',
-      unreadCount: 0,
-      lastMessage: 'تم تحديث الجدول',
-      lastMessageTime: new Date(Date.now() - 1000 * 60 * 120)
-    }
-  ]);
-
-  const [groups, setGroups] = useState<ChatGroup[]>([
-    {
-      id: 'g1',
-      name: 'فريق العلاج النفسي',
-      members: contacts.slice(0, 3),
-      isGroup: true,
-      avatar: '/groups/therapy-team.jpg'
-    },
-    {
-      id: 'g2',
-      name: 'إدارة المركز',
-      members: contacts.slice(2, 4),
-      isGroup: true,
-      avatar: '/groups/management.jpg'
-    }
-  ]);
-
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [groups, setGroups] = useState<ChatGroup[]>([]);
+  const [usersMap, setUsersMap] = useState<Record<string, { name: string; role: string; avatar: string }>>({});
   const [selectedContact, setSelectedContact] = useState<Contact | ChatGroup | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -138,102 +86,158 @@ const InternalChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // محاكاة رسائل وهمية
+  // معرف المستخدم الحالي (مؤقتاً: أول مستخدم في القائمة)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // جلب المستخدمين والمجموعات من Supabase
   useEffect(() => {
-    if (selectedContact) {
-      const mockMessages: Message[] = [
-        {
-          id: '1',
-          senderId: selectedContact.id,
-          senderName: selectedContact.name,
-          senderRole: 'role',
-          content: 'مرحباً، كيف حالك؟',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60),
-          type: 'text',
-          status: 'read',
-          isOwn: false
-        },
-        {
-          id: '2',
-          senderId: 'current-user',
-          senderName: 'أنا',
-          senderRole: 'معالج',
-          content: 'أهلاً، الحمد لله. هل تم مراجعة الجلسة الجديدة؟',
-          timestamp: new Date(Date.now() - 1000 * 60 * 45),
-          type: 'text',
-          status: 'read',
-          isOwn: true
-        },
-        {
-          id: '3',
-          senderId: selectedContact.id,
-          senderName: selectedContact.name,
-          senderRole: 'role',
-          content: 'نعم، تم مراجعتها. المريض يظهر تحسناً ملحوظاً',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30),
-          type: 'text',
-          status: 'read',
-          isOwn: false
-        },
-        {
-          id: '4',
-          senderId: selectedContact.id,
-          senderName: selectedContact.name,
-          senderRole: 'role',
-          content: 'هل تريد أن أرسل لك التقرير المفصل؟',
-          timestamp: new Date(Date.now() - 1000 * 60 * 25),
-          type: 'text',
-          status: 'delivered',
-          isOwn: false
-        }
-      ];
-      setMessages(mockMessages);
+    async function fetchData() {
+      try {
+        const users = await getUsers();
+        setContacts(users.map((u: any) => ({
+          ...u,
+          unreadCount: 0,
+          lastMessage: '',
+          lastMessageTime: undefined,
+          status: u.status || 'offline',
+          avatar: u.avatar || '',
+        })));
+        // usersMap: id => {name, role, avatar}
+        const map: Record<string, { name: string; role: string; avatar: string }> = {};
+        users.forEach((u: any) => { map[u.id] = { name: u.name, role: u.role, avatar: u.avatar || '' }; });
+        setUsersMap(map);
+        if (users.length > 0) setCurrentUserId(users[0].id); // مؤقتاً
+        const groups = await getGroups();
+        setGroups(groups.map((g: any) => ({
+          ...g,
+          members: [], // يمكن جلب الأعضاء لاحقاً
+          isGroup: true,
+          avatar: g.avatar || '',
+        })));
+      } catch (error) {
+        toast({ title: 'خطأ', description: 'فشل في تحميل البيانات' });
+      }
     }
-  }, [selectedContact]);
+    fetchData();
+  }, []);
+
+  // جلب الرسائل الحقيقية عند اختيار جهة اتصال أو مجموعة
+  useEffect(() => {
+    async function fetchMessages() {
+      if (!selectedContact || !currentUserId) return;
+      try {
+        let msgs = [];
+        if ('members' in selectedContact) {
+          // مجموعة
+          msgs = await getMessages({ groupId: selectedContact.id });
+        } else {
+          // فردي
+          msgs = await getMessages({ userId: currentUserId, contactId: selectedContact.id });
+        }
+        setMessages((msgs as any[]).map((m) => ({
+          id: m.id,
+          senderId: m.sender_id,
+          senderName: usersMap[m.sender_id]?.name || '',
+          senderRole: usersMap[m.sender_id]?.role || '',
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+          type: m.type || 'text',
+          status: m.status || 'sent',
+          isOwn: m.sender_id === currentUserId,
+        })));
+      } catch (error) {
+        toast({ title: 'خطأ', description: 'فشل في تحميل الرسائل' });
+      }
+    }
+    fetchMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedContact, currentUserId, usersMap]);
+
+  // تفعيل التحديث اللحظي (Realtime) للرسائل
+  useEffect(() => {
+    if (!selectedContact || !currentUserId) return;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const channel = supabase.channel('messages-realtime');
+    channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      const m = payload.new;
+      // تحقق أن الرسالة تخص المحادثة الحالية
+      if (
+        ('members' in selectedContact && m.group_id === selectedContact.id) ||
+        (!('members' in selectedContact) &&
+          ((m.sender_id === currentUserId && m.receiver_id === selectedContact.id) ||
+           (m.sender_id === selectedContact.id && m.receiver_id === currentUserId)))
+      ) {
+        setMessages((prev) => ([
+          ...prev,
+          {
+            id: m.id,
+            senderId: m.sender_id,
+            senderName: usersMap[m.sender_id]?.name || '',
+            senderRole: usersMap[m.sender_id]?.role || '',
+            content: m.content,
+            timestamp: new Date(m.timestamp),
+            type: m.type || 'text',
+            status: m.status || 'sent',
+            isOwn: m.sender_id === currentUserId,
+          }
+        ]));
+      }
+    });
+    channel.subscribe();
+    return () => { channel.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedContact, currentUserId, usersMap]);
 
   // التمرير التلقائي للأسفل
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedContact) return;
-
-    const message: Message = {
-      id: Date.now().toString(),
-      senderId: 'current-user',
-      senderName: 'أنا',
-      senderRole: 'معالج',
-      content: newMessage,
-      timestamp: new Date(),
-      type: 'text',
-      status: 'sent',
-      isOwn: true
-    };
-
-    setMessages([...messages, message]);
-    setNewMessage('');
-
-    // محاكاة الرد
-    setTimeout(() => {
-      const reply: Message = {
-        id: (Date.now() + 1).toString(),
-        senderId: selectedContact.id,
-        senderName: selectedContact.name,
-        senderRole: 'role',
-        content: 'تم استلام رسالتك، سأرد عليك قريباً',
-        timestamp: new Date(),
-        type: 'text',
-        status: 'sent',
-        isOwn: false
-      };
-      setMessages(prev => [...prev, reply]);
-    }, 2000);
-
-    toast({
-      title: 'تم الإرسال',
-      description: 'تم إرسال الرسالة بنجاح',
-    });
+  // إرسال رسالة جديدة وحفظها في Supabase
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedContact || !currentUserId) return;
+    try {
+      if ('members' in selectedContact) {
+        // رسالة جماعية
+        await sendMessage({
+          senderId: currentUserId,
+          content: newMessage,
+          groupId: selectedContact.id
+        });
+      } else {
+        // رسالة فردية
+        await sendMessage({
+          senderId: currentUserId,
+          content: newMessage,
+          receiverId: selectedContact.id
+        });
+      }
+      setNewMessage('');
+      // إعادة تحميل الرسائل بعد الإرسال
+      let msgs = [];
+      if ('members' in selectedContact) {
+        msgs = await getMessages({ groupId: selectedContact.id });
+      } else {
+        msgs = await getMessages({ userId: currentUserId, contactId: selectedContact.id });
+      }
+      setMessages((msgs as any[]).map((m) => ({
+        id: m.id,
+        senderId: m.sender_id,
+        senderName: '',
+        senderRole: '',
+        content: m.content,
+        timestamp: new Date(m.timestamp),
+        type: m.type || 'text',
+        status: m.status || 'sent',
+        isOwn: m.sender_id === currentUserId,
+      })));
+      toast({ title: 'تم الإرسال', description: 'تم إرسال الرسالة بنجاح' });
+    } catch (error) {
+      toast({ title: 'خطأ', description: 'فشل في إرسال الرسالة' });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -476,6 +480,12 @@ const InternalChat = () => {
                             : 'bg-gray-100 text-gray-900'
                         }`}>
                           <p className="text-sm">{message.content}</p>
+                          {!message.isOwn && (
+                            <div className="text-xs text-gray-500 mt-1 mr-2 flex gap-2">
+                              <span>{message.senderName}</span>
+                              <span>{message.senderRole}</span>
+                            </div>
+                          )}
                           <div className={`flex items-center justify-between mt-2 text-xs ${
                             message.isOwn ? 'text-blue-100' : 'text-gray-500'
                           }`}>
@@ -492,9 +502,6 @@ const InternalChat = () => {
                             )}
                           </div>
                         </div>
-                        {!message.isOwn && (
-                          <p className="text-xs text-gray-500 mt-1 mr-2">{message.senderName}</p>
-                        )}
                       </div>
                     </div>
                   ))}

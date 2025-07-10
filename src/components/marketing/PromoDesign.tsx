@@ -31,11 +31,19 @@ import {
   Eye
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRef } from 'react';
+import * as htmlToImage from 'html-to-image';
 
 const PromoDesign = () => {
   const { toast } = useToast();
   const [activeDesign, setActiveDesign] = useState('hero');
   const [copied, setCopied] = useState(false);
+  const [customTexts, setCustomTexts] = useState({
+    centerName: 'شفا كير',
+    slogan: 'مساعدك الذكي للرعاية الصحية',
+    promo: 'جرب المساعد الذكي الآن!'
+  });
+  const designRef = useRef<HTMLDivElement>(null);
 
   const designs = [
     {
@@ -118,11 +126,32 @@ const PromoDesign = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    toast({
-      title: "تحميل التصميم",
-      description: "سيتم تحميل التصميم قريباً",
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setCustomTexts({
+      ...customTexts,
+      [e.target.name]: e.target.value
     });
+  };
+
+  const handleDownload = async () => {
+    if (designRef.current) {
+      try {
+        const dataUrl = await htmlToImage.toPng(designRef.current, { pixelRatio: 2 });
+        const link = document.createElement('a');
+        link.download = `promo-design-${activeDesign}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast({
+          title: 'تم تحميل الصورة!',
+          description: 'يمكنك الآن نشر التصميم على وسائل التواصل الاجتماعي.'
+        });
+      } catch (err) {
+        toast({
+          title: 'حدث خطأ',
+          description: 'تعذر تحميل الصورة. حاول مرة أخرى.'
+        });
+      }
+    }
   };
 
   const handleShare = () => {
@@ -155,7 +184,7 @@ const PromoDesign = () => {
               <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">شفا كير</h2>
+              <h2 className="text-lg font-semibold">{customTexts.centerName}</h2>
               <p className="text-sm opacity-90">نظام الرعاية الذكي</p>
             </div>
           </div>
@@ -167,12 +196,8 @@ const PromoDesign = () => {
 
         {/* Main Content */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            المساعد الذكي
-          </h1>
-          <p className="text-xl md:text-2xl opacity-90 mb-6">
-            مساعدك الشخصي في شفا كير
-          </p>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">{customTexts.promo}</h1>
+          <p className="text-xl md:text-2xl opacity-90 mb-6">{customTexts.slogan}</p>
           <p className="text-lg opacity-80 mb-8 max-w-2xl mx-auto">
             احصل على مساعدة فورية باللهجة المصرية، متاح 24/7 لجميع الموظفين
           </p>
@@ -336,6 +361,21 @@ const PromoDesign = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* تخصيص النصوص */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+          <Label htmlFor="centerName">اسم المركز</Label>
+          <Input name="centerName" value={customTexts.centerName} onChange={handleInputChange} className="mt-1" />
+        </div>
+        <div>
+          <Label htmlFor="slogan">جملة تعريفية</Label>
+          <Input name="slogan" value={customTexts.slogan} onChange={handleInputChange} className="mt-1" />
+        </div>
+        <div>
+          <Label htmlFor="promo">جملة دعائية</Label>
+          <Input name="promo" value={customTexts.promo} onChange={handleInputChange} className="mt-1" />
+        </div>
+      </div>
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">تصميمات دعائية للمساعد الذكي</h1>
@@ -362,7 +402,7 @@ const PromoDesign = () => {
 
       {/* Design Preview */}
       <Card className="overflow-hidden">
-        <CardHeader className="bg-gray-50">
+        <CardHeader className="bg-gray-50 dark:bg-gray-900">
           <div className="flex items-center justify-between">
             <CardTitle>معاينة التصميم</CardTitle>
             <div className="flex items-center space-x-2 space-x-reverse">
@@ -394,7 +434,7 @@ const PromoDesign = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="min-h-[600px]">
+          <div ref={designRef} className="min-h-[600px] bg-white dark:bg-gray-900">
             {renderDesign()}
           </div>
         </CardContent>

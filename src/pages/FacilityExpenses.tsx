@@ -19,6 +19,27 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Expense {
+  id: string;
+  category: string;
+  amount: number;
+  date: string;
+  status: 'paid' | 'pending' | 'overdue';
+  description: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface ExpenseStats {
+  totalExpenses: number;
+  paidExpenses: number;
+  pendingExpenses: number;
+  monthlyExpenses: number;
+  lastMonthExpenses: number;
+  percentageChange: number;
+}
 
 const FacilityExpenses = () => {
   const { toast } = useToast();
@@ -28,28 +49,19 @@ const FacilityExpenses = () => {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isEditExpensesOpen, setIsEditExpensesOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [stats, setStats] = useState<ExpenseStats>({
+    totalExpenses: 0,
+    paidExpenses: 0,
+    pendingExpenses: 0,
+    monthlyExpenses: 0,
+    lastMonthExpenses: 0,
+    percentageChange: 0
+  });
+  const [loading, setLoading] = useState(false);
 
-  // بيانات وهمية للمصاريف
-  const expenses = [
-    { id: 1, category: 'كهرباء', amount: 2500, date: '2024-01-15', status: 'مدفوع', description: 'فاتورة الكهرباء الشهرية' },
-    { id: 2, category: 'مياه', amount: 800, date: '2024-01-10', status: 'مدفوع', description: 'فاتورة المياه الشهرية' },
-    { id: 3, category: 'طعام', amount: 5000, date: '2024-01-20', status: 'معلق', description: 'مصاريف الطعام للمرضى' },
-    { id: 4, category: 'صيانة', amount: 1200, date: '2024-01-05', status: 'مدفوع', description: 'صيانة المكيفات' },
-    { id: 5, category: 'تنظيف', amount: 1500, date: '2024-01-12', status: 'معلق', description: 'خدمات التنظيف' },
-    { id: 6, category: 'أدوية', amount: 3000, date: '2024-01-18', status: 'مدفوع', description: 'مشتريات الأدوية' },
-  ];
-
-  const stats = {
-    totalExpenses: expenses.reduce((sum, exp) => sum + exp.amount, 0),
-    paidExpenses: expenses.filter(exp => exp.status === 'مدفوع').reduce((sum, exp) => sum + exp.amount, 0),
-    pendingExpenses: expenses.filter(exp => exp.status === 'معلق').reduce((sum, exp) => sum + exp.amount, 0),
-    monthlyExpenses: 14000,
-    lastMonthExpenses: 12000,
-    percentageChange: 16.7
-  };
-
-  // اختبار تحميل الصفحة
   useEffect(() => {
+    fetchExpenses();
     console.log('FacilityExpenses component loaded successfully');
     setPageLoaded(true);
     toast({
@@ -58,17 +70,105 @@ const FacilityExpenses = () => {
     });
   }, [toast]);
 
+  const fetchExpenses = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      setExpenses(data || []);
+      calculateStats(data || []);
+    } catch (error: any) {
+      console.error('Error fetching expenses:', error);
+      toast({
+        title: "خطأ في تحميل بيانات المصاريف",
+        description: error.message || "حدث خطأ أثناء تحميل بيانات المصاريف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateStats = (expensesData: Expense[]) => {
+    const totalExpenses = expensesData.reduce((sum, exp) => sum + exp.amount, 0);
+    const paidExpenses = expensesData.filter(exp => exp.status === 'paid').reduce((sum, exp) => sum + exp.amount, 0);
+    const pendingExpenses = expensesData.filter(exp => exp.status === 'pending').reduce((sum, exp) => sum + exp.amount, 0);
+    
+    // حساب المصاريف الشهرية (الشهر الحالي)
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthlyExpenses = expensesData
+      .filter(exp => {
+        const expDate = new Date(exp.date);
+        return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, exp) => sum + exp.amount, 0);
+
+    // حساب المصاريف الشهر الماضي
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const lastMonthExpenses = expensesData
+      .filter(exp => {
+        const expDate = new Date(exp.date);
+        return expDate.getMonth() === lastMonth && expDate.getFullYear() === lastMonthYear;
+      })
+      .reduce((sum, exp) => sum + exp.amount, 0);
+
+    const percentageChange = lastMonthExpenses > 0 ? ((monthlyExpenses - lastMonthExpenses) / lastMonthExpenses) * 100 : 0;
+
+    setStats({
+      totalExpenses,
+      paidExpenses,
+      pendingExpenses,
+      monthlyExpenses,
+      lastMonthExpenses,
+      percentageChange
+    });
+  };
+
   const handleBackToHome = () => {
     navigate('/');
   };
 
-  // وظائف الأزرار
-  const handleAddExpense = () => {
-    setIsAddExpenseOpen(true);
-    toast({
-      title: "إضافة مصروف جديد",
-      description: "سيتم فتح نموذج إضافة المصروف",
-    });
+  const handleAddExpense = async () => {
+    try {
+      setLoading(true);
+      const newExpense = {
+        category: 'كهرباء',
+        amount: 1000,
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending' as const,
+        description: 'مصروف جديد'
+      };
+
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert([newExpense])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setExpenses(prev => [data, ...prev]);
+      calculateStats([data, ...expenses]);
+      toast({
+        title: "تم إضافة مصروف جديد",
+        description: "تم إضافة المصروف بنجاح",
+      });
+    } catch (error: any) {
+      console.error('Error adding expense:', error);
+      toast({
+        title: "خطأ في إضافة المصروف",
+        description: error.message || "حدث خطأ أثناء إضافة المصروف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditExpenses = () => {
@@ -87,32 +187,82 @@ const FacilityExpenses = () => {
     });
   };
 
-  const handleDownloadReport = () => {
-    toast({
-      title: "تحميل التقرير",
-      description: "جاري تحميل تقرير المصاريف...",
-    });
-    
-    setTimeout(() => {
+  const handleDownloadReport = async () => {
+    try {
       toast({
-        title: "تم التحميل",
-        description: "تم تحميل تقرير المصاريف بنجاح",
+        title: "تحميل التقرير",
+        description: "جاري تحميل تقرير المصاريف...",
       });
-    }, 2000);
+      
+      const reportData = {
+        expenses_summary: stats,
+        expenses_details: expenses,
+        generated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'expenses_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم التحميل",
+          description: "تم تحميل تقرير المصاريف بنجاح",
+        });
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error downloading report:', error);
+      toast({
+        title: "خطأ في تحميل التقرير",
+        description: error.message || "حدث خطأ أثناء تحميل التقرير",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleCreateReport = () => {
-    toast({
-      title: "إنشاء التقرير",
-      description: "جاري إنشاء تقرير المصاريف...",
-    });
-    
-    setTimeout(() => {
+  const handleCreateReport = async () => {
+    try {
       toast({
-        title: "تم الإنشاء",
-        description: "تم إنشاء تقرير المصاريف بنجاح",
+        title: "إنشاء التقرير",
+        description: "جاري إنشاء تقرير المصاريف...",
       });
-    }, 2500);
+      
+      const reportData = {
+        expenses_analysis: stats,
+        expenses_breakdown: expenses,
+        generated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'detailed_expenses_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم الإنشاء",
+          description: "تم إنشاء تقرير المصاريف بنجاح",
+        });
+      }, 2500);
+    } catch (error: any) {
+      console.error('Error creating report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddCategory = () => {
@@ -129,46 +279,151 @@ const FacilityExpenses = () => {
     });
   };
 
-  const handleMonthlyReport = () => {
-    toast({
-      title: "تقرير شهري",
-      description: "جاري إنشاء التقرير الشهري...",
-    });
-    
-    setTimeout(() => {
+  const handleMonthlyReport = async () => {
+    try {
       toast({
-        title: "تم الإنشاء",
-        description: "تم إنشاء التقرير الشهري بنجاح",
+        title: "تقرير شهري",
+        description: "جاري إنشاء التقرير الشهري...",
       });
-    }, 2000);
-  };
+      
+      const monthlyData = {
+        monthly_expenses: stats.monthlyExpenses,
+        expenses_list: expenses.filter(exp => {
+          const expDate = new Date(exp.date);
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+          return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+        }),
+        generated_at: new Date().toISOString()
+      };
 
-  const handleYearlyReport = () => {
-    toast({
-      title: "تقرير سنوي",
-      description: "جاري إنشاء التقرير السنوي...",
-    });
-    
-    setTimeout(() => {
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'monthly_expenses_report',
+          data: monthlyData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم الإنشاء",
+          description: "تم إنشاء التقرير الشهري بنجاح",
+        });
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error creating monthly report:', error);
       toast({
-        title: "تم الإنشاء",
-        description: "تم إنشاء التقرير السنوي بنجاح",
+        title: "خطأ في إنشاء التقرير الشهري",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير الشهري",
+        variant: "destructive",
       });
-    }, 3000);
+    }
   };
 
-  const handleEditExpense = (expenseId: number) => {
-    toast({
-      title: "تعديل المصروف",
-      description: `سيتم فتح نموذج تعديل المصروف رقم ${expenseId}`,
-    });
+  const handleYearlyReport = async () => {
+    try {
+      toast({
+        title: "تقرير سنوي",
+        description: "جاري إنشاء التقرير السنوي...",
+      });
+      
+      const yearlyData = {
+        yearly_expenses: stats.totalExpenses,
+        expenses_breakdown: expenses,
+        generated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'yearly_expenses_report',
+          data: yearlyData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم الإنشاء",
+          description: "تم إنشاء التقرير السنوي بنجاح",
+        });
+      }, 3000);
+    } catch (error: any) {
+      console.error('Error creating yearly report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير السنوي",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير السنوي",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteExpense = (expenseId: number) => {
-    toast({
-      title: "حذف المصروف",
-      description: `سيتم حذف المصروف رقم ${expenseId}`,
-    });
+  const handleEditExpense = async (expenseId: string) => {
+    try {
+      const expense = expenses.find(e => e.id === expenseId);
+      if (!expense) return;
+
+      const updatedExpense: Expense = {
+        ...expense,
+        status: expense.status === 'paid' ? 'pending' : 'paid',
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('expenses')
+        .update(updatedExpense)
+        .eq('id', expenseId);
+
+      if (error) throw error;
+
+      setExpenses(prev => prev.map(e => e.id === expenseId ? updatedExpense : e));
+      calculateStats(expenses.map(e => e.id === expenseId ? updatedExpense : e));
+      toast({
+        title: "تم تحديث المصروف",
+        description: `تم تحديث حالة المصروف ${expense.category}`,
+      });
+    } catch (error: any) {
+      console.error('Error updating expense:', error);
+      toast({
+        title: "خطأ في تحديث المصروف",
+        description: error.message || "حدث خطأ أثناء تحديث المصروف",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المصروف؟')) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', expenseId);
+
+      if (error) throw error;
+
+      setExpenses(prev => prev.filter(e => e.id !== expenseId));
+      calculateStats(expenses.filter(e => e.id !== expenseId));
+      toast({
+        title: "تم حذف المصروف",
+        description: "تم حذف المصروف بنجاح",
+      });
+    } catch (error: any) {
+      console.error('Error deleting expense:', error);
+      toast({
+        title: "خطأ في حذف المصروف",
+        description: error.message || "حدث خطأ أثناء حذف المصروف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -181,7 +436,7 @@ const FacilityExpenses = () => {
               <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-pink-600 rounded-xl flex items-center justify-center">
                 <DollarSign className="h-7 w-7 text-white" />
               </div>
-              <div>
+          <div>
                 <h1 className="text-3xl font-bold text-foreground">مصاريف المرافق</h1>
                 <p className="text-muted-foreground">إدارة شاملة لمصاريف المصحة والمرافق</p>
               </div>
@@ -196,10 +451,10 @@ const FacilityExpenses = () => {
               <Button variant="outline" onClick={handleBackToHome}>
                 العودة للرئيسية
               </Button>
-            </div>
           </div>
+        </div>
 
-          {/* إحصائيات سريعة */}
+        {/* إحصائيات سريعة */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
             <Card className="text-center">
               <CardContent className="p-4">
@@ -220,29 +475,29 @@ const FacilityExpenses = () => {
                 <AlertCircle className="h-6 w-6 mx-auto mb-2 text-yellow-600" />
                 <div className="text-2xl font-bold text-yellow-600">{stats.pendingExpenses.toLocaleString()}</div>
                 <div className="text-sm text-gray-600">مصاريف معلقة</div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
             <Card className="text-center">
               <CardContent className="p-4">
                 <TrendingDown className="h-6 w-6 mx-auto mb-2 text-blue-600" />
                 <div className="text-2xl font-bold text-blue-600">{stats.monthlyExpenses.toLocaleString()}</div>
                 <div className="text-sm text-gray-600">مصاريف الشهر</div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
             <Card className="text-center">
               <CardContent className="p-4">
                 <Building className="h-6 w-6 mx-auto mb-2 text-purple-600" />
                 <div className="text-2xl font-bold text-purple-600">{expenses.length}</div>
                 <div className="text-sm text-gray-600">عدد الفواتير</div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
             <Card className="text-center">
               <CardContent className="p-4">
                 <TrendingDown className="h-6 w-6 mx-auto mb-2 text-indigo-600" />
                 <div className="text-2xl font-bold text-indigo-600">{stats.percentageChange}%</div>
                 <div className="text-sm text-gray-600">زيادة عن الشهر السابق</div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
           </div>
         </div>
 
@@ -253,8 +508,8 @@ const FacilityExpenses = () => {
             <TabsTrigger value="expenses">قائمة المصاريف</TabsTrigger>
             <TabsTrigger value="categories">فئات المصاريف</TabsTrigger>
             <TabsTrigger value="reports">التقارير</TabsTrigger>
-          </TabsList>
-
+            </TabsList>
+            
           {/* نظرة عامة */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -272,14 +527,14 @@ const FacilityExpenses = () => {
                       <div className="flex items-center space-x-2">
                         <TrendingDown className="h-5 w-5 text-red-600" />
                         <span>إجمالي المصاريف</span>
-                      </div>
+                  </div>
                       <span className="font-bold text-red-600">{stats.totalExpenses.toLocaleString()} ج.م</span>
-                    </div>
+                  </div>
                     <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div className="flex items-center space-x-2">
                         <CheckCircle className="h-5 w-5 text-green-600" />
                         <span>مصاريف مدفوعة</span>
-                      </div>
+                  </div>
                       <span className="font-bold text-green-600">{stats.paidExpenses.toLocaleString()} ج.م</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
@@ -321,14 +576,14 @@ const FacilityExpenses = () => {
                       <div className="flex items-center space-x-2">
                         <Utensils className="h-4 w-4 text-orange-600" />
                         <span>طعام</span>
-                      </div>
+                  </div>
                       <span className="font-medium">5,000 ج.م</span>
-                    </div>
+                  </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Wrench className="h-4 w-4 text-gray-600" />
                         <span>صيانة</span>
-                      </div>
+                  </div>
                       <span className="font-medium">1,200 ج.م</span>
                     </div>
                     <hr />
@@ -388,8 +643,8 @@ const FacilityExpenses = () => {
                       <div className="flex items-center space-x-4">
                         <span className="font-bold">{expense.amount.toLocaleString()} ج.م</span>
                         <Badge 
-                          variant={expense.status === 'مدفوع' ? 'default' : 'secondary'}
-                          className={expense.status === 'مدفوع' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                          variant={expense.status === 'paid' ? 'default' : 'secondary'}
+                          className={expense.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
                         >
                           {expense.status}
                         </Badge>
@@ -402,7 +657,7 @@ const FacilityExpenses = () => {
                           </Button>
                         </div>
                       </div>
-                    </div>
+                  </div>
                   ))}
                 </div>
               </CardContent>
@@ -447,12 +702,12 @@ const FacilityExpenses = () => {
                   <Button onClick={handleMonthlyReport}>
                     <DollarSign className="h-4 w-4 mr-2" />
                     تقرير شهري
-                  </Button>
+                            </Button>
                   <Button variant="outline" onClick={handleYearlyReport}>
                     <TrendingDown className="h-4 w-4 mr-2" />
                     تقرير سنوي
-                  </Button>
-                </div>
+                            </Button>
+                          </div>
               </CardContent>
             </Card>
           </TabsContent>

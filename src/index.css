@@ -2,12 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* إضافة الخطوط العربية */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
+    /* الألوان الطبية الأساسية */
+    --medical-blue: 221 83% 53%;
+    --healing-green: 142 76% 36%;
+    --emergency-red: 0 84% 60%;
+    --calm-gray: 210 16% 46%;
+    --success-green: 142 76% 36%;
+    --warning-orange: 38 92% 50%;
+    --clean-white: 0 0% 100%;
+    --soft-background: 210 40% 98%;
+
+    /* نظام الألوان الأساسي */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -17,7 +31,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 221.2 83.2% 53.3%;
+    --primary: var(--medical-blue);
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96%;
@@ -29,46 +43,40 @@ All colors MUST be HSL.
     --accent: 210 40% 96%;
     --accent-foreground: 222.2 84% 4.9%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: var(--emergency-red);
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: var(--medical-blue);
 
-    --success: 142.1 76.2% 36.3%;
+    --success: var(--healing-green);
     --success-foreground: 355.7 100% 97.3%;
 
-    --warning: 38 92% 50%;
+    --warning: var(--warning-orange);
     --warning-foreground: 48 96% 89%;
 
     --info: 199 89% 48%;
     --info-foreground: 210 40% 98%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 30% 96%), hsl(142 50% 88%));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--healing-green)), hsl(142 76% 46%));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--soft-background)), hsl(142 50% 88%));
+    --gradient-medical: linear-gradient(135deg, hsl(var(--medical-blue)), hsl(221 83% 63%));
     
-    --shadow-soft: 0 4px 20px -4px hsl(142 76% 36% / 0.1);
-    --shadow-medium: 0 8px 25px -5px hsl(142 76% 36% / 0.15);
-    --shadow-strong: 0 20px 40px -12px hsl(142 76% 36% / 0.25);
+    --shadow-soft: 0 4px 20px -4px hsl(var(--medical-blue) / 0.1);
+    --shadow-medium: 0 8px 25px -5px hsl(var(--medical-blue) / 0.15);
+    --shadow-strong: 0 20px 40px -12px hsl(var(--medical-blue) / 0.25);
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 100%;
-
     --sidebar-foreground: 222.2 84% 4.9%;
-
-    --sidebar-primary: 221.2 83.2% 53.3%;
-
+    --sidebar-primary: var(--medical-blue);
     --sidebar-primary-foreground: 210 40% 98%;
-
     --sidebar-accent: 210 40% 96%;
-
     --sidebar-accent-foreground: 222.2 84% 4.9%;
-
     --sidebar-border: 214.3 31.8% 91.4%;
-
-    --sidebar-ring: 221.2 83.2% 53.3%;
+    --sidebar-ring: var(--medical-blue);
   }
 
   .dark {
@@ -123,7 +131,10 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
     direction: rtl;
     text-align: right;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -135,11 +146,50 @@ All colors MUST be HSL.
     overflow-x: hidden;
   }
 
+  /* تحسين العناوين */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-weight: 600;
+    color: hsl(var(--medical-blue));
+    line-height: 1.3;
+    margin-bottom: 0.5em;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 600;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  /* تحسين الفقرات */
+  p {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-weight: 400;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
   /* Mobile-specific improvements */
   @media (max-width: 768px) {
     body {
       font-size: 14px;
     }
+    
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    h4 { font-size: 1.125rem; }
+    h5 { font-size: 1rem; }
+    h6 { font-size: 0.875rem; }
     
     /* Prevent horizontal scroll on mobile */
     html, body {
@@ -162,7 +212,7 @@ All colors MUST be HSL.
 
   /* Arabic Font Support */
   .arabic-font {
-    font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+    font-family: 'Cairo', 'Tajawal', 'Noto Sans Arabic', sans-serif;
   }
   
   /* RTL Support */
@@ -199,140 +249,272 @@ All colors MUST be HSL.
       width: 4px;
     }
   }
-
-  /* Ensure basic elements are visible */
-  h1, h2, h3, h4, h5, h6 {
-    @apply text-foreground;
-    line-height: 1.2;
-  }
-
-  p {
-    @apply text-foreground;
-    line-height: 1.6;
-  }
-
-  div {
-    @apply text-foreground;
-  }
-
-  /* Mobile typography improvements */
-  @media (max-width: 768px) {
-    h1 { font-size: 1.5rem; }
-    h2 { font-size: 1.25rem; }
-    h3 { font-size: 1.125rem; }
-    h4 { font-size: 1rem; }
-    h5 { font-size: 0.875rem; }
-    h6 { font-size: 0.75rem; }
-  }
 }
 
-/* تحسينات الأداء */
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .text-shadow {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .shadow-soft {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-  
-  .dark .shadow-soft {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Mobile-specific utilities */
-  .mobile-padding {
-    padding: 1rem;
-  }
-  
-  .mobile-margin {
-    margin: 1rem;
-  }
-  
-  .mobile-text {
-    font-size: 0.875rem;
-  }
-  
-  .mobile-text-sm {
-    font-size: 0.75rem;
-  }
-  
-  .mobile-text-lg {
-    font-size: 1rem;
-  }
-
-  /* Responsive grid improvements */
-  .mobile-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  @media (min-width: 640px) {
-    .mobile-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .mobile-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-    }
-  }
-
-  /* Debug styles to ensure visibility */
-  .debug-border {
-    border: 2px solid red !important;
-  }
-  
-  .debug-bg {
-    background-color: red !important;
-  }
-}
-
-/* Component styles */
 @layer components {
+  /* أزرار تفاعلية محسنة */
+  .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    background: linear-gradient(135deg, hsl(var(--medical-blue)), hsl(221 83% 63%));
+    color: white;
+    box-shadow: 0 2px 10px hsl(var(--medical-blue) / 0.3);
   }
-  
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, hsl(221 83% 63%), hsl(var(--medical-blue)));
+    box-shadow: 0 5px 20px hsl(var(--medical-blue) / 0.4);
+  }
+
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    background: linear-gradient(135deg, hsl(var(--healing-green)), hsl(142 76% 46%));
+    color: white;
+    box-shadow: 0 2px 10px hsl(var(--healing-green) / 0.3);
   }
-  
-  .card-hover {
-    @apply hover:shadow-md transition-all duration-200;
+
+  .btn-secondary:hover {
+    background: linear-gradient(135deg, hsl(142 76% 46%), hsl(var(--healing-green)));
+    box-shadow: 0 5px 20px hsl(var(--healing-green) / 0.4);
   }
-  
+
+  .btn-danger {
+    background: linear-gradient(135deg, hsl(var(--emergency-red)), hsl(0 84% 70%));
+    color: white;
+    box-shadow: 0 2px 10px hsl(var(--emergency-red) / 0.3);
+  }
+
+  .btn-danger:hover {
+    background: linear-gradient(135deg, hsl(0 84% 70%), hsl(var(--emergency-red)));
+    box-shadow: 0 5px 20px hsl(var(--emergency-red) / 0.4);
+  }
+
+  /* بطاقات محسنة */
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+
+  .card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid hsl(var(--border));
+    background: linear-gradient(135deg, hsl(var(--soft-background)), white);
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-weight: 600;
+    color: hsl(var(--medical-blue));
+    font-size: 1.25rem;
+  }
+
+  /* تأثيرات بصرية */
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+    background: linear-gradient(135deg, hsl(var(--medical-blue)), hsl(var(--healing-green)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  
-  .card {
-    @apply bg-card text-card-foreground rounded-lg border shadow-sm;
+
+  .shadow-soft {
+    box-shadow: 0 4px 20px -4px hsl(var(--medical-blue) / 0.1);
   }
-  
-  .card-header {
-    @apply flex flex-col space-y-1.5 p-4 sm:p-6;
+
+  .dark .shadow-soft {
+    box-shadow: 0 4px 20px -4px hsl(var(--medical-blue) / 0.2);
   }
-  
-  .card-content {
-    @apply p-4 sm:p-6 pt-0;
+
+  /* تحسينات للموبايل */
+  .mobile-padding {
+    @apply px-4 py-2;
   }
-  
-  .card-title {
-    @apply text-lg sm:text-xl lg:text-2xl font-semibold leading-none tracking-tight;
+
+  .mobile-margin {
+    @apply mx-2 my-1;
+  }
+
+  .mobile-text {
+    @apply text-sm;
+  }
+
+  .mobile-text-sm {
+    @apply text-xs;
+  }
+
+  .mobile-text-lg {
+    @apply text-base;
+  }
+
+  .mobile-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  @media (min-width: 640px) {
+    .mobile-grid {
+      @apply grid-cols-2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-grid {
+      @apply grid-cols-3;
+    }
+  }
+
+  /* تأثيرات تفاعلية */
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+
+  .pulse-animation {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* تحسينات للألوان الطبية */
+  .medical-blue {
+    color: hsl(var(--medical-blue));
+  }
+
+  .healing-green {
+    color: hsl(var(--healing-green));
+  }
+
+  .emergency-red {
+    color: hsl(var(--emergency-red));
+  }
+
+  .calm-gray {
+    color: hsl(var(--calm-gray));
+  }
+
+  .bg-medical-blue {
+    background-color: hsl(var(--medical-blue));
+  }
+
+  .bg-healing-green {
+    background-color: hsl(var(--healing-green));
+  }
+
+  .bg-emergency-red {
+    background-color: hsl(var(--emergency-red));
+  }
+
+  .bg-calm-gray {
+    background-color: hsl(var(--calm-gray));
+  }
+
+  /* تحسينات للجداول */
+  .table-medical {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .table-medical th {
+    background: linear-gradient(135deg, hsl(var(--medical-blue)), hsl(221 83% 63%));
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+  }
+
+  .table-medical td {
+    padding: 1rem;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .table-medical tr:hover {
+    background-color: hsl(var(--soft-background));
+  }
+
+  /* تحسينات للنماذج */
+  .form-input {
+    border: 2px solid hsl(var(--border));
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    transition: all 0.3s ease;
+  }
+
+  .form-input:focus {
+    border-color: hsl(var(--medical-blue));
+    box-shadow: 0 0 0 3px hsl(var(--medical-blue) / 0.1);
+    outline: none;
+  }
+
+  /* تحسينات للتنبيهات */
+  .alert-success {
+    background: linear-gradient(135deg, hsl(var(--healing-green)), hsl(142 76% 46%));
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px hsl(var(--healing-green) / 0.3);
+  }
+
+  .alert-warning {
+    background: linear-gradient(135deg, hsl(var(--warning-orange)), hsl(38 92% 60%));
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px hsl(var(--warning-orange) / 0.3);
+  }
+
+  .alert-error {
+    background: linear-gradient(135deg, hsl(var(--emergency-red)), hsl(0 84% 70%));
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px hsl(var(--emergency-red) / 0.3);
+  }
+
+  .alert-info {
+    background: linear-gradient(135deg, hsl(var(--medical-blue)), hsl(221 83% 63%));
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px hsl(var(--medical-blue) / 0.3);
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,13 +17,25 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
-import { TreatmentGoal } from '@/types/session';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface TreatmentGoal {
+  id: string;
+  patient_id: string;
+  title: string;
+  description: string;
+  target_date: string;
+  priority: 'high' | 'medium' | 'low';
+  category: 'behavioral' | 'emotional' | 'social' | 'physical' | 'spiritual';
+  progress: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface TreatmentGoalsProps {
-  goals: TreatmentGoal[];
-  onUpdateGoal: (goalId: string, updates: Partial<TreatmentGoal>) => void;
-  onAddGoal: (goal: Omit<TreatmentGoal, 'id'>) => void;
-  onDeleteGoal: (goalId: string) => void;
+  patientId?: string;
 }
 
 const priorityColors = {
@@ -47,13 +59,11 @@ const statusIcons = {
   failed: AlertTriangle
 };
 
-export default function TreatmentGoals({ 
-  goals, 
-  onUpdateGoal, 
-  onAddGoal, 
-  onDeleteGoal 
-}: TreatmentGoalsProps) {
+export default function TreatmentGoals({ patientId }: TreatmentGoalsProps) {
+  const { toast } = useToast();
+  const [goals, setGoals] = useState<TreatmentGoal[]>([]);
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
@@ -62,18 +72,114 @@ export default function TreatmentGoals({
     category: 'behavioral' as const
   });
 
-  const handleSaveGoal = (goalId: string, updates: Partial<TreatmentGoal>) => {
-    onUpdateGoal(goalId, updates);
-    setEditingGoal(null);
+  useEffect(() => {
+    if (patientId) {
+      fetchGoals();
+    }
+  }, [patientId]);
+
+  const fetchGoals = async () => {
+    if (!patientId) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('treatment_goals')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setGoals(data || []);
+    } catch (error: any) {
+      console.error('Error fetching goals:', error);
+      toast({
+        title: "خطأ في تحميل الأهداف",
+        description: error.message || "حدث خطأ أثناء تحميل الأهداف العلاجية",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddGoal = () => {
-    if (newGoal.title && newGoal.description && newGoal.target_date) {
-      onAddGoal({
+  const handleSaveGoal = async (goalId: string, updates: Partial<TreatmentGoal>) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('treatment_goals')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      setGoals(prev => prev.map(goal => 
+        goal.id === goalId ? { ...goal, ...updates, updated_at: new Date().toISOString() } : goal
+      ));
+
+      toast({
+        title: "تم تحديث الهدف",
+        description: "تم حفظ التغييرات بنجاح",
+      });
+
+      setEditingGoal(null);
+    } catch (error: any) {
+      console.error('Error updating goal:', error);
+      toast({
+        title: "خطأ في تحديث الهدف",
+        description: error.message || "حدث خطأ أثناء تحديث الهدف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddGoal = async () => {
+    if (!patientId) {
+      toast({
+        title: "خطأ في البيانات",
+        description: "يرجى تحديد المريض أولاً",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newGoal.title || !newGoal.description || !newGoal.target_date) {
+      toast({
+        title: "بيانات مطلوبة",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const goalData = {
+        patient_id: patientId,
         ...newGoal,
         progress: 0,
-        status: 'pending'
+        status: 'pending' as const
+      };
+
+      const { data, error } = await supabase
+        .from('treatment_goals')
+        .insert([goalData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setGoals(prev => [data, ...prev]);
+      toast({
+        title: "تم إضافة الهدف",
+        description: "تم إضافة الهدف العلاجي بنجاح",
       });
+
       setNewGoal({
         title: '',
         description: '',
@@ -81,6 +187,44 @@ export default function TreatmentGoals({
         priority: 'medium',
         category: 'behavioral'
       });
+    } catch (error: any) {
+      console.error('Error adding goal:', error);
+      toast({
+        title: "خطأ في إضافة الهدف",
+        description: error.message || "حدث خطأ أثناء إضافة الهدف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الهدف؟')) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('treatment_goals')
+        .delete()
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      setGoals(prev => prev.filter(goal => goal.id !== goalId));
+      toast({
+        title: "تم حذف الهدف",
+        description: "تم حذف الهدف العلاجي بنجاح",
+      });
+    } catch (error: any) {
+      console.error('Error deleting goal:', error);
+      toast({
+        title: "خطأ في حذف الهدف",
+        description: error.message || "حدث خطأ أثناء حذف الهدف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,158 +343,162 @@ export default function TreatmentGoals({
 
         {/* قائمة الأهداف */}
         <div className="space-y-4">
-          {goals.map((goal) => (
-            <div key={goal.id} className="p-4 border rounded-lg">
-              {editingGoal === goal.id ? (
-                // وضع التحرير
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>العنوان</Label>
-                      <Input
-                        value={goal.title}
-                        onChange={(e) => handleSaveGoal(goal.id, { title: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label>التقدم (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={goal.progress}
-                        onChange={(e) => handleSaveGoal(goal.id, { progress: parseInt(e.target.value) })}
-                      />
-                    </div>
-                    <div>
-                      <Label>الحالة</Label>
-                      <Select
-                        value={goal.status}
-                        onValueChange={(value: any) => handleSaveGoal(goal.id, { status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">في الانتظار</SelectItem>
-                          <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
-                          <SelectItem value="completed">مكتمل</SelectItem>
-                          <SelectItem value="failed">فشل</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>الأولوية</Label>
-                      <Select
-                        value={goal.priority}
-                        onValueChange={(value: any) => handleSaveGoal(goal.id, { priority: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">منخفضة</SelectItem>
-                          <SelectItem value="medium">متوسطة</SelectItem>
-                          <SelectItem value="high">عالية</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label>الوصف</Label>
-                    <Input
-                      value={goal.description}
-                      onChange={(e) => handleSaveGoal(goal.id, { description: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" onClick={() => setEditingGoal(null)}>
-                      <Save className="h-4 w-4 mr-1" />
-                      حفظ
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditingGoal(null)}>
-                      <X className="h-4 w-4 mr-1" />
-                      إلغاء
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                // وضع العرض
-                <div>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-medium">{goal.title}</h4>
-                        <Badge 
-                          variant="outline" 
-                          className={`${priorityColors[goal.priority]}`}
-                        >
-                          {getPriorityLabel(goal.priority)}
-                        </Badge>
-                        <Badge 
-                          variant="outline" 
-                          className={`${categoryColors[goal.category]}`}
-                        >
-                          {getCategoryLabel(goal.category)}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{goal.description}</p>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">التقدم:</span>
-                          <span className="text-sm font-medium">{goal.progress}%</span>
-                        </div>
-                        <Progress value={goal.progress} className="h-2" />
-                      </div>
-
-                      <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>الهدف: {new Date(goal.target_date).toLocaleDateString('ar-EG')}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          {React.createElement(statusIcons[goal.status], { 
-                            className: `h-4 w-4 ${getStatusColor(goal.status)}` 
-                          })}
-                          <span className={getStatusColor(goal.status)}>
-                            {goal.status === 'pending' && 'في الانتظار'}
-                            {goal.status === 'in_progress' && 'قيد التنفيذ'}
-                            {goal.status === 'completed' && 'مكتمل'}
-                            {goal.status === 'failed' && 'فشل'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setEditingGoal(goal.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onDeleteGoal(goal.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">
+              جاري التحميل...
             </div>
-          ))}
-        </div>
+          ) : goals.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              لا توجد أهداف علاجية محددة
+            </div>
+          ) : (
+            goals.map((goal) => (
+              <div key={goal.id} className="p-4 border rounded-lg">
+                {editingGoal === goal.id ? (
+                  // وضع التحرير
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>العنوان</Label>
+                        <Input
+                          value={goal.title}
+                          onChange={(e) => handleSaveGoal(goal.id, { title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label>التقدم (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={goal.progress}
+                          onChange={(e) => handleSaveGoal(goal.id, { progress: parseInt(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <Label>الحالة</Label>
+                        <Select
+                          value={goal.status}
+                          onValueChange={(value: any) => handleSaveGoal(goal.id, { status: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">في الانتظار</SelectItem>
+                            <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
+                            <SelectItem value="completed">مكتمل</SelectItem>
+                            <SelectItem value="failed">فشل</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>الأولوية</Label>
+                        <Select
+                          value={goal.priority}
+                          onValueChange={(value: any) => handleSaveGoal(goal.id, { priority: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">منخفضة</SelectItem>
+                            <SelectItem value="medium">متوسطة</SelectItem>
+                            <SelectItem value="high">عالية</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>الوصف</Label>
+                      <Input
+                        value={goal.description}
+                        onChange={(e) => handleSaveGoal(goal.id, { description: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" onClick={() => setEditingGoal(null)}>
+                        <Save className="h-4 w-4 mr-1" />
+                        حفظ
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingGoal(null)}>
+                        <X className="h-4 w-4 mr-1" />
+                        إلغاء
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // وضع العرض
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="font-medium">{goal.title}</h4>
+                          <Badge 
+                            variant="outline" 
+                            className={`${priorityColors[goal.priority]}`}
+                          >
+                            {getPriorityLabel(goal.priority)}
+                          </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className={`${categoryColors[goal.category]}`}
+                          >
+                            {getCategoryLabel(goal.category)}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{goal.description}</p>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500">التقدم:</span>
+                            <span className="text-sm font-medium">{goal.progress}%</span>
+                          </div>
+                          <Progress value={goal.progress} className="h-2" />
+                        </div>
 
-        {goals.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            لا توجد أهداف علاجية محددة
-          </div>
-        )}
+                        <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>الهدف: {new Date(goal.target_date).toLocaleDateString('ar-EG')}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            {React.createElement(statusIcons[goal.status], { 
+                              className: `h-4 w-4 ${getStatusColor(goal.status)}` 
+                            })}
+                            <span className={getStatusColor(goal.status)}>
+                              {goal.status === 'pending' && 'في الانتظار'}
+                              {goal.status === 'in_progress' && 'قيد التنفيذ'}
+                              {goal.status === 'completed' && 'مكتمل'}
+                              {goal.status === 'failed' && 'فشل'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setEditingGoal(goal.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDeleteGoal(goal.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -11,6 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Shield, 
   Users, 
@@ -64,17 +75,133 @@ const AdvancedPermissions = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('roles');
   const [editingRole, setEditingRole] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRoleData, setEditingRoleData] = useState<Role | null>(null);
+  
+  // نظام إدارة حالة حقيقي
+  const [roles, setRoles] = useState<Role[]>([
+    {
+      id: 'admin',
+      name: 'مدير النظام',
+      description: 'صلاحيات كاملة على النظام',
+      permissions: ['patients.view', 'patients.create', 'patients.edit', 'patients.delete', 'sessions.view', 'sessions.create', 'sessions.edit', 'sessions.delete', 'ai.sessions', 'ai.treatment', 'ai.assistant', 'reports.view', 'reports.create', 'reports.export', 'staff.view', 'staff.manage', 'communication.view', 'communication.send', 'admin.settings', 'admin.permissions'],
+      users: 1,
+      color: 'bg-red-500'
+    },
+    {
+      id: 'therapist',
+      name: 'معالج نفسي',
+      description: 'معالج نفسي متخصص',
+      permissions: ['patients.view', 'patients.create', 'patients.edit', 'sessions.view', 'sessions.create', 'sessions.edit', 'ai.sessions', 'ai.treatment', 'ai.assistant', 'reports.view', 'reports.create', 'communication.view', 'communication.send'],
+      users: 3,
+      color: 'bg-blue-500'
+    },
+    {
+      id: 'supervisor',
+      name: 'مشرف',
+      description: 'مشرف على المعالجين والمرضى',
+      permissions: ['patients.view', 'patients.create', 'patients.edit', 'sessions.view', 'sessions.create', 'sessions.edit', 'ai.sessions', 'ai.treatment', 'ai.assistant', 'reports.view', 'reports.create', 'reports.export', 'staff.view', 'communication.view', 'communication.send'],
+      users: 2,
+      color: 'bg-green-500'
+    },
+    {
+      id: 'assistant',
+      name: 'مساعد',
+      description: 'مساعد إداري',
+      permissions: ['patients.view', 'sessions.view', 'reports.view', 'communication.view'],
+      users: 2,
+      color: 'bg-purple-500'
+    }
+  ]);
+
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: '1',
+      name: 'أحمد محمد',
+      email: 'ahmed@shifacare.com',
+      role: 'admin',
+      status: 'active',
+      lastLogin: '2024-12-20 10:30',
+      permissions: ['patients.view', 'patients.create', 'patients.edit', 'patients.delete', 'sessions.view', 'sessions.create', 'sessions.edit', 'sessions.delete', 'ai.sessions', 'ai.treatment', 'ai.assistant', 'reports.view', 'reports.create', 'reports.export', 'staff.view', 'staff.manage', 'communication.view', 'communication.send', 'admin.settings', 'admin.permissions']
+    },
+    {
+      id: '2',
+      name: 'سارة أحمد',
+      email: 'sara@shifacare.com',
+      role: 'therapist',
+      status: 'active',
+      lastLogin: '2024-12-20 09:15',
+      permissions: ['patients.view', 'patients.create', 'patients.edit', 'sessions.view', 'sessions.create', 'sessions.edit', 'ai.sessions', 'ai.treatment', 'ai.assistant', 'reports.view', 'reports.create', 'communication.view', 'communication.send']
+    },
+    {
+      id: '3',
+      name: 'محمد علي',
+      email: 'mohamed@shifacare.com',
+      role: 'supervisor',
+      status: 'active',
+      lastLogin: '2024-12-20 08:45',
+      permissions: ['patients.view', 'patients.create', 'patients.edit', 'sessions.view', 'sessions.create', 'sessions.edit', 'ai.sessions', 'ai.treatment', 'ai.assistant', 'reports.view', 'reports.create', 'reports.export', 'staff.view', 'communication.view', 'communication.send']
+    },
+    {
+      id: '4',
+      name: 'فاطمة حسن',
+      email: 'fatima@shifacare.com',
+      role: 'assistant',
+      status: 'active',
+      lastLogin: '2024-12-20 08:30',
+      permissions: ['patients.view', 'sessions.view', 'reports.view', 'communication.view']
+    }
+  ]);
 
   // إضافة console.log للتأكد من تحميل المكون
   console.log('AdvancedPermissions component loaded successfully');
 
-  // إظهار toast للتأكد من التحميل
+  // حفظ البيانات في localStorage
+  const saveToLocalStorage = (data: any, key: string) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  // تحميل البيانات من localStorage
+  const loadFromLocalStorage = (key: string, defaultValue: any) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      return defaultValue;
+    }
+  };
+
+  // تحميل البيانات المحفوظة عند بدء التطبيق
   React.useEffect(() => {
+    const savedRoles = loadFromLocalStorage('shifacare_roles', roles);
+    const savedUsers = loadFromLocalStorage('shifacare_users', users);
+    
+    if (savedRoles.length > 0) {
+      setRoles(savedRoles);
+    }
+    if (savedUsers.length > 0) {
+      setUsers(savedUsers);
+    }
+    
     toast({
       title: "تم تحميل الصفحة",
       description: "صفحة إدارة الصلاحيات المتقدمة جاهزة",
     });
   }, [toast]);
+
+  // حفظ البيانات عند تغييرها
+  React.useEffect(() => {
+    saveToLocalStorage(roles, 'shifacare_roles');
+  }, [roles]);
+
+  React.useEffect(() => {
+    saveToLocalStorage(users, 'shifacare_users');
+  }, [users]);
 
   // الصلاحيات المتاحة
   const availablePermissions: Permission[] = [
@@ -282,113 +409,7 @@ const AdvancedPermissions = () => {
     }
   ];
 
-  // الأدوار المتاحة
-  const [roles, setRoles] = useState<Role[]>([
-    {
-      id: 'admin',
-      name: 'مدير النظام',
-      description: 'صلاحيات كاملة على النظام',
-      permissions: availablePermissions.map(p => p.id),
-      users: 2,
-      color: 'bg-red-500'
-    },
-    {
-      id: 'manager',
-      name: 'مدير المركز',
-      description: 'إدارة شاملة للمركز',
-      permissions: availablePermissions.filter(p => p.level !== 'admin').map(p => p.id),
-      users: 3,
-      color: 'bg-blue-500'
-    },
-    {
-      id: 'therapist',
-      name: 'معالج نفسي',
-      description: 'إدارة الجلسات والمرضى',
-      permissions: [
-        'patients.view', 'patients.create', 'patients.edit',
-        'sessions.view', 'sessions.create', 'sessions.edit',
-        'ai.sessions', 'ai.treatment', 'ai.assistant',
-        'reports.view', 'reports.create',
-        'communication.view', 'communication.send'
-      ],
-      users: 8,
-      color: 'bg-green-500'
-    },
-    {
-      id: 'assistant',
-      name: 'مساعد إداري',
-      description: 'مهام إدارية أساسية',
-      permissions: [
-        'patients.view', 'patients.create',
-        'sessions.view', 'sessions.create',
-        'ai.assistant',
-        'reports.view',
-        'communication.view', 'communication.send',
-        'staff.view'
-      ],
-      users: 5,
-      color: 'bg-purple-500'
-    },
-    {
-      id: 'viewer',
-      name: 'مشاهد',
-      description: 'عرض البيانات فقط',
-      permissions: [
-        'patients.view',
-        'sessions.view',
-        'ai.assistant',
-        'reports.view',
-        'communication.view',
-        'staff.view'
-      ],
-      users: 12,
-      color: 'bg-gray-500'
-    }
-  ]);
 
-  // المستخدمين
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'أحمد محمد',
-      email: 'ahmed@shifa-care.com',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2024-12-20 10:30',
-      permissions: availablePermissions.map(p => p.id)
-    },
-    {
-      id: '2',
-      name: 'سارة أحمد',
-      email: 'sara@shifa-care.com',
-      role: 'therapist',
-      status: 'active',
-      lastLogin: '2024-12-20 09:15',
-      permissions: [
-        'patients.view', 'patients.create', 'patients.edit',
-        'sessions.view', 'sessions.create', 'sessions.edit',
-        'ai.sessions', 'ai.treatment', 'ai.assistant',
-        'reports.view', 'reports.create',
-        'communication.view', 'communication.send'
-      ]
-    },
-    {
-      id: '3',
-      name: 'محمد علي',
-      email: 'mohamed@shifa-care.com',
-      role: 'assistant',
-      status: 'active',
-      lastLogin: '2024-12-20 08:45',
-      permissions: [
-        'patients.view', 'patients.create',
-        'sessions.view', 'sessions.create',
-        'ai.assistant',
-        'reports.view',
-        'communication.view', 'communication.send',
-        'staff.view'
-      ]
-    }
-  ]);
 
   const getPermissionIcon = (permissionId: string) => {
     const permission = availablePermissions.find(p => p.id === permissionId);
@@ -427,11 +448,22 @@ const AdvancedPermissions = () => {
     setRoles(prev => prev.map(role => {
       if (role.id === roleId) {
         const hasPermission = role.permissions.includes(permissionId);
+        const newPermissions = hasPermission 
+          ? role.permissions.filter(p => p !== permissionId)
+          : [...role.permissions, permissionId];
+        
+        // تحديث عدد المستخدمين لهذا الدور
+        const usersWithRole = users.filter(user => user.role === roleId).length;
+        
+        toast({
+          title: hasPermission ? "إلغاء الصلاحية" : "منح الصلاحية",
+          description: `${hasPermission ? 'تم إلغاء' : 'تم منح'} صلاحية "${getPermissionName(permissionId)}" للدور "${role.name}"`,
+        });
+
         return {
           ...role,
-          permissions: hasPermission 
-            ? role.permissions.filter(p => p !== permissionId)
-            : [...role.permissions, permissionId]
+          permissions: newPermissions,
+          users: usersWithRole
         };
       }
       return role;
@@ -443,20 +475,40 @@ const AdvancedPermissions = () => {
     if (role) {
       setUsers(prev => prev.map(user => {
         if (user.id === userId) {
-          return {
+          // تحديث صلاحيات المستخدم بناءً على الدور الجديد
+          const updatedUser = {
             ...user,
             role: newRole,
             permissions: role.permissions
           };
+          
+          toast({
+            title: "تغيير دور المستخدم",
+            description: `تم تغيير دور "${user.name}" إلى "${role.name}"`,
+          });
+          
+          return updatedUser;
         }
         return user;
       }));
+      
+      // تحديث عدد المستخدمين في الأدوار
+      setRoles(prev => prev.map(r => ({
+        ...r,
+        users: users.filter(u => u.role === r.id).length
+      })));
     }
   };
 
   const handleUserStatusChange = (userId: string, newStatus: string) => {
     setUsers(prev => prev.map(user => {
       if (user.id === userId) {
+        const statusText = getStatusText(newStatus);
+        toast({
+          title: "تغيير حالة المستخدم",
+          description: `تم تغيير حالة "${user.name}" إلى "${statusText}"`,
+        });
+        
         return {
           ...user,
           status: newStatus as 'active' | 'inactive' | 'suspended'
@@ -482,6 +534,115 @@ const AdvancedPermissions = () => {
       case 'suspended': return 'معلق';
       default: return 'غير محدد';
     }
+  };
+
+  // وظائف نافذة تعديل الدور
+  const handleEditRole = (role: Role) => {
+    setEditingRoleData(role);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveRole = () => {
+    if (editingRoleData) {
+      // تحديث الدور في القائمة
+      setRoles(prev => prev.map(role => {
+        if (role.id === editingRoleData.id) {
+          return {
+            ...editingRoleData,
+            users: users.filter(u => u.role === role.id).length
+          };
+        }
+        return role;
+      }));
+      
+      // تحديث صلاحيات جميع المستخدمين الذين لديهم هذا الدور
+      setUsers(prev => prev.map(user => {
+        if (user.role === editingRoleData.id) {
+          return {
+            ...user,
+            permissions: editingRoleData.permissions
+          };
+        }
+        return user;
+      }));
+      
+      toast({
+        title: "تم حفظ الدور",
+        description: `تم تحديث دور "${editingRoleData.name}" وتم تحديث صلاحيات ${users.filter(u => u.role === editingRoleData.id).length} مستخدم`,
+      });
+      
+      setIsEditDialogOpen(false);
+      setEditingRoleData(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditDialogOpen(false);
+    setEditingRoleData(null);
+  };
+
+  // وظائف إضافية حقيقية
+  const handleAddNewRole = () => {
+    const newRole: Role = {
+      id: `role-${Date.now()}`,
+      name: 'دور جديد',
+      description: 'وصف الدور الجديد',
+      permissions: [],
+      users: 0,
+      color: 'bg-blue-500'
+    };
+    
+    setRoles(prev => [...prev, newRole]);
+    setEditingRoleData(newRole);
+    setIsEditDialogOpen(true);
+    
+    toast({
+      title: "إضافة دور جديد",
+      description: "تم إنشاء دور جديد، يمكنك الآن تخصيصه",
+    });
+  };
+
+  const handleDeleteRole = (roleId: string) => {
+    const role = roles.find(r => r.id === roleId);
+    if (role && role.users > 0) {
+      toast({
+        title: "لا يمكن حذف الدور",
+        description: `لا يمكن حذف الدور "${role.name}" لأنه يحتوي على ${role.users} مستخدم`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setRoles(prev => prev.filter(r => r.id !== roleId));
+    toast({
+      title: "تم حذف الدور",
+      description: `تم حذف الدور "${role?.name}" بنجاح`,
+    });
+  };
+
+  const handleAddNewUser = () => {
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      name: 'مستخدم جديد',
+      email: 'newuser@shifacare.com',
+      role: 'assistant',
+      status: 'active',
+      lastLogin: new Date().toLocaleString('ar-EG'),
+      permissions: roles.find(r => r.id === 'assistant')?.permissions || []
+    };
+    
+    setUsers(prev => [...prev, newUser]);
+    
+    // تحديث عدد المستخدمين في الدور
+    setRoles(prev => prev.map(r => ({
+      ...r,
+      users: users.filter(u => u.role === r.id).length + (r.id === 'assistant' ? 1 : 0)
+    })));
+    
+    toast({
+      title: "إضافة مستخدم جديد",
+      description: "تم إضافة مستخدم جديد بنجاح",
+    });
   };
 
   const groupedPermissions = availablePermissions.reduce((acc, permission) => {
@@ -529,6 +690,14 @@ const AdvancedPermissions = () => {
             <p className="text-yellow-700">عدد الصلاحيات: {availablePermissions.length}</p>
           </div>
           
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">الأدوار المتاحة ({roles.length})</h3>
+            <Button onClick={handleAddNewRole} className="bg-green-600 hover:bg-green-700">
+              <Plus className="w-4 h-4 mr-2" />
+              إضافة دور جديد
+            </Button>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {roles.map((role) => (
               <Card key={role.id} className="hover:shadow-lg transition-shadow">
@@ -574,63 +743,31 @@ const AdvancedPermissions = () => {
                         </div>
                       )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => setEditingRole(editingRole === role.id ? null : role.id)}
-                    >
-                      {editingRole === role.id ? 'إغلاق' : 'تعديل الصلاحيات'}
-                    </Button>
+                    <div className="flex space-x-2 space-x-reverse">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleEditRole(role)}
+                      >
+                        تعديل الدور
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteRole(role.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        disabled={role.users > 0}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* تعديل الصلاحيات */}
-          {editingRole && (
-            <Card>
-              <CardHeader>
-                <CardTitle>تعديل صلاحيات الدور: {roles.find(r => r.id === editingRole)?.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {Object.entries(groupedPermissions).map(([category, permissions]) => (
-                    <div key={category}>
-                      <h3 className="font-semibold text-lg mb-3">{category}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {permissions.map((permission) => {
-                          const role = roles.find(r => r.id === editingRole);
-                          const hasPermission = role?.permissions.includes(permission.id) || false;
-                          const Icon = permission.icon;
-                          
-                          return (
-                            <div key={permission.id} className="flex items-center justify-between p-3 border rounded-lg">
-                              <div className="flex items-center">
-                                <Icon className="w-4 h-4 text-gray-600 mr-2" />
-                                <div>
-                                  <div className="font-medium text-sm">{permission.name}</div>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <Badge className={getLevelColor(permission.level)} variant="outline">
-                                  {getLevelText(permission.level)}
-                                </Badge>
-                                <Switch
-                                  checked={hasPermission}
-                                  onCheckedChange={() => handleRolePermissionToggle(editingRole, permission.id)}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+
         </TabsContent>
 
         {/* المستخدمين */}
@@ -650,7 +787,13 @@ const AdvancedPermissions = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>إدارة المستخدمين</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle>إدارة المستخدمين</CardTitle>
+                <Button onClick={handleAddNewUser} className="bg-blue-600 hover:bg-blue-700">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  إضافة مستخدم جديد
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -838,6 +981,137 @@ const AdvancedPermissions = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* نافذة تعديل الدور */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="w-5 h-5 mr-2" />
+              تعديل الدور: {editingRoleData?.name}
+            </DialogTitle>
+            <DialogDescription>
+              يمكنك تعديل معلومات الدور والصلاحيات الممنوحة له
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingRoleData && (
+            <div className="space-y-6">
+              {/* معلومات الدور الأساسية */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="roleName">اسم الدور</Label>
+                  <Input
+                    id="roleName"
+                    value={editingRoleData.name}
+                    onChange={(e) => setEditingRoleData({
+                      ...editingRoleData,
+                      name: e.target.value
+                    })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="roleColor">لون الدور</Label>
+                  <Select
+                    value={editingRoleData.color}
+                    onValueChange={(value) => setEditingRoleData({
+                      ...editingRoleData,
+                      color: value
+                    })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bg-blue-500">أزرق</SelectItem>
+                      <SelectItem value="bg-green-500">أخضر</SelectItem>
+                      <SelectItem value="bg-purple-500">بنفسجي</SelectItem>
+                      <SelectItem value="bg-orange-500">برتقالي</SelectItem>
+                      <SelectItem value="bg-red-500">أحمر</SelectItem>
+                      <SelectItem value="bg-pink-500">وردي</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="roleDescription">وصف الدور</Label>
+                <Textarea
+                  id="roleDescription"
+                  value={editingRoleData.description}
+                  onChange={(e) => setEditingRoleData({
+                    ...editingRoleData,
+                    description: e.target.value
+                  })}
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+
+              {/* الصلاحيات */}
+              <div>
+                <h3 className="font-semibold text-lg mb-4">الصلاحيات الممنوحة</h3>
+                <div className="space-y-4">
+                  {Object.entries(groupedPermissions).map(([category, permissions]) => (
+                    <div key={category} className="border rounded-lg p-4">
+                      <h4 className="font-semibold text-md mb-3 text-blue-600">{category}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {permissions.map((permission) => {
+                          const hasPermission = editingRoleData.permissions.includes(permission.id);
+                          const Icon = permission.icon;
+                          
+                          return (
+                            <div key={permission.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                              <div className="flex items-center">
+                                <Icon className="w-4 h-4 text-gray-600 mr-2" />
+                                <div>
+                                  <div className="font-medium text-sm">{permission.name}</div>
+                                  <div className="text-xs text-gray-500">{permission.description}</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <Badge className={getLevelColor(permission.level)} variant="outline">
+                                  {getLevelText(permission.level)}
+                                </Badge>
+                                <Switch
+                                  checked={hasPermission}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setEditingRoleData({
+                                        ...editingRoleData,
+                                        permissions: [...editingRoleData.permissions, permission.id]
+                                      });
+                                    } else {
+                                      setEditingRoleData({
+                                        ...editingRoleData,
+                                        permissions: editingRoleData.permissions.filter(p => p !== permission.id)
+                                      });
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelEdit}>
+              إلغاء
+            </Button>
+            <Button onClick={handleSaveRole}>
+              حفظ التغييرات
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -24,6 +24,7 @@ interface Session {
   duration: number;
   notes?: string;
   created_at: string;
+  updated_at?: string;
   patients?: {
     name: string;
   };
@@ -63,42 +64,7 @@ const Sessions = () => {
 
   const fetchSessions = async () => {
     try {
-      // Mock data for demonstration
-      const mockSessions: Session[] = [
-        {
-          id: '1',
-          patient_id: '1',
-          therapist_id: '1',
-          session_date: '2024-07-04',
-          session_time: '10:00',
-          session_type: 'individual',
-          status: 'scheduled',
-          duration: 60,
-          notes: 'جلسة علاج سلوكي',
-          created_at: '2024-07-03T10:00:00Z',
-          patients: { name: 'أحمد محمد' },
-          profiles: { full_name: 'د. سارة أحمد' }
-        },
-        {
-          id: '2',
-          patient_id: '2',
-          therapist_id: '2',
-          session_date: '2024-07-04',
-          session_time: '14:00',
-          session_type: 'group',
-          status: 'completed',
-          duration: 90,
-          notes: 'جلسة جماعية للدعم النفسي',
-          created_at: '2024-07-02T14:00:00Z',
-          patients: { name: 'فاطمة علي' },
-          profiles: { full_name: 'د. محمد علي' }
-        }
-      ];
-      
-      setSessions(mockSessions);
-      
-      // Uncomment when database is set up:
-      /*
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('sessions')
         .select(`
@@ -110,27 +76,20 @@ const Sessions = () => {
 
       if (error) throw error;
       setSessions(data || []);
-      */
     } catch (error: any) {
+      console.error('Error fetching sessions:', error);
       toast({
         title: "خطأ في تحميل الجلسات",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء تحميل الجلسات",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchPatients = async () => {
     try {
-      // Mock data
-      const mockPatients = [
-        { id: '1', name: 'أحمد محمد' },
-        { id: '2', name: 'فاطمة علي' }
-      ];
-      setPatients(mockPatients);
-      
-      // Uncomment when database is set up:
-      /*
       const { data, error } = await supabase
         .from('patients')
         .select('id, name')
@@ -138,7 +97,6 @@ const Sessions = () => {
 
       if (error) throw error;
       setPatients(data || []);
-      */
     } catch (error: any) {
       console.error('Error fetching patients:', error);
     }
@@ -146,15 +104,6 @@ const Sessions = () => {
 
   const fetchTherapists = async () => {
     try {
-      // Mock data
-      const mockTherapists = [
-        { id: '1', full_name: 'د. سارة أحمد' },
-        { id: '2', full_name: 'د. محمد علي' }
-      ];
-      setTherapists(mockTherapists);
-      
-      // Uncomment when database is set up:
-      /*
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name')
@@ -162,7 +111,6 @@ const Sessions = () => {
 
       if (error) throw error;
       setTherapists(data || []);
-      */
     } catch (error: any) {
       console.error('Error fetching therapists:', error);
     }
@@ -181,23 +129,30 @@ const Sessions = () => {
     setIsLoading(true);
 
     try {
-      // Mock implementation for demonstration
-      const newSessionWithId: Session = {
+      const sessionData = {
         ...newSession,
-        id: Date.now().toString(),
-        status: 'scheduled',
-        created_at: new Date().toISOString(),
-        patients: patients.find(p => p.id === newSession.patient_id),
-        profiles: therapists.find(t => t.id === newSession.therapist_id)
+        status: 'scheduled' as const
       };
-      
-      setSessions(prev => [newSessionWithId, ...prev]);
+
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert([sessionData])
+        .select(`
+          *,
+          patients (name),
+          profiles (full_name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      setSessions(prev => [data, ...prev]);
 
       toast({
         title: "تم إضافة الجلسة بنجاح",
         description: "تم حفظ موعد الجلسة الجديدة",
       });
-      
+
       setIsAddDialogOpen(false);
       setNewSession({
         patient_id: '',
@@ -208,20 +163,12 @@ const Sessions = () => {
         duration: 60,
         notes: ''
       });
-      
-      // Uncomment when database is set up:
-      /*
-      const { error } = await supabase
-        .from('sessions')
-        .insert([newSession]);
-
-      if (error) throw error;
-      fetchSessions();
-      */
+      setShowExtraFields(false);
     } catch (error: any) {
+      console.error('Error adding session:', error);
       toast({
         title: "خطأ في إضافة الجلسة",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء إضافة الجلسة",
         variant: "destructive",
       });
     } finally {
@@ -243,35 +190,44 @@ const Sessions = () => {
     if (!editingSession) return;
 
     try {
-      // Mock implementation for demonstration
-      setSessions(prev => prev.map(session => 
-        session.id === editingSession.id ? editingSession : session
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('sessions')
+        .update({
+          patient_id: editingSession.patient_id,
+          therapist_id: editingSession.therapist_id,
+          session_date: editingSession.session_date,
+          session_time: editingSession.session_time,
+          session_type: editingSession.session_type,
+          status: editingSession.status,
+          duration: editingSession.duration,
+          notes: editingSession.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingSession.id);
+
+      if (error) throw error;
+
+      setSessions(prev => prev.map(s => 
+        s.id === editingSession.id ? { ...editingSession, updated_at: new Date().toISOString() } : s
       ));
 
       toast({
-        title: "تم تحديث الجلسة",
-        description: "تم حفظ التغييرات بنجاح",
+        title: "تم تحديث الجلسة بنجاح",
+        description: "تم حفظ التغييرات",
       });
 
       setIsEditDialogOpen(false);
       setEditingSession(null);
-      
-      // Uncomment when database is set up:
-      /*
-      const { error } = await supabase
-        .from('sessions')
-        .update(editingSession)
-        .eq('id', editingSession.id);
-
-      if (error) throw error;
-      fetchSessions();
-      */
     } catch (error: any) {
+      console.error('Error updating session:', error);
       toast({
         title: "خطأ في تحديث الجلسة",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء تحديث الجلسة",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -279,30 +235,28 @@ const Sessions = () => {
     if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
 
     try {
-      // Mock implementation for demonstration
-      setSessions(prev => prev.filter(session => session.id !== sessionId));
-
-      toast({
-        title: "تم حذف الجلسة",
-        description: "تم حذف الجلسة بنجاح",
-      });
-      
-      // Uncomment when database is set up:
-      /*
+      setIsLoading(true);
       const { error } = await supabase
         .from('sessions')
         .delete()
         .eq('id', sessionId);
 
       if (error) throw error;
-      fetchSessions();
-      */
+
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      toast({
+        title: "تم حذف الجلسة بنجاح",
+        description: "تم حذف الجلسة من النظام",
+      });
     } catch (error: any) {
+      console.error('Error deleting session:', error);
       toast({
         title: "خطأ في حذف الجلسة",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء حذف الجلسة",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

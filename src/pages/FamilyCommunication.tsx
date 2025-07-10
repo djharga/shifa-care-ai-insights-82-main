@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GoogleAIService } from '@/services/google-ai-service';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Family {
   id: string;
@@ -35,54 +36,59 @@ interface Family {
   phone: string;
   email: string;
   address: string;
-  patientName: string;
-  patientId: string;
+  patient_name: string;
+  patient_id: string;
   relationship: string;
   status: 'active' | 'inactive';
-  lastContact: string;
+  last_contact: string;
   preferences: {
     notifications: boolean;
     reports: boolean;
     visits: boolean;
     language: 'ar' | 'en';
   };
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Message {
   id: string;
-  familyId: string;
-  familyName: string;
+  family_id: string;
+  family_name: string;
   type: 'notification' | 'report' | 'reminder' | 'general';
   title: string;
   content: string;
   status: 'sent' | 'delivered' | 'read';
-  sentAt: string;
+  sent_at: string;
   priority: 'low' | 'medium' | 'high';
+  created_at?: string;
 }
 
 interface Visit {
   id: string;
-  familyId: string;
-  familyName: string;
-  patientName: string;
+  family_id: string;
+  family_name: string;
+  patient_name: string;
   date: string;
   time: string;
   duration: string;
   purpose: string;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string;
+  created_at?: string;
 }
 
 interface Report {
   id: string;
-  familyId: string;
-  familyName: string;
-  patientName: string;
+  family_id: string;
+  family_name: string;
+  patient_name: string;
   type: 'weekly' | 'monthly' | 'progress' | 'treatment';
   title: string;
   content: string;
-  generatedAt: string;
+  generated_at: string;
   status: 'draft' | 'sent' | 'read';
+  created_at?: string;
 }
 
 const FamilyCommunication = () => {
@@ -99,11 +105,12 @@ const FamilyCommunication = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showVisitDialog, setShowVisitDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   // State for forms
   const [newFamily, setNewFamily] = useState({
     name: '',
-    patientName: '',
+    patient_name: '',
     relationship: '',
     phone: '',
     email: '',
@@ -111,7 +118,7 @@ const FamilyCommunication = () => {
   });
   
   const [newMessage, setNewMessage] = useState({
-    familyId: '',
+    family_id: '',
     type: '',
     title: '',
     content: '',
@@ -119,7 +126,7 @@ const FamilyCommunication = () => {
   });
   
   const [newVisit, setNewVisit] = useState({
-    familyId: '',
+    family_id: '',
     date: '',
     time: '',
     duration: '',
@@ -127,399 +134,325 @@ const FamilyCommunication = () => {
   });
   
   const [newReport, setNewReport] = useState({
-    familyId: '',
+    family_id: '',
     type: '',
     title: '',
     content: ''
   });
 
-  // Mock data
   useEffect(() => {
-    const mockFamilies: Family[] = [
-      {
-        id: '1',
-        name: 'عائلة أحمد محمد',
-        phone: '0123456789',
-        email: 'ahmed.family@email.com',
-        address: 'شارع الملك فهد، الرياض',
-        patientName: 'أحمد محمد علي',
-        patientId: 'P001',
-        relationship: 'أب',
-        status: 'active',
-        lastContact: '2024-01-15',
-        preferences: {
-          notifications: true,
-          reports: true,
-          visits: true,
-          language: 'ar'
-        }
-      },
-      {
-        id: '2',
-        name: 'عائلة سارة أحمد',
-        phone: '0123456790',
-        email: 'sara.family@email.com',
-        address: 'شارع التحلية، جدة',
-        patientName: 'سارة أحمد حسن',
-        patientId: 'P002',
-        relationship: 'أم',
-        status: 'active',
-        lastContact: '2024-01-14',
-        preferences: {
-          notifications: true,
-          reports: false,
-          visits: true,
-          language: 'ar'
-        }
-      },
-      {
-        id: '3',
-        name: 'عائلة محمد علي',
-        phone: '0123456791',
-        email: 'mohamed.family@email.com',
-        address: 'شارع العليا، الدمام',
-        patientName: 'محمد علي أحمد',
-        patientId: 'P003',
-        relationship: 'أخ',
-        status: 'inactive',
-        lastContact: '2024-01-10',
-        preferences: {
-          notifications: false,
-          reports: true,
-          visits: false,
-          language: 'ar'
-        }
-      }
-    ];
-
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        familyId: '1',
-        familyName: 'عائلة أحمد محمد',
-        type: 'notification',
-        title: 'تحديث حالة المريض',
-        content: 'تم تحسين حالة المريض أحمد محمد بشكل ملحوظ خلال الأسبوع الماضي',
-        status: 'read',
-        sentAt: '2024-01-15 10:30',
-        priority: 'medium'
-      },
-      {
-        id: '2',
-        familyId: '2',
-        familyName: 'عائلة سارة أحمد',
-        type: 'reminder',
-        title: 'تذكير بموعد الزيارة',
-        content: 'تذكير بموعد الزيارة غداً الساعة 2:00 مساءً',
-        status: 'delivered',
-        sentAt: '2024-01-15 09:00',
-        priority: 'high'
-      }
-    ];
-
-    const mockVisits: Visit[] = [
-      {
-        id: '1',
-        familyId: '1',
-        familyName: 'عائلة أحمد محمد',
-        patientName: 'أحمد محمد علي',
-        date: '2024-01-20',
-        time: '14:00',
-        duration: 'ساعة واحدة',
-        purpose: 'مناقشة تقدم العلاج',
-        status: 'scheduled',
-        notes: 'سيتم مناقشة خطة العلاج الجديدة'
-      },
-      {
-        id: '2',
-        familyId: '2',
-        familyName: 'عائلة سارة أحمد',
-        patientName: 'سارة أحمد حسن',
-        date: '2024-01-18',
-        time: '15:30',
-        duration: '45 دقيقة',
-        purpose: 'زيارة روتينية',
-        status: 'completed',
-        notes: 'تمت الزيارة بنجاح وتم مناقشة التقدم'
-      }
-    ];
-
-    const mockReports: Report[] = [
-      {
-        id: '1',
-        familyId: '1',
-        familyName: 'عائلة أحمد محمد',
-        patientName: 'أحمد محمد علي',
-        type: 'weekly',
-        title: 'تقرير الأسبوع الأول',
-        content: 'تقرير مفصل عن تقدم المريض خلال الأسبوع الأول من العلاج',
-        generatedAt: '2024-01-15',
-        status: 'sent'
-      },
-      {
-        id: '2',
-        familyId: '2',
-        familyName: 'عائلة سارة أحمد',
-        patientName: 'سارة أحمد حسن',
-        type: 'progress',
-        title: 'تقرير التقدم الشهري',
-        content: 'تقرير شامل عن التقدم المحرز خلال الشهر الماضي',
-        generatedAt: '2024-01-10',
-        status: 'read'
-      }
-    ];
-
-    setFamilies(mockFamilies);
-    setMessages(mockMessages);
-    setVisits(mockVisits);
-    setReports(mockReports);
+    fetchFamilies();
+    fetchMessages();
+    fetchVisits();
+    fetchReports();
   }, []);
 
-  const filteredFamilies = families.filter(family => {
-    const matchesSearch = family.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         family.patientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || family.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const fetchFamilies = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('families')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getMessageTypeColor = (type: string) => {
-    switch (type) {
-      case 'notification': return 'bg-blue-100 text-blue-800';
-      case 'report': return 'bg-purple-100 text-purple-800';
-      case 'reminder': return 'bg-orange-100 text-orange-800';
-      case 'general': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'text-red-600';
-      case 'medium': return 'text-yellow-600';
-      case 'low': return 'text-green-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const handleAddFamily = () => {
-    // التحقق من البيانات المطلوبة
-    if (!newFamily.name || !newFamily.patientName || !newFamily.phone) {
+      if (error) throw error;
+      setFamilies(data || []);
+    } catch (error: any) {
+      console.error('Error fetching families:', error);
       toast({
-        title: "خطأ",
-        description: "يرجى ملء الحقول المطلوبة (اسم العائلة، اسم المريض، رقم الهاتف)",
-        variant: "destructive"
+        title: "خطأ في تحميل بيانات العائلات",
+        description: error.message || "حدث خطأ أثناء تحميل بيانات العائلات",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('family_messages')
+        .select('*')
+        .order('sent_at', { ascending: false });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error: any) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  const fetchVisits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('family_visits')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      setVisits(data || []);
+    } catch (error: any) {
+      console.error('Error fetching visits:', error);
+    }
+  };
+
+  const fetchReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('family_reports')
+        .select('*')
+        .order('generated_at', { ascending: false });
+
+      if (error) throw error;
+      setReports(data || []);
+    } catch (error: any) {
+      console.error('Error fetching reports:', error);
+    }
+  };
+
+  const handleAddFamily = async () => {
+    if (!newFamily.name || !newFamily.patient_name || !newFamily.phone) {
+      toast({
+        title: "بيانات مطلوبة",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
       });
       return;
     }
 
-    // إنشاء عائلة جديدة
-    const family: Family = {
-      id: Date.now().toString(),
-      name: newFamily.name,
-      phone: newFamily.phone,
-      email: newFamily.email || '',
-      address: newFamily.address || '',
-      patientName: newFamily.patientName,
-      patientId: `P${Date.now()}`,
-      relationship: newFamily.relationship || 'أخرى',
-      status: 'active',
-      lastContact: new Date().toLocaleDateString('ar-EG'),
+    try {
+      setLoading(true);
+      const familyData = {
+        ...newFamily,
+        status: 'active' as const,
+        last_contact: new Date().toISOString().split('T')[0],
       preferences: {
         notifications: true,
         reports: true,
         visits: true,
-        language: 'ar'
+          language: 'ar' as const
       }
     };
 
-    // إضافة العائلة للقائمة
-    setFamilies(prev => [family, ...prev]);
+      const { data, error } = await supabase
+        .from('families')
+        .insert([familyData])
+        .select()
+        .single();
 
-    // إظهار رسالة نجاح
+      if (error) throw error;
+
+      setFamilies(prev => [data, ...prev]);
     toast({
-      title: "تم إضافة العائلة",
-      description: "تم إضافة العائلة بنجاح",
+        title: "تم إضافة العائلة بنجاح",
+        description: "تم حفظ بيانات العائلة الجديدة",
     });
 
-    // إعادة تعيين النموذج
     setNewFamily({
       name: '',
-      patientName: '',
+        patient_name: '',
       relationship: '',
       phone: '',
       email: '',
       address: ''
     });
+    } catch (error: any) {
+      console.error('Error adding family:', error);
+      toast({
+        title: "خطأ في إضافة العائلة",
+        description: error.message || "حدث خطأ أثناء إضافة العائلة",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSendMessage = () => {
-    // التحقق من البيانات
-    if (!newMessage.familyId || !newMessage.type || !newMessage.title || !newMessage.content) {
+  const handleSendMessage = async () => {
+    if (!newMessage.family_id || !newMessage.title || !newMessage.content) {
       toast({
-        title: "خطأ",
+        title: "بيانات مطلوبة",
         description: "يرجى ملء جميع الحقول المطلوبة",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    // الحصول على اسم العائلة
-    const family = families.find(f => f.id === newMessage.familyId);
-    if (!family) {
-      toast({
-        title: "خطأ",
-        description: "العائلة غير موجودة",
-        variant: "destructive"
-      });
-      return;
-    }
+    try {
+      setLoading(true);
+      const family = families.find(f => f.id === newMessage.family_id);
+      if (!family) throw new Error('العائلة غير موجودة');
 
-    // إنشاء رسالة جديدة
-    const message: Message = {
-      id: Date.now().toString(),
-      familyId: newMessage.familyId,
-      familyName: family.name,
-      type: newMessage.type as any,
+      const messageData = {
+        family_id: newMessage.family_id,
+        family_name: family.name,
+        type: newMessage.type as 'notification' | 'report' | 'reminder' | 'general',
       title: newMessage.title,
       content: newMessage.content,
-      status: 'sent',
-      sentAt: new Date().toLocaleString('ar-EG'),
-      priority: newMessage.priority as any
+        status: 'sent' as const,
+        sent_at: new Date().toISOString(),
+        priority: newMessage.priority as 'low' | 'medium' | 'high'
     };
 
-    // إضافة الرسالة للقائمة
-    setMessages(prev => [message, ...prev]);
+      const { data, error } = await supabase
+        .from('family_messages')
+        .insert([messageData])
+        .select()
+        .single();
 
-    // إظهار رسالة نجاح
+      if (error) throw error;
+
+      setMessages(prev => [data, ...prev]);
     toast({
-      title: "تم إرسال الرسالة",
-      description: "تم إرسال الرسالة بنجاح",
+        title: "تم إرسال الرسالة بنجاح",
+        description: "تم إرسال الرسالة إلى العائلة",
     });
 
-    // إعادة تعيين النموذج
     setNewMessage({
-      familyId: '',
+        family_id: '',
       type: '',
       title: '',
       content: '',
       priority: 'medium'
     });
+      setShowSendDialog(false);
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "خطأ في إرسال الرسالة",
+        description: error.message || "حدث خطأ أثناء إرسال الرسالة",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleScheduleVisit = () => {
-    // التحقق من البيانات المطلوبة
-    if (!newVisit.familyId || !newVisit.date || !newVisit.time || !newVisit.purpose) {
+  const handleScheduleVisit = async () => {
+    if (!newVisit.family_id || !newVisit.date || !newVisit.time) {
       toast({
-        title: "خطأ",
-        description: "يرجى ملء الحقول المطلوبة (العائلة، التاريخ، الوقت، الغرض)",
-        variant: "destructive"
+        title: "بيانات مطلوبة",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
       });
       return;
     }
 
-    // الحصول على بيانات العائلة
-    const family = families.find(f => f.id === newVisit.familyId);
-    if (!family) {
-      toast({
-        title: "خطأ",
-        description: "العائلة غير موجودة",
-        variant: "destructive"
-      });
-      return;
-    }
+    try {
+      setLoading(true);
+      const family = families.find(f => f.id === newVisit.family_id);
+      if (!family) throw new Error('العائلة غير موجودة');
 
-    // إنشاء زيارة جديدة
-    const visit: Visit = {
-      id: Date.now().toString(),
-      familyId: newVisit.familyId,
-      familyName: family.name,
-      patientName: family.patientName,
+      const visitData = {
+        family_id: newVisit.family_id,
+        family_name: family.name,
+        patient_name: family.patient_name,
       date: newVisit.date,
       time: newVisit.time,
-      duration: newVisit.duration || 'ساعة واحدة',
+        duration: newVisit.duration,
       purpose: newVisit.purpose,
-      status: 'scheduled',
+        status: 'scheduled' as const,
       notes: ''
     };
 
-    // إضافة الزيارة للقائمة
-    setVisits(prev => [visit, ...prev]);
+      const { data, error } = await supabase
+        .from('family_visits')
+        .insert([visitData])
+        .select()
+        .single();
 
-    // إظهار رسالة نجاح
+      if (error) throw error;
+
+      setVisits(prev => [data, ...prev]);
     toast({
-      title: "تم جدولة الزيارة",
-      description: "تم جدولة الزيارة بنجاح",
+        title: "تم جدولة الزيارة بنجاح",
+        description: "تم إضافة الزيارة إلى الجدول",
     });
 
-    // إعادة تعيين النموذج
     setNewVisit({
-      familyId: '',
+        family_id: '',
       date: '',
       time: '',
       duration: '',
       purpose: ''
     });
+      setShowVisitDialog(false);
+    } catch (error: any) {
+      console.error('Error scheduling visit:', error);
+      toast({
+        title: "خطأ في جدولة الزيارة",
+        description: error.message || "حدث خطأ أثناء جدولة الزيارة",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGenerateReport = () => {
-    // التحقق من البيانات المطلوبة
-    if (!newReport.familyId || !newReport.type || !newReport.title || !newReport.content) {
+  const handleGenerateReport = async () => {
+    if (!newReport.family_id || !newReport.type) {
       toast({
-        title: "خطأ",
-        description: "يرجى ملء جميع الحقول المطلوبة",
-        variant: "destructive"
+        title: "بيانات مطلوبة",
+        description: "يرجى اختيار العائلة ونوع التقرير",
+        variant: "destructive",
       });
       return;
     }
 
-    // الحصول على بيانات العائلة
-    const family = families.find(f => f.id === newReport.familyId);
-    if (!family) {
-      toast({
-        title: "خطأ",
-        description: "العائلة غير موجودة",
-        variant: "destructive"
-      });
-      return;
-    }
+    try {
+      setIsGeneratingReport(true);
+      const family = families.find(f => f.id === newReport.family_id);
+      if (!family) throw new Error('العائلة غير موجودة');
 
-    // إنشاء تقرير جديد
-    const report: Report = {
-      id: Date.now().toString(),
-      familyId: newReport.familyId,
-      familyName: family.name,
-      patientName: family.patientName,
-      type: newReport.type as any,
-      title: newReport.title,
-      content: newReport.content,
-      generatedAt: new Date().toLocaleString('ar-EG'),
-      status: 'draft'
-    };
+      const reportContent = await generateSmartReport(
+        family.name,
+        family.patient_name,
+        newReport.type,
+        'بيانات المريض الحالية'
+      );
 
-    // إضافة التقرير للقائمة
-    setReports(prev => [report, ...prev]);
+      const reportData = {
+        family_id: newReport.family_id,
+        family_name: family.name,
+        patient_name: family.patient_name,
+        type: newReport.type as 'weekly' | 'monthly' | 'progress' | 'treatment',
+        title: newReport.title || `تقرير ${newReport.type} - ${family.patient_name}`,
+        content: reportContent,
+        generated_at: new Date().toISOString(),
+        status: 'draft' as const
+      };
 
-    // إظهار رسالة نجاح
+      const { data, error } = await supabase
+        .from('family_reports')
+        .insert([reportData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setReports(prev => [data, ...prev]);
     toast({
-      title: "تم إنشاء التقرير",
-      description: "تم إنشاء التقرير بنجاح",
+        title: "تم إنشاء التقرير بنجاح",
+        description: "تم إنشاء التقرير وحفظه",
     });
 
-    // إعادة تعيين النموذج
     setNewReport({
-      familyId: '',
+        family_id: '',
       type: '',
       title: '',
       content: ''
     });
+    } catch (error: any) {
+      console.error('Error generating report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
   // دالة إنشاء رسالة ذكية باللهجة المصرية
@@ -605,6 +538,40 @@ const FamilyCommunication = () => {
     }
   };
 
+  const filteredFamilies = families.filter(family => {
+    const matchesSearch = family.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         family.patient_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || family.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getMessageTypeColor = (type: string) => {
+    switch (type) {
+      case 'notification': return 'bg-blue-100 text-blue-800';
+      case 'report': return 'bg-purple-100 text-purple-800';
+      case 'reminder': return 'bg-orange-100 text-orange-800';
+      case 'general': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'text-red-600';
+      case 'medium': return 'text-yellow-600';
+      case 'low': return 'text-green-600';
+      default: return 'text-gray-600';
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -640,8 +607,8 @@ const FamilyCommunication = () => {
                   <Input 
                     id="patientName" 
                     placeholder="اسم المريض"
-                    value={newFamily.patientName}
-                    onChange={(e) => setNewFamily(prev => ({ ...prev, patientName: e.target.value }))}
+                    value={newFamily.patient_name}
+                    onChange={(e) => setNewFamily(prev => ({ ...prev, patient_name: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -787,7 +754,7 @@ const FamilyCommunication = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg">{family.name}</CardTitle>
-                      <p className="text-sm text-gray-600">المريض: {family.patientName}</p>
+                      <p className="text-sm text-gray-600">المريض: {family.patient_name}</p>
                     </div>
                     <Badge className={getStatusColor(family.status)}>
                       {family.status === 'active' ? 'نشط' : 'غير نشط'}
@@ -815,7 +782,7 @@ const FamilyCommunication = () => {
                     <div className="flex items-center">
                       <Clock className="w-4 h-4 text-gray-400 mr-1" />
                       <span className="text-sm text-gray-600">
-                        آخر تواصل: {family.lastContact}
+                        آخر تواصل: {family.last_contact}
                       </span>
                     </div>
                   </div>
@@ -864,7 +831,7 @@ const FamilyCommunication = () => {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="recipient">المستقبل</Label>
-                      <Select value={newMessage.familyId} onValueChange={(value) => setNewMessage(prev => ({ ...prev, familyId: value }))}>
+                      <Select value={newMessage.family_id} onValueChange={(value) => setNewMessage(prev => ({ ...prev, family_id: value }))}>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر العائلة" />
                         </SelectTrigger>
@@ -914,7 +881,7 @@ const FamilyCommunication = () => {
                             variant="outline"
                             size="sm"
                             onClick={async () => {
-                              const family = families.find(f => f.id === newMessage.familyId);
+                              const family = families.find(f => f.id === newMessage.family_id);
                               if (family && newMessage.type) {
                                 const smartMessage = await generateSmartMessage(
                                   family.name,
@@ -963,7 +930,7 @@ const FamilyCommunication = () => {
                       </Select>
                     </div>
                     <Button onClick={() => {
-                      if (!newMessage.familyId || !newMessage.type || !newMessage.title || !newMessage.content) {
+                      if (!newMessage.family_id || !newMessage.type || !newMessage.title || !newMessage.content) {
                         toast({
                           title: "خد بالك!",
                           description: "لازم تعبي كل البيانات قبل ما تبعت الرسالة.",
@@ -990,7 +957,7 @@ const FamilyCommunication = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className="font-semibold">{message.title}</h4>
-                      <p className="text-sm text-gray-600">{message.familyName}</p>
+                      <p className="text-sm text-gray-600">{message.family_name}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <Badge className={getMessageTypeColor(message.type)}>
@@ -1007,7 +974,7 @@ const FamilyCommunication = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-gray-700">{message.content}</p>
                     <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span>{message.sentAt}</span>
+                      <span>{message.sent_at}</span>
                       <span className={
                         message.status === 'read' ? 'text-green-600' :
                         message.status === 'delivered' ? 'text-blue-600' : 'text-gray-600'
@@ -1042,7 +1009,7 @@ const FamilyCommunication = () => {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="family">العائلة</Label>
-                      <Select value={newVisit.familyId} onValueChange={(value) => setNewVisit(prev => ({ ...prev, familyId: value }))}>
+                      <Select value={newVisit.family_id} onValueChange={(value) => setNewVisit(prev => ({ ...prev, family_id: value }))}>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر العائلة" />
                         </SelectTrigger>
@@ -1095,7 +1062,7 @@ const FamilyCommunication = () => {
                       />
                     </div>
                     <Button onClick={() => {
-                      if (!newVisit.familyId || !newVisit.date || !newVisit.time || !newVisit.purpose) {
+                      if (!newVisit.family_id || !newVisit.date || !newVisit.time || !newVisit.purpose) {
                         toast({
                           title: "خد بالك!",
                           description: "لازم تعبي كل بيانات الزيارة قبل الجدولة.",
@@ -1120,8 +1087,8 @@ const FamilyCommunication = () => {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="font-semibold">{visit.familyName}</h4>
-                      <p className="text-sm text-gray-600">المريض: {visit.patientName}</p>
+                      <h4 className="font-semibold">{visit.family_name}</h4>
+                      <p className="text-sm text-gray-600">المريض: {visit.patient_name}</p>
                     </div>
                     <Badge className={
                       visit.status === 'completed' ? 'bg-green-100 text-green-800' :
@@ -1180,7 +1147,7 @@ const FamilyCommunication = () => {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="reportFamily">العائلة</Label>
-                    <Select value={newReport.familyId} onValueChange={(value) => setNewReport(prev => ({ ...prev, familyId: value }))}>
+                    <Select value={newReport.family_id} onValueChange={(value) => setNewReport(prev => ({ ...prev, family_id: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر العائلة" />
                       </SelectTrigger>
@@ -1230,13 +1197,13 @@ const FamilyCommunication = () => {
                           variant="outline"
                           size="sm"
                           onClick={async () => {
-                            const family = families.find(f => f.id === newReport.familyId);
+                            const family = families.find(f => f.id === newReport.family_id);
                             if (family && newReport.type) {
                               const smartReport = await generateSmartReport(
                                 family.name,
-                                family.patientName,
+                                family.patient_name,
                                 newReport.type,
-                                'مريض في مرحلة العلاج، يحتاج تقرير شامل عن التقدم'
+                                'بيانات المريض الحالية'
                               );
                               
                               if (smartReport) {
@@ -1281,7 +1248,7 @@ const FamilyCommunication = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className="font-semibold">{report.title}</h4>
-                      <p className="text-sm text-gray-600">{report.familyName}</p>
+                      <p className="text-sm text-gray-600">{report.family_name}</p>
                     </div>
                     <Badge className={
                       report.status === 'read' ? 'bg-green-100 text-green-800' :
@@ -1303,7 +1270,7 @@ const FamilyCommunication = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>تاريخ الإنشاء:</span>
-                      <span className="font-medium">{report.generatedAt}</span>
+                      <span className="font-medium">{report.generated_at}</span>
                     </div>
                     <div className="text-sm">
                       <span>المحتوى:</span>

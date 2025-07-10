@@ -6,91 +6,269 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useToast } from '@/hooks/use-toast';
 import { Download, TrendingUp, Users, Calendar, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+
+interface ReportStats {
+  totalPatients: number;
+  activeSessions: number;
+  completionRate: number;
+  relapseRate: number;
+}
+
+interface MonthlyData {
+  name: string;
+  patients: number;
+  sessions: number;
+  completion: number;
+}
+
+interface AddictionType {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface AgeGroup {
+  name: string;
+  patients: number;
+}
 
 const Reports = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<ReportStats>({
     totalPatients: 0,
     activeSessions: 0,
     completionRate: 0,
     relapseRate: 0
   });
   const [timeframe, setTimeframe] = useState('month');
-
-  // Sample data for charts
-  const monthlyData = [
-    { name: 'يناير', patients: 12, sessions: 45, completion: 85 },
-    { name: 'فبراير', patients: 15, sessions: 52, completion: 88 },
-    { name: 'مارس', patients: 18, sessions: 61, completion: 82 },
-    { name: 'أبريل', patients: 22, sessions: 78, completion: 90 },
-    { name: 'مايو', patients: 25, sessions: 89, completion: 87 },
-    { name: 'يونيو', patients: 28, sessions: 95, completion: 91 }
-  ];
-
-  const addictionTypes = [
-    { name: 'المخدرات', value: 45, color: '#8884d8' },
-    { name: 'الكحول', value: 25, color: '#82ca9d' },
-    { name: 'التدخين', value: 20, color: '#ffc658' },
-    { name: 'أخرى', value: 10, color: '#ff7300' }
-  ];
-
-  const ageGroups = [
-    { name: '18-25', patients: 15 },
-    { name: '26-35', patients: 22 },
-    { name: '36-45', patients: 18 },
-    { name: '46-55', patients: 12 },
-    { name: '56+', patients: 8 }
-  ];
+  const [loading, setLoading] = useState(false);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [addictionTypes, setAddictionTypes] = useState<AddictionType[]>([]);
+  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
 
   useEffect(() => {
     fetchStats();
-  }, []);
+    fetchChartData();
+  }, [timeframe]);
 
   const fetchStats = async () => {
     try {
-      // Mock data for demonstration
-      setStats({
-        totalPatients: 45,
-        activeSessions: 8,
-        completionRate: 87,
-        relapseRate: 13
-      });
+      setLoading(true);
       
-      // Uncomment when database is set up:
-      /*
-      // Fetch total patients
-      const { count: totalPatients } = await supabase
+      // جلب إجمالي المرضى
+      const { count: totalPatients, error: patientsError } = await supabase
         .from('patients')
         .select('*', { count: 'exact', head: true });
 
-      // Fetch active sessions
-      const { count: activeSessions } = await supabase
+      if (patientsError) throw patientsError;
+
+      // جلب الجلسات النشطة
+      const { count: activeSessions, error: sessionsError } = await supabase
         .from('sessions')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'scheduled');
 
+      if (sessionsError) throw sessionsError;
+
+      // جلب معدل الإكمال
+      const { data: completedSessions, error: completedError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('status', 'completed');
+
+      if (completedError) throw completedError;
+
+      const { data: totalSessions, error: totalSessionsError } = await supabase
+        .from('sessions')
+        .select('*');
+
+      if (totalSessionsError) throw totalSessionsError;
+
+      const completionRate = totalSessions && totalSessions.length > 0 
+        ? Math.round((completedSessions?.length || 0) / totalSessions.length * 100) 
+        : 0;
+
+      // جلب معدل الانتكاس
+      const { data: relapseData, error: relapseError } = await supabase
+        .from('relapse_indicators')
+        .select('*');
+
+      if (relapseError) throw relapseError;
+
+      const relapseRate = relapseData && relapseData.length > 0 
+        ? Math.round((relapseData.filter(r => r.status === 'relapsed').length / relapseData.length) * 100)
+        : 0;
+
       setStats({
         totalPatients: totalPatients || 0,
         activeSessions: activeSessions || 0,
-        completionRate: 87,
-        relapseRate: 13
+        completionRate,
+        relapseRate
       });
-      */
     } catch (error: any) {
+      console.error('Error fetching stats:', error);
       toast({
         title: t("error_loading_stats"),
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء تحميل الإحصائيات",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const exportReport = () => {
-    toast({
-      title: t("exporting_report"),
-      description: t("report_will_be_downloaded_soon"),
+  const fetchChartData = async () => {
+    try {
+      // جلب بيانات المرضى الشهرية
+      const { data: patientsData, error: patientsError } = await supabase
+        .from('patients')
+        .select('created_at, addiction_type');
+
+      if (patientsError) throw patientsError;
+
+      // جلب بيانات الجلسات الشهرية
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('created_at, status');
+
+      if (sessionsError) throw sessionsError;
+
+      // تحليل البيانات الشهرية
+      const monthlyAnalysis = analyzeMonthlyData(patientsData || [], sessionsData || []);
+      setMonthlyData(monthlyAnalysis);
+
+      // تحليل أنواع الإدمان
+      const addictionAnalysis = analyzeAddictionTypes(patientsData || []);
+      setAddictionTypes(addictionAnalysis);
+
+      // تحليل الفئات العمرية
+      const ageAnalysis = analyzeAgeGroups(patientsData || []);
+      setAgeGroups(ageAnalysis);
+
+    } catch (error: any) {
+      console.error('Error fetching chart data:', error);
+    }
+  };
+
+  const analyzeMonthlyData = (patients: any[], sessions: any[]): MonthlyData[] => {
+    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.map((month, index) => {
+      const monthPatients = patients.filter(p => {
+        const date = new Date(p.created_at);
+        return date.getMonth() === index && date.getFullYear() === currentYear;
+      }).length;
+
+      const monthSessions = sessions.filter(s => {
+        const date = new Date(s.created_at);
+        return date.getMonth() === index && date.getFullYear() === currentYear;
+      }).length;
+
+      const completedSessions = sessions.filter(s => {
+        const date = new Date(s.created_at);
+        return date.getMonth() === index && date.getFullYear() === currentYear && s.status === 'completed';
+      }).length;
+
+      const completion = monthSessions > 0 ? Math.round((completedSessions / monthSessions) * 100) : 0;
+
+      return {
+        name: month,
+        patients: monthPatients,
+        sessions: monthSessions,
+        completion
+      };
     });
+  };
+
+  const analyzeAddictionTypes = (patients: any[]): AddictionType[] => {
+    const typeCounts: { [key: string]: number } = {};
+    
+    patients.forEach(patient => {
+      const type = patient.addiction_type || 'أخرى';
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+    });
+
+    const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#ff0000'];
+    let colorIndex = 0;
+
+    return Object.entries(typeCounts).map(([name, value]) => ({
+      name,
+      value,
+      color: colors[colorIndex++ % colors.length]
+    }));
+  };
+
+  const analyzeAgeGroups = (patients: any[]): AgeGroup[] => {
+    const ageGroups: { [key: string]: number } = {
+      '18-25': 0,
+      '26-35': 0,
+      '36-45': 0,
+      '46-55': 0,
+      '56+': 0
+    };
+
+    patients.forEach(patient => {
+      if (patient.date_of_birth) {
+        const birthDate = new Date(patient.date_of_birth);
+        const age = new Date().getFullYear() - birthDate.getFullYear();
+        
+        if (age >= 18 && age <= 25) ageGroups['18-25']++;
+        else if (age >= 26 && age <= 35) ageGroups['26-35']++;
+        else if (age >= 36 && age <= 45) ageGroups['36-45']++;
+        else if (age >= 46 && age <= 55) ageGroups['46-55']++;
+        else if (age > 55) ageGroups['56+']++;
+      }
+    });
+
+    return Object.entries(ageGroups).map(([name, patients]) => ({
+      name,
+      patients
+    }));
+  };
+
+  const exportReport = async () => {
+    try {
+      toast({
+        title: t("exporting_report"),
+        description: t("report_will_be_downloaded_soon"),
+      });
+
+      const reportData = {
+        stats,
+        monthly_data: monthlyData,
+        addiction_types: addictionTypes,
+        age_groups: ageGroups,
+        timeframe,
+        generated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'comprehensive_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        toast({
+          title: "تم تصدير التقرير",
+          description: "تم حفظ التقرير بنجاح",
+        });
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error exporting report:', error);
+      toast({
+        title: "خطأ في تصدير التقرير",
+        description: error.message || "حدث خطأ أثناء تصدير التقرير",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

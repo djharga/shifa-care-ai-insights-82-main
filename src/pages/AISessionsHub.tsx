@@ -33,6 +33,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import AdvancedSessions from './AdvancedSessions';
+import { SupabaseService } from '@/services/supabase-service';
 
 const AISessionsHub = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -198,24 +199,65 @@ const AISessionsHub = () => {
   };
 
   const handleDownloadReport = (session: any) => {
-    toast({
-      title: "تحميل التقرير",
-      description: `جاري تحميل تقرير جلسة ${session.patientName}...`,
-    });
+    // إنشاء تقرير حقيقي
+    const reportData = {
+      sessionId: session.id,
+      patientName: session.patientName,
+      therapistName: session.therapistName,
+      date: session.date,
+      duration: session.duration,
+      progress: session.progress,
+      notes: session.notes,
+      goals: session.goals,
+      emotions: session.emotions,
+      recommendations: session.recommendations,
+      generatedAt: new Date().toISOString(),
+      reportType: 'session_report'
+    };
     
-    setTimeout(() => {
-      toast({
-        title: "تم التحميل",
-        description: "تم تحميل التقرير بنجاح",
-      });
-    }, 2000);
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير-جلسة-${session.patientName}-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "تم التحميل",
+      description: `تم تحميل تقرير جلسة ${session.patientName} بنجاح`,
+    });
   };
 
   const handleShareSession = (session: any) => {
-    toast({
-      title: "مشاركة الجلسة",
-      description: `سيتم مشاركة جلسة ${session.patientName}`,
-    });
+    const sessionData = {
+      title: `جلسة ${session.patientName}`,
+      text: `جلسة علاجية مع ${session.patientName} - التقدم: ${session.progress}%`,
+      url: `${window.location.origin}/sessions/${session.id}`
+    };
+    
+    if (navigator.share) {
+      navigator.share(sessionData).then(() => {
+        toast({
+          title: "تم المشاركة",
+          description: `تم مشاركة جلسة ${session.patientName} بنجاح`,
+        });
+      }).catch(() => {
+        // Fallback للنسخ
+        navigator.clipboard.writeText(`${sessionData.title}: ${sessionData.url}`);
+        toast({
+          title: "تم النسخ",
+          description: `تم نسخ رابط الجلسة إلى الحافظة`,
+        });
+      });
+    } else {
+      // Fallback للنسخ
+      navigator.clipboard.writeText(`${sessionData.title}: ${sessionData.url}`);
+      toast({
+        title: "تم النسخ",
+        description: `تم نسخ رابط الجلسة إلى الحافظة`,
+      });
+    }
   };
 
   const handleViewGoal = (goal: any) => {
@@ -240,32 +282,132 @@ const AISessionsHub = () => {
     });
   };
 
-  const handleGenerateReport = () => {
-    toast({
-      title: "إنشاء تقرير",
-      description: "جاري إنشاء التقرير الشامل...",
-    });
-    
-    setTimeout(() => {
+  const handleGenerateReport = async () => {
+    try {
+      toast({
+        title: "جاري إنشاء التقرير",
+        description: "جاري جمع البيانات من قاعدة البيانات...",
+      });
+
+      const supabaseService = new SupabaseService();
+      
+      // جلب البيانات من قاعدة البيانات
+      const sessions = await supabaseService.getSessions();
+      const treatmentGoals = await supabaseService.getTreatmentGoals();
+      const sessionStats = await supabaseService.getSessionStats();
+      const goalStats = await supabaseService.getGoalStats();
+      
+      const comprehensiveReport = {
+        reportId: `REP-${Date.now()}`,
+        generatedAt: new Date().toISOString(),
+        period: {
+          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date().toISOString()
+        },
+        summary: {
+          totalSessions: sessionStats.totalSessions,
+          totalPatients: new Set(sessions.map(s => s.patient_id)).size,
+          averageProgress: sessionStats.avgProgress,
+          completedGoals: goalStats.completedGoals,
+          pendingGoals: goalStats.pendingGoals,
+          thisWeek: sessionStats.thisWeek,
+          thisMonth: sessionStats.thisMonth
+        },
+        sessions: sessions.map(s => ({
+          id: s.id,
+          patient_id: s.patient_id,
+          session_date: s.session_date,
+          current_progress: s.current_progress,
+          emotions: s.emotions,
+          status: s.status
+        })),
+        goals: treatmentGoals.map((g: any) => ({
+          id: g.id,
+          patient_id: g.patient_id,
+          title: g.title,
+          status: g.status,
+          progress: g.progress
+        })),
+        recommendations: [
+          'زيادة عدد الجلسات للحالات عالية الأولوية',
+          'تحسين التواصل مع الأسر',
+          'تطوير خطط علاجية مخصصة'
+        ]
+      };
+      
+      const blob = new Blob([JSON.stringify(comprehensiveReport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `تقرير-شامل-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
       toast({
         title: "تم إنشاء التقرير",
-        description: "تم إنشاء التقرير بنجاح!",
+        description: "تم إنشاء التقرير الشامل من قاعدة البيانات بنجاح!",
       });
-    }, 3000);
+    } catch (error) {
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: "فشل في إنشاء التقرير",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleExportData = () => {
-    toast({
-      title: "تصدير البيانات",
-      description: "جاري تصدير البيانات...",
-    });
-    
-    setTimeout(() => {
+  const handleExportData = async () => {
+    try {
+      toast({
+        title: "جاري التصدير",
+        description: "جاري تصدير البيانات من قاعدة البيانات...",
+      });
+
+      const supabaseService = new SupabaseService();
+      
+      // جلب جميع البيانات من قاعدة البيانات
+      const sessions = await supabaseService.getSessions();
+      const treatmentGoals = await supabaseService.getTreatmentGoals();
+      const activities = await supabaseService.getActivities();
+      const centerGoals = await supabaseService.getCenterGoals();
+      const sessionStats = await supabaseService.getSessionStats();
+      const goalStats = await supabaseService.getGoalStats();
+      
+      const exportData = {
+        exportId: `EXP-${Date.now()}`,
+        exportedAt: new Date().toISOString(),
+        source: 'supabase_database',
+        data: {
+          sessions,
+          treatmentGoals,
+          activities,
+          centerGoals,
+          statistics: {
+            sessionStats,
+            goalStats
+          }
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `تصدير-بيانات-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
       toast({
         title: "تم التصدير",
-        description: "تم تصدير البيانات بنجاح",
+        description: "تم تصدير جميع البيانات من قاعدة البيانات بنجاح",
       });
-    }, 2000);
+    } catch (error) {
+      toast({
+        title: "خطأ في التصدير",
+        description: "فشل في تصدير البيانات",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAISettings = () => {

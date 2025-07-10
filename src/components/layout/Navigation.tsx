@@ -179,6 +179,12 @@ const Navigation = () => {
       icon: FileText,
       description: 'اختبار التوجيه البسيط'
     },
+    {
+      title: 'سياسة الخصوصية',
+      href: '/privacy-policy',
+      icon: Shield,
+      description: 'سياسة الخصوصية والاستخدام وحقوق الملكية'
+    },
   ];
 
   const isActive = (href: string) => {

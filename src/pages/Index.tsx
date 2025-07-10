@@ -491,6 +491,29 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Footer with Privacy Policy */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+            <div className="text-center sm:text-right">
+              <p className="text-sm text-gray-600">
+                © 2024 شفا كير - نظام الرعاية الذكي. جميع الحقوق محفوظة.
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                مطور بواسطة Claude Sonnet 4 & Islam Ali Dev
+              </p>
+            </div>
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <Link 
+                to="/privacy-policy"
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center"
+              >
+                <Shield className="w-4 h-4 mr-1" />
+                سياسة الخصوصية والاستخدام
+              </Link>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

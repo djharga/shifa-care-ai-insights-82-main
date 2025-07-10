@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Patient {
   id: string;
@@ -22,6 +23,8 @@ interface Patient {
   status: 'active' | 'completed' | 'paused' | 'dropped_out';
   admission_date: string;
   notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const Patients = () => {
@@ -32,6 +35,7 @@ const Patients = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(false);
   const [newPatient, setNewPatient] = useState({
     name: '',
     phone: '',
@@ -50,38 +54,7 @@ const Patients = () => {
 
   const fetchPatients = async () => {
     try {
-      // Mock data for demonstration since database types are not available
-      const mockPatients: Patient[] = [
-        {
-          id: '1',
-          name: 'أحمد محمد',
-          phone: '0501234567',
-          email: 'ahmed@example.com',
-          date_of_birth: '1990-01-01',
-          gender: 'male',
-          addiction_type: 'المخدرات',
-          status: 'active',
-          admission_date: '2024-01-15',
-          notes: 'مريض متعاون'
-        },
-        {
-          id: '2',
-          name: 'فاطمة علي',
-          phone: '0507654321',
-          email: 'fatima@example.com',
-          date_of_birth: '1985-05-10',
-          gender: 'female',
-          addiction_type: 'التدخين',
-          status: 'active',
-          admission_date: '2024-02-20',
-          notes: 'تحسن ملحوظ'
-        }
-      ];
-      
-      setPatients(mockPatients);
-      
-      // Uncomment this when database is properly set up:
-      /*
+      setLoading(true);
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -89,28 +62,45 @@ const Patients = () => {
 
       if (error) throw error;
       setPatients(data || []);
-      */
     } catch (error: any) {
+      console.error('Error fetching patients:', error);
       toast({
         title: "خطأ في تحميل البيانات",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء تحميل بيانات المرضى",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddPatient = async () => {
+    if (!newPatient.name || !newPatient.phone || !newPatient.addiction_type) {
+      toast({
+        title: "بيانات مطلوبة",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Mock implementation for demonstration
-      const newPatientWithId: Patient = {
+      setLoading(true);
+      const patientData = {
         ...newPatient,
-        id: Date.now().toString(),
-        status: 'active',
+        status: 'active' as const,
         admission_date: new Date().toISOString().split('T')[0]
       };
-      
-      setPatients(prev => [newPatientWithId, ...prev]);
 
+      const { data, error } = await supabase
+        .from('patients')
+        .insert([patientData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setPatients(prev => [data, ...prev]);
       toast({
         title: "تم إضافة المريض بنجاح",
         description: "تم حفظ بيانات المريض الجديد",
@@ -126,22 +116,16 @@ const Patients = () => {
         addiction_type: '',
         notes: ''
       });
-      
-      // Uncomment this when database is properly set up:
-      /*
-      const { error } = await supabase
-        .from('patients')
-        .insert([newPatient]);
-
-      if (error) throw error;
-      fetchPatients();
-      */
+      setShowExtraFields(false);
     } catch (error: any) {
+      console.error('Error adding patient:', error);
       toast({
         title: "خطأ في إضافة المريض",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء إضافة المريض",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -159,9 +143,26 @@ const Patients = () => {
     if (!editingPatient) return;
 
     try {
-      // Mock implementation for demonstration
+      setLoading(true);
+      const { error } = await supabase
+        .from('patients')
+        .update({
+          name: editingPatient.name,
+          phone: editingPatient.phone,
+          email: editingPatient.email,
+          date_of_birth: editingPatient.date_of_birth,
+          gender: editingPatient.gender,
+          addiction_type: editingPatient.addiction_type,
+          status: editingPatient.status,
+          notes: editingPatient.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingPatient.id);
+
+      if (error) throw error;
+
       setPatients(prev => prev.map(p => 
-        p.id === editingPatient.id ? editingPatient : p
+        p.id === editingPatient.id ? { ...editingPatient, updated_at: new Date().toISOString() } : p
       ));
 
       toast({
@@ -171,23 +172,15 @@ const Patients = () => {
 
       setIsEditDialogOpen(false);
       setEditingPatient(null);
-      
-      // Uncomment this when database is properly set up:
-      /*
-      const { error } = await supabase
-        .from('patients')
-        .update(editingPatient)
-        .eq('id', editingPatient.id);
-
-      if (error) throw error;
-      fetchPatients();
-      */
     } catch (error: any) {
+      console.error('Error updating patient:', error);
       toast({
         title: "خطأ في تحديث البيانات",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء تحديث بيانات المريض",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -195,30 +188,28 @@ const Patients = () => {
     if (!confirm('هل أنت متأكد من حذف هذا المريض؟')) return;
 
     try {
-      // Mock implementation for demonstration
-      setPatients(prev => prev.filter(p => p.id !== patientId));
-
-      toast({
-        title: "تم حذف المريض",
-        description: "تم حذف بيانات المريض بنجاح",
-      });
-      
-      // Uncomment this when database is properly set up:
-      /*
+      setLoading(true);
       const { error } = await supabase
         .from('patients')
         .delete()
         .eq('id', patientId);
 
       if (error) throw error;
-      fetchPatients();
-      */
+
+      setPatients(prev => prev.filter(p => p.id !== patientId));
+      toast({
+        title: "تم حذف المريض",
+        description: "تم حذف بيانات المريض بنجاح",
+      });
     } catch (error: any) {
+      console.error('Error deleting patient:', error);
       toast({
         title: "خطأ في حذف المريض",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء حذف المريض",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -342,40 +333,54 @@ const Patients = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPatients.map((patient) => (
-                    <TableRow key={patient.id}>
-                      <TableCell className="font-medium">{patient.name}</TableCell>
-                      <TableCell>{patient.phone}</TableCell>
-                      <TableCell>{patient.addiction_type}</TableCell>
-                      <TableCell>{getStatusBadge(patient.status)}</TableCell>
-                      <TableCell>{new Date(patient.admission_date).toLocaleDateString('ar-SA')}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleViewPatient(patient)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditPatient(patient)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDeletePatient(patient.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        جاري التحميل...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : filteredPatients.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        لا يوجد مرضى مطابقة للبحث.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredPatients.map((patient) => (
+                      <TableRow key={patient.id}>
+                        <TableCell className="font-medium">{patient.name}</TableCell>
+                        <TableCell>{patient.phone}</TableCell>
+                        <TableCell>{patient.addiction_type}</TableCell>
+                        <TableCell>{getStatusBadge(patient.status)}</TableCell>
+                        <TableCell>{new Date(patient.admission_date).toLocaleDateString('ar-SA')}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewPatient(patient)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditPatient(patient)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeletePatient(patient.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

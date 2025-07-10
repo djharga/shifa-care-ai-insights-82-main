@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { 
   Heart, 
   Smile, 
@@ -8,16 +10,30 @@ import {
   Meh,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Save,
+  RefreshCw
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface EmotionData {
+  id: string;
+  patient_id: string;
+  session_id?: string;
+  primary_emotion: string;
+  secondary_emotions: string[];
+  intensity: number;
+  emotional_state: 'positive' | 'negative' | 'neutral' | 'mixed';
+  session_date: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface EmotionAnalysisProps {
-  emotions: {
-    primary_emotion: string;
-    secondary_emotions: string[];
-    intensity: number;
-    emotional_state: 'positive' | 'negative' | 'neutral' | 'mixed';
-  };
+  patientId?: string;
+  sessionId?: string;
 }
 
 const emotionColors = {
@@ -47,7 +63,148 @@ const intensityColors = [
   'bg-green-200 text-green-800'
 ];
 
-export default function EmotionAnalysis({ emotions }: EmotionAnalysisProps) {
+export default function EmotionAnalysis({ patientId, sessionId }: EmotionAnalysisProps) {
+  const { toast } = useToast();
+  const [emotions, setEmotions] = useState<EmotionData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (patientId && sessionId) {
+      fetchEmotionData();
+    }
+  }, [patientId, sessionId]);
+
+  const fetchEmotionData = async () => {
+    if (!patientId || !sessionId) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('emotion_analysis')
+        .select('*')
+        .eq('patient_id', patientId)
+        .eq('session_id', sessionId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+      
+      if (data) {
+        setEmotions(data);
+      } else {
+        // إنشاء تحليل مشاعر افتراضي إذا لم يكن موجوداً
+        const defaultEmotions: EmotionData = {
+          id: '',
+          patient_id: patientId,
+          session_id: sessionId,
+          primary_emotion: 'قلق',
+          secondary_emotions: ['توتر', 'خوف'],
+          intensity: 6,
+          emotional_state: 'negative',
+          session_date: new Date().toISOString().split('T')[0],
+          notes: 'تحليل مشاعر افتراضي'
+        };
+        setEmotions(defaultEmotions);
+      }
+    } catch (error: any) {
+      console.error('Error fetching emotion data:', error);
+      toast({
+        title: "خطأ في تحميل تحليل المشاعر",
+        description: error.message || "حدث خطأ أثناء تحميل تحليل المشاعر",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveEmotionData = async () => {
+    if (!emotions || !patientId || !sessionId) return;
+
+    try {
+      setSaving(true);
+      const emotionData = {
+        ...emotions,
+        updated_at: new Date().toISOString()
+      };
+
+      let error;
+      if (emotions.id) {
+        // تحديث البيانات الموجودة
+        const { error: updateError } = await supabase
+          .from('emotion_analysis')
+          .update(emotionData)
+          .eq('id', emotions.id);
+        error = updateError;
+      } else {
+        // إضافة بيانات جديدة
+        const { error: insertError } = await supabase
+          .from('emotion_analysis')
+          .insert([emotionData]);
+        error = insertError;
+      }
+
+      if (error) throw error;
+
+      toast({
+        title: "تم حفظ تحليل المشاعر",
+        description: "تم حفظ البيانات بنجاح",
+      });
+
+      fetchEmotionData(); // إعادة تحميل البيانات
+    } catch (error: any) {
+      console.error('Error saving emotion data:', error);
+      toast({
+        title: "خطأ في حفظ تحليل المشاعر",
+        description: error.message || "حدث خطأ أثناء حفظ تحليل المشاعر",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateEmotionState = (field: keyof EmotionData, value: any) => {
+    if (!emotions) return;
+    setEmotions(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Heart className="h-5 w-5 text-purple-600" />
+            <span>تحليل المشاعر</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            جاري تحميل تحليل المشاعر...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!emotions) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Heart className="h-5 w-5 text-purple-600" />
+            <span>تحليل المشاعر</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            لا توجد بيانات تحليل مشاعر متاحة
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const EmotionIcon = emotionIcons[emotions.emotional_state];
   
   const getIntensityColor = (intensity: number) => {
@@ -65,9 +222,29 @@ export default function EmotionAnalysis({ emotions }: EmotionAnalysisProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <EmotionIcon className={`h-5 w-5 ${emotionColors[emotions.emotional_state]}`} />
-          <span>تحليل المشاعر</span>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <EmotionIcon className={`h-5 w-5 ${emotionColors[emotions.emotional_state]}`} />
+            <span>تحليل المشاعر</span>
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={fetchEmotionData}
+              disabled={loading}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={saveEmotionData}
+              disabled={saving}
+            >
+              <Save className="h-4 w-4 mr-1" />
+              حفظ
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

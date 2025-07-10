@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,136 +32,209 @@ import {
   Calendar
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SystemSettings {
+  id?: string;
   // إعدادات عامة
-  siteName: string;
-  siteDescription: string;
+  site_name: string;
+  site_description: string;
   timezone: string;
-  dateFormat: string;
+  date_format: string;
   language: string;
   
   // إعدادات الأمان
-  sessionTimeout: number;
-  maxLoginAttempts: number;
-  requireTwoFactor: boolean;
-  passwordMinLength: number;
-  passwordComplexity: 'low' | 'medium' | 'high';
+  session_timeout: number;
+  max_login_attempts: number;
+  require_two_factor: boolean;
+  password_min_length: number;
+  password_complexity: 'low' | 'medium' | 'high';
   
   // إعدادات الذكاء الاصطناعي
-  aiEnabled: boolean;
-  openaiApiKey: string;
-  googleAiEnabled: boolean;
-  googleAiApiKey: string;
-  aiResponseTimeout: number;
-  aiMaxTokens: number;
+  ai_enabled: boolean;
+  openai_api_key: string;
+  google_ai_enabled: boolean;
+  google_ai_api_key: string;
+  ai_response_timeout: number;
+  ai_max_tokens: number;
   
   // إعدادات قاعدة البيانات
-  databaseBackupEnabled: boolean;
-  backupFrequency: 'daily' | 'weekly' | 'monthly';
-  backupRetentionDays: number;
-  autoOptimization: boolean;
+  database_backup_enabled: boolean;
+  backup_frequency: 'daily' | 'weekly' | 'monthly';
+  backup_retention_days: number;
+  auto_optimization: boolean;
   
   // إعدادات الإشعارات
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  pushNotifications: boolean;
-  notificationSound: boolean;
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  push_notifications: boolean;
+  notification_sound: boolean;
   
   // إعدادات الواجهة
   theme: 'light' | 'dark' | 'auto';
-  rtlEnabled: boolean;
-  compactMode: boolean;
-  animationsEnabled: boolean;
+  rtl_enabled: boolean;
+  compact_mode: boolean;
+  animations_enabled: boolean;
   
   // إعدادات الأداء
-  cacheEnabled: boolean;
-  cacheDuration: number;
-  imageOptimization: boolean;
-  lazyLoading: boolean;
+  cache_enabled: boolean;
+  cache_duration: number;
+  image_optimization: boolean;
+  lazy_loading: boolean;
   
   // إعدادات الخصوصية
-  dataRetentionDays: number;
-  anonymizeData: boolean;
-  gdprCompliance: boolean;
-  auditLogEnabled: boolean;
+  data_retention_days: number;
+  anonymize_data: boolean;
+  gdpr_compliance: boolean;
+  audit_log_enabled: boolean;
+  
+  created_at?: string;
+  updated_at?: string;
 }
 
 const SystemSettings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState<SystemSettings>({
     // إعدادات عامة
-    siteName: 'شفاء كير - مركز العلاج النفسي',
-    siteDescription: 'مركز متخصص في العلاج النفسي والسلوكي',
+    site_name: 'شفاء كير - مركز العلاج النفسي',
+    site_description: 'مركز متخصص في العلاج النفسي والسلوكي',
     timezone: 'Africa/Cairo',
-    dateFormat: 'DD/MM/YYYY',
+    date_format: 'DD/MM/YYYY',
     language: 'ar-EG',
     
     // إعدادات الأمان
-    sessionTimeout: 30,
-    maxLoginAttempts: 5,
-    requireTwoFactor: false,
-    passwordMinLength: 8,
-    passwordComplexity: 'medium',
+    session_timeout: 30,
+    max_login_attempts: 5,
+    require_two_factor: false,
+    password_min_length: 8,
+    password_complexity: 'medium',
     
     // إعدادات الذكاء الاصطناعي
-    aiEnabled: true,
-    openaiApiKey: '',
-    googleAiEnabled: false,
-    googleAiApiKey: '',
-    aiResponseTimeout: 30,
-    aiMaxTokens: 2000,
+    ai_enabled: true,
+    openai_api_key: '',
+    google_ai_enabled: false,
+    google_ai_api_key: '',
+    ai_response_timeout: 30,
+    ai_max_tokens: 2000,
     
     // إعدادات قاعدة البيانات
-    databaseBackupEnabled: true,
-    backupFrequency: 'daily',
-    backupRetentionDays: 30,
-    autoOptimization: true,
+    database_backup_enabled: true,
+    backup_frequency: 'daily',
+    backup_retention_days: 30,
+    auto_optimization: true,
     
     // إعدادات الإشعارات
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    notificationSound: true,
+    email_notifications: true,
+    sms_notifications: false,
+    push_notifications: true,
+    notification_sound: true,
     
     // إعدادات الواجهة
     theme: 'auto',
-    rtlEnabled: true,
-    compactMode: false,
-    animationsEnabled: true,
+    rtl_enabled: true,
+    compact_mode: false,
+    animations_enabled: true,
     
     // إعدادات الأداء
-    cacheEnabled: true,
-    cacheDuration: 3600,
-    imageOptimization: true,
-    lazyLoading: true,
+    cache_enabled: true,
+    cache_duration: 3600,
+    image_optimization: true,
+    lazy_loading: true,
     
     // إعدادات الخصوصية
-    dataRetentionDays: 365,
-    anonymizeData: false,
-    gdprCompliance: true,
-    auditLogEnabled: true
+    data_retention_days: 365,
+    anonymize_data: false,
+    gdpr_compliance: true,
+    audit_log_enabled: true
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [showApiKeys, setShowApiKeys] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+      
+      if (data) {
+        setSettings(data);
+      } else {
+        // إنشاء إعدادات افتراضية إذا لم تكن موجودة
+        await createDefaultSettings();
+      }
+    } catch (error: any) {
+      console.error('Error fetching settings:', error);
+      toast({
+        title: "خطأ في تحميل الإعدادات",
+        description: error.message || "حدث خطأ أثناء تحميل إعدادات النظام",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createDefaultSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .insert([settings])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setSettings(data);
+    } catch (error: any) {
+      console.error('Error creating default settings:', error);
+    }
+  };
+
   // حفظ الإعدادات
   const saveSettings = async () => {
     setIsLoading(true);
     try {
-      // محاكاة حفظ الإعدادات
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const settingsData = {
+        ...settings,
+        updated_at: new Date().toISOString()
+      };
+
+      let error;
+      if (settings.id) {
+        // تحديث الإعدادات الموجودة
+        const { error: updateError } = await supabase
+          .from('system_settings')
+          .update(settingsData)
+          .eq('id', settings.id);
+        error = updateError;
+      } else {
+        // إنشاء إعدادات جديدة
+        const { error: insertError } = await supabase
+          .from('system_settings')
+          .insert([settingsData]);
+        error = insertError;
+      }
+
+      if (error) throw error;
       
       toast({
         title: "✅ تم حفظ الإعدادات",
         description: "تم حفظ جميع الإعدادات بنجاح",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
       toast({
         title: "❌ خطأ في الحفظ",
-        description: "فشل في حفظ الإعدادات",
+        description: error.message || "فشل في حفظ الإعدادات",
         variant: "destructive",
       });
     } finally {
@@ -172,19 +245,51 @@ const SystemSettings = () => {
   // اختبار الاتصال بالذكاء الاصطناعي
   const testAIConnection = async () => {
     try {
-      // محاكاة اختبار الاتصال
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      setIsLoading(true);
+      
+      // اختبار الاتصال بـ OpenAI
+      if (settings.ai_enabled && settings.openai_api_key) {
+        const response = await fetch('/api/test-openai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            apiKey: settings.openai_api_key
+          })
+        });
+
+        if (!response.ok) throw new Error('فشل في الاتصال بـ OpenAI');
+      }
+
+      // اختبار الاتصال بـ Google AI
+      if (settings.google_ai_enabled && settings.google_ai_api_key) {
+        const response = await fetch('/api/test-google-ai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            apiKey: settings.google_ai_api_key
+          })
+        });
+
+        if (!response.ok) throw new Error('فشل في الاتصال بـ Google AI');
+      }
       
       toast({
         title: "✅ اتصال ناجح",
         description: "تم اختبار الاتصال بالذكاء الاصطناعي بنجاح",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error testing AI connection:', error);
       toast({
         title: "❌ فشل في الاتصال",
-        description: "فشل في الاتصال بالذكاء الاصطناعي",
+        description: error.message || "فشل في الاتصال بالذكاء الاصطناعي",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -198,13 +303,41 @@ const SystemSettings = () => {
   };
 
   // توليد مفتاح API جديد
-  const generateApiKey = () => {
-    const newKey = 'sk-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    setSettings(prev => ({ ...prev, openaiApiKey: newKey }));
-    toast({
-      title: "✅ تم التوليد",
-      description: "تم توليد مفتاح API جديد",
-    });
+  const generateApiKey = async (type: 'openai' | 'google') => {
+    try {
+      setIsLoading(true);
+      
+      // محاكاة توليد مفتاح جديد
+      const newKey = `sk-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      
+      const updatedSettings = {
+        ...settings,
+        [type === 'openai' ? 'openai_api_key' : 'google_ai_api_key']: newKey,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('system_settings')
+        .update(updatedSettings)
+        .eq('id', settings.id);
+
+      if (error) throw error;
+
+      setSettings(updatedSettings);
+      toast({
+        title: "✅ تم التوليد",
+        description: `تم توليد مفتاح ${type === 'openai' ? 'OpenAI' : 'Google AI'} جديد`,
+      });
+    } catch (error: any) {
+      console.error('Error generating API key:', error);
+      toast({
+        title: "❌ خطأ في التوليد",
+        description: error.message || "فشل في توليد مفتاح API جديد",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -268,16 +401,16 @@ const SystemSettings = () => {
                   <Label htmlFor="siteName">اسم الموقع</Label>
                   <Input
                     id="siteName"
-                    value={settings.siteName}
-                    onChange={(e) => setSettings(prev => ({ ...prev, siteName: e.target.value }))}
+                    value={settings.site_name}
+                    onChange={(e) => setSettings(prev => ({ ...prev, site_name: e.target.value }))}
                   />
                 </div>
                 <div>
                   <Label htmlFor="siteDescription">وصف الموقع</Label>
                   <Input
                     id="siteDescription"
-                    value={settings.siteDescription}
-                    onChange={(e) => setSettings(prev => ({ ...prev, siteDescription: e.target.value }))}
+                    value={settings.site_description}
+                    onChange={(e) => setSettings(prev => ({ ...prev, site_description: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -327,8 +460,8 @@ const SystemSettings = () => {
                   <p className="text-sm text-gray-600">تفعيل ميزات الذكاء الاصطناعي في النظام</p>
                 </div>
                 <Switch
-                  checked={settings.aiEnabled}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, aiEnabled: checked }))}
+                  checked={settings.ai_enabled}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, ai_enabled: checked }))}
                 />
               </div>
 
@@ -339,8 +472,8 @@ const SystemSettings = () => {
                     <Input
                       id="openaiApiKey"
                       type={showApiKeys ? "text" : "password"}
-                      value={settings.openaiApiKey}
-                      onChange={(e) => setSettings(prev => ({ ...prev, openaiApiKey: e.target.value }))}
+                      value={settings.openai_api_key}
+                      onChange={(e) => setSettings(prev => ({ ...prev, openai_api_key: e.target.value }))}
                       placeholder="sk-..."
                     />
                     <Button
@@ -353,14 +486,14 @@ const SystemSettings = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copyApiKey(settings.openaiApiKey)}
+                      onClick={() => copyApiKey(settings.openai_api_key)}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={generateApiKey}
+                      onClick={() => generateApiKey('openai')}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -373,26 +506,26 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">استخدام Google AI كبديل</p>
                   </div>
                   <Switch
-                    checked={settings.googleAiEnabled}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, googleAiEnabled: checked }))}
+                    checked={settings.google_ai_enabled}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, google_ai_enabled: checked }))}
                   />
                 </div>
 
-                {settings.googleAiEnabled && (
+                {settings.google_ai_enabled && (
                   <div>
                     <Label htmlFor="googleAiApiKey">مفتاح Google AI API</Label>
                     <div className="flex space-x-2">
                       <Input
                         id="googleAiApiKey"
                         type={showApiKeys ? "text" : "password"}
-                        value={settings.googleAiApiKey}
-                        onChange={(e) => setSettings(prev => ({ ...prev, googleAiApiKey: e.target.value }))}
+                        value={settings.google_ai_api_key}
+                        onChange={(e) => setSettings(prev => ({ ...prev, google_ai_api_key: e.target.value }))}
                         placeholder="AIza..."
                       />
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => copyApiKey(settings.googleAiApiKey)}
+                        onClick={() => copyApiKey(settings.google_ai_api_key)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -420,8 +553,8 @@ const SystemSettings = () => {
                   <Input
                     id="sessionTimeout"
                     type="number"
-                    value={settings.sessionTimeout}
-                    onChange={(e) => setSettings(prev => ({ ...prev, sessionTimeout: parseInt(e.target.value) }))}
+                    value={settings.session_timeout}
+                    onChange={(e) => setSettings(prev => ({ ...prev, session_timeout: parseInt(e.target.value) }))}
                   />
                 </div>
                 <div>
@@ -429,8 +562,8 @@ const SystemSettings = () => {
                   <Input
                     id="maxLoginAttempts"
                     type="number"
-                    value={settings.maxLoginAttempts}
-                    onChange={(e) => setSettings(prev => ({ ...prev, maxLoginAttempts: parseInt(e.target.value) }))}
+                    value={settings.max_login_attempts}
+                    onChange={(e) => setSettings(prev => ({ ...prev, max_login_attempts: parseInt(e.target.value) }))}
                   />
                 </div>
               </div>
@@ -441,14 +574,14 @@ const SystemSettings = () => {
                   <p className="text-sm text-gray-600">تطلب رمز إضافي عند تسجيل الدخول</p>
                 </div>
                 <Switch
-                  checked={settings.requireTwoFactor}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, requireTwoFactor: checked }))}
+                  checked={settings.require_two_factor}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, require_two_factor: checked }))}
                 />
               </div>
 
               <div>
                 <Label htmlFor="passwordComplexity">تعقيد كلمة المرور</Label>
-                <Select value={settings.passwordComplexity} onValueChange={(value: 'low' | 'medium' | 'high') => setSettings(prev => ({ ...prev, passwordComplexity: value }))}>
+                <Select value={settings.password_complexity} onValueChange={(value: 'low' | 'medium' | 'high') => setSettings(prev => ({ ...prev, password_complexity: value }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -479,16 +612,16 @@ const SystemSettings = () => {
                   <p className="text-sm text-gray-600">إنشاء نسخ احتياطية تلقائية</p>
                 </div>
                 <Switch
-                  checked={settings.databaseBackupEnabled}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, databaseBackupEnabled: checked }))}
+                  checked={settings.database_backup_enabled}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, database_backup_enabled: checked }))}
                 />
               </div>
 
-              {settings.databaseBackupEnabled && (
+              {settings.database_backup_enabled && (
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="backupFrequency">تكرار النسخ الاحتياطي</Label>
-                    <Select value={settings.backupFrequency} onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setSettings(prev => ({ ...prev, backupFrequency: value }))}>
+                    <Select value={settings.backup_frequency} onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setSettings(prev => ({ ...prev, backup_frequency: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -519,8 +652,8 @@ const SystemSettings = () => {
                   <p className="text-sm text-gray-600">تحسين قاعدة البيانات تلقائياً</p>
                 </div>
                 <Switch
-                  checked={settings.autoOptimization}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, autoOptimization: checked }))}
+                  checked={settings.auto_optimization}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_optimization: checked }))}
                 />
               </div>
             </CardContent>
@@ -544,8 +677,8 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">إرسال إشعارات عبر البريد الإلكتروني</p>
                   </div>
                   <Switch
-                    checked={settings.emailNotifications}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, emailNotifications: checked }))}
+                    checked={settings.email_notifications}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, email_notifications: checked }))}
                   />
                 </div>
 
@@ -555,8 +688,8 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">إرسال إشعارات عبر الرسائل النصية</p>
                   </div>
                   <Switch
-                    checked={settings.smsNotifications}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, smsNotifications: checked }))}
+                    checked={settings.sms_notifications}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, sms_notifications: checked }))}
                   />
                 </div>
 
@@ -566,8 +699,8 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">إشعارات فورية في المتصفح</p>
                   </div>
                   <Switch
-                    checked={settings.pushNotifications}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, pushNotifications: checked }))}
+                    checked={settings.push_notifications}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, push_notifications: checked }))}
                   />
                 </div>
 
@@ -577,8 +710,8 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">تشغيل صوت عند استلام إشعار</p>
                   </div>
                   <Switch
-                    checked={settings.notificationSound}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, notificationSound: checked }))}
+                    checked={settings.notification_sound}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, notification_sound: checked }))}
                   />
                 </div>
               </div>
@@ -632,8 +765,8 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">تقليل المسافات والعناصر</p>
                   </div>
                   <Switch
-                    checked={settings.compactMode}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, compactMode: checked }))}
+                    checked={settings.compact_mode}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, compact_mode: checked }))}
                   />
                 </div>
 
@@ -643,8 +776,8 @@ const SystemSettings = () => {
                     <p className="text-sm text-gray-600">تفعيل الحركات والانتقالات</p>
                   </div>
                   <Switch
-                    checked={settings.animationsEnabled}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, animationsEnabled: checked }))}
+                    checked={settings.animations_enabled}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, animations_enabled: checked }))}
                   />
                 </div>
               </div>

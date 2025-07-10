@@ -19,12 +19,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       
       {/* Debug Info - إزالة هذا في الإنتاج */}
-      <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs z-50">
-        <div>Layout: Active</div>
-        <div>Navigation: Loaded</div>
-        <div>Content: Ready</div>
-        <div>Screen: {window.innerWidth}px</div>
-      </div>
     </div>
   );
 };
