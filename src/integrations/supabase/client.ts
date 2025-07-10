@@ -5,33 +5,15 @@
 // =====================================================
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types';
 
-// الحصول على بيانات الاتصال من متغيرات البيئة
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// التحقق من وجود بيانات الاتصال
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.');
 }
 
-// إنشاء client Supabase مع إعدادات محسنة لـ Node.js 22+
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  },
-  db: {
-    schema: 'public'
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'shifa-care-ai-insights'
-    }
-  }
-});
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // =====================================================
 // وظائف مساعدة للتعامل مع قاعدة البيانات
