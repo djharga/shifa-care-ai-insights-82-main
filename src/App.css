@@ -414,3 +414,45 @@ body {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
+
+/* ثيمات الوقت */
+.theme-morning {
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+}
+.theme-evening {
+  background: linear-gradient(135deg, #fffde7 0%, #ffe082 100%);
+}
+.theme-night {
+  background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+}
+
+/* تخصيص حسب الدور */
+.role-admin .Navigation, .role-admin main {
+  /* لمسات إدارية */
+  border-right: 4px solid #1976d2;
+}
+.role-therapist .Navigation, .role-therapist main {
+  border-right: 4px solid #43a047;
+}
+.role-patient .Navigation, .role-patient main {
+  border-right: 4px solid #fbc02d;
+}
+
+/* تخصيص حسب نوع الصفحة */
+.page-reports main {
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 0 40px 0 #e0e0e0;
+}
+.page-chat main {
+  background: rgba(245,245,255,0.98);
+  box-shadow: 0 0 40px 0 #b3e5fc;
+}
+
+/* تحسينات عامة */
+.fade-in {
+  animation: fadeIn 0.7s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
