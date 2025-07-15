@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, User, Bed, Calendar } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 import { hasPermission, Role } from '@/utils/permissions';
 import { useNavigate } from 'react-router-dom';
 

@@ -14,6 +14,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export default supabase;
 
 // =====================================================
 // وظائف مساعدة للتعامل مع قاعدة البيانات

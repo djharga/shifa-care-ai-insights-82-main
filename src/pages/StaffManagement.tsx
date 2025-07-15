@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 
 interface Staff {
   id: string;

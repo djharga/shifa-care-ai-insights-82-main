@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useToast } from '@/hooks/use-toast';
 import { Download, TrendingUp, Users, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 
 interface ReportStats {
   totalPatients: number;

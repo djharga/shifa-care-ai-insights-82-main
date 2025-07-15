@@ -33,7 +33,7 @@ import {
   Brain
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 import { googleAIService } from '@/services/google-ai-service';
 
 interface SystemSettings {

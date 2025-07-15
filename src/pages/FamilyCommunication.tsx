@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GoogleAIService } from '@/services/google-ai-service';
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 
 interface Family {
   id: string;

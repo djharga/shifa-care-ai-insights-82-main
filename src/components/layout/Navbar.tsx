@@ -2,7 +2,7 @@ import { User, Calendar, FileText, BarChart3, Brain, Users, Menu, X, Settings, D
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const Navbar = () => {

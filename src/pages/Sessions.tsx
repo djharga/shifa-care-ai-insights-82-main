@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Calendar, Clock, User, Edit, Trash2, Eye, Search, Download, CheckCircle, X, FileText, Bell, FileDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
