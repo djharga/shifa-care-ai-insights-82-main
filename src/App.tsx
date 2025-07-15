@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import Layout from './components/layout/Layout'
-import SmartAssistant from './components/ai/SmartAssistant'
+
 import './App.css'
 
 // Error Boundary Component
@@ -58,6 +58,7 @@ const TestPage = React.lazy(() => import('./pages/TestPage'))
 const SimpleTestPage = React.lazy(() => import('./pages/SimpleTestPage'))
 const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'))
 const NotFound = React.lazy(() => import('./pages/NotFound'))
+const UserGuide = React.lazy(() => import('./pages/UserGuide'))
 
 // Loading component
 const LoadingSpinner = () => (
@@ -102,6 +103,7 @@ function App() {
             <Route path="/test" element={<TestPage />} />
             <Route path="/simple-test" element={<SimpleTestPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/user-guide" element={<UserGuide />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -116,7 +118,7 @@ function App() {
       />
       
       {/* Smart Assistant */}
-      <SmartAssistant />
+      
     </Layout>
   )
 }

@@ -46,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Navigation />
       {/* Main Content */}
       <main className="lg:mr-80 transition-all duration-300 fade-in">
-        <div className="min-h-screen p-3 sm:p-4 md:p-6 lg:p-8 max-w-full">
+        <div className="min-h-screen p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 max-w-full">
           {children}
         </div>
       </main>

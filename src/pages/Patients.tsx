@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Eye, Trash2, Download, CheckCircle, Pause, History, MessageSquare, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,6 +47,223 @@ const Patients = () => {
   });
   const [showExtraFields, setShowExtraFields] = useState(false);
   const { toast } = useToast();
+
+  // Add missing patient management functions
+  const handleBulkAction = async (action: 'activate' | 'pause' | 'complete' | 'delete', patientIds: string[]) => {
+    try {
+      setLoading(true);
+      
+      for (const patientId of patientIds) {
+        const patient = patients.find(p => p.id === patientId);
+        if (!patient) continue;
+
+        if (action === 'delete') {
+          // حذف المريض
+          const { error: deleteError } = await supabase
+            .from('patients')
+            .delete()
+            .eq('id', patientId);
+          
+          if (deleteError) throw deleteError;
+        } else {
+          // تحديث حالة المريض
+          let updatedPatient: Patient = { ...patient, updated_at: new Date().toISOString() };
+
+          switch (action) {
+            case 'activate':
+              updatedPatient.status = 'active';
+              break;
+            case 'pause':
+              updatedPatient.status = 'paused';
+              break;
+            case 'complete':
+              updatedPatient.status = 'completed';
+              break;
+            default:
+              break;
+          }
+
+          const { error } = await supabase
+            .from('patients')
+            .update(updatedPatient)
+            .eq('id', patientId);
+
+          if (error) throw error;
+        }
+      }
+
+      // تحديث القائمة المحلية
+      await fetchPatients();
+
+      const actionText = {
+        activate: 'تفعيل',
+        pause: 'إيقاف مؤقت',
+        complete: 'إكمال',
+        delete: 'حذف'
+      };
+
+      toast({
+        title: "تم تنفيذ الإجراء",
+        description: `تم ${actionText[action]} ${patientIds.length} مريض بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error in bulk action:', error);
+      toast({
+        title: "خطأ في تنفيذ الإجراء",
+        description: error.message || "حدث خطأ أثناء تنفيذ الإجراء",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewPatientHistory = async (patientId: string) => {
+    try {
+      setLoading(true);
+      
+      // جلب تاريخ المريض (الجلسات، المدفوعات، إلخ)
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('session_date', { ascending: false });
+
+      if (sessionsError) throw sessionsError;
+
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('payment_date', { ascending: false });
+
+      if (paymentsError) throw paymentsError;
+
+      // عرض تاريخ المريض في نافذة منبثقة
+      setPatientHistory({
+        sessions: sessions || [],
+        payments: payments || []
+      });
+      setIsHistoryDialogOpen(true);
+
+    } catch (error: any) {
+      console.error('Error fetching patient history:', error);
+      toast({
+        title: "خطأ في جلب تاريخ المريض",
+        description: error.message || "حدث خطأ أثناء جلب تاريخ المريض",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportPatients = async (format: 'json' | 'csv' = 'json') => {
+    try {
+      setLoading(true);
+      toast({
+        title: "جاري تصدير بيانات المرضى",
+        description: "جاري تحضير البيانات للتصدير...",
+      });
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        totalPatients: patients.length,
+        patients: patients.map(p => ({
+          id: p.id,
+          name: p.name,
+          phone: p.phone,
+          email: p.email,
+          date_of_birth: p.date_of_birth,
+          gender: p.gender,
+          addiction_type: p.addiction_type,
+          status: p.status,
+          admission_date: p.admission_date,
+          notes: p.notes
+        }))
+      };
+
+      if (format === 'json') {
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+          type: 'application/json' 
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `مرضى-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // تصدير CSV
+        const csvContent = [
+          ['ID', 'الاسم', 'الهاتف', 'البريد الإلكتروني', 'تاريخ الميلاد', 'الجنس', 'نوع الإدمان', 'الحالة', 'تاريخ الدخول', 'ملاحظات'],
+          ...patients.map(p => [
+            p.id,
+            p.name,
+            p.phone,
+            p.email,
+            p.date_of_birth,
+            p.gender === 'male' ? 'ذكر' : 'أنثى',
+            p.addiction_type,
+            p.status,
+            p.admission_date,
+            p.notes || ''
+          ])
+        ].map(row => row.join(',')).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `مرضى-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      toast({
+        title: "تم التصدير",
+        description: `تم تصدير بيانات ${patients.length} مريض بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error exporting patients:', error);
+      toast({
+        title: "خطأ في التصدير",
+        description: error.message || "حدث خطأ أثناء تصدير البيانات",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessageToPatient = (patientId: string) => {
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // فتح نموذج إرسال رسالة للمريض
+      setSelectedPatientForMessage(patient);
+      setIsMessageDialogOpen(true);
+    }
+  };
+
+  const handleScheduleAppointment = (patientId: string) => {
+    const patient = patients.find(p => p.id === patientId);
+    if (patient) {
+      // فتح نموذج جدولة موعد
+      setSelectedPatientForAppointment(patient);
+      setIsAppointmentDialogOpen(true);
+    }
+  };
+
+  // Add state for new dialogs and data
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
+  const [patientHistory, setPatientHistory] = useState<{
+    sessions: any[];
+    payments: any[];
+  }>({ sessions: [], payments: [] });
+  const [selectedPatientForMessage, setSelectedPatientForMessage] = useState<Patient | null>(null);
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
 
   useEffect(() => {
     fetchPatients();
@@ -225,24 +442,25 @@ const Patients = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm) ||
-    patient.addiction_type.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPatients = patients.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.phone.includes(searchTerm) ||
+    (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    p.addiction_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">إدارة المرضى</h1>
-            <p className="text-muted-foreground">إدارة ومتابعة ملفات المرضى</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">إدارة المرضى</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">إدارة ومتابعة ملفات المرضى</p>
           </div>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Button className="flex items-center space-x-2 rtl:space-x-reverse h-10 text-base">
                 <Plus className="h-4 w-4" />
                 <span>إضافة مريض جديد</span>
               </Button>
@@ -265,7 +483,7 @@ const Patients = () => {
                   <Input id="addiction" value={newPatient.addiction_type} onChange={e => setNewPatient({...newPatient, addiction_type: e.target.value})} placeholder="مثال: المخدرات، الكحول، التدخين" required />
                 </div>
                 {!showExtraFields && (
-                  <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)}>
+                  <Button variant="outline" type="button" onClick={() => setShowExtraFields(true)} className="h-10 text-base">
                     تفاصيل إضافية
                   </Button>
                 )}
@@ -297,12 +515,48 @@ const Patients = () => {
                     </div>
                   </>
                 )}
-                <Button onClick={handleAddPatient} className="w-full">
+                <Button onClick={handleAddPatient} className="w-full h-10 text-base">
                   إضافة المريض
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Add action buttons section after the search bar */}
+        <div className="flex flex-wrap gap-2 sm:gap-4 mb-6">
+          <Button onClick={handleAddPatient} disabled={loading} className="h-10 text-sm sm:text-base">
+            <Plus className="h-4 w-4 mr-2" />
+            إضافة مريض جديد
+          </Button>
+          <Button variant="outline" onClick={() => handleExportPatients('json')} disabled={loading} className="h-10 text-sm sm:text-base">
+            <Download className="h-4 w-4 mr-2" />
+            تصدير JSON
+          </Button>
+          <Button variant="outline" onClick={() => handleExportPatients('csv')} disabled={loading} className="h-10 text-sm sm:text-base">
+            <Download className="h-4 w-4 mr-2" />
+            تصدير CSV
+          </Button>
+          <Button variant="outline" onClick={() => handleBulkAction('activate', [])} disabled={loading} className="h-10 text-sm sm:text-base">
+            <CheckCircle className="h-4 w-4 mr-2" />
+            تفعيل المحددين
+          </Button>
+          <Button variant="outline" onClick={() => handleBulkAction('pause', [])} disabled={loading} className="h-10 text-sm sm:text-base">
+            <Pause className="h-4 w-4 mr-2" />
+            إيقاف مؤقت
+          </Button>
+        </div>
+
+        {/* Place this search bar above the table (after useEffect/fetchPatients, before the table rendering) */}
+        <div className="flex items-center mb-4">
+          <Input
+            className="w-full max-w-md"
+            type="text"
+            placeholder="ابحث باسم المريض أو رقم الهاتف أو البريد الإلكتروني أو نوع الإدمان..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <Search className="ml-2 text-muted-foreground" />
         </div>
 
         <Card>
@@ -354,11 +608,12 @@ const Patients = () => {
                         <TableCell>{getStatusBadge(patient.status)}</TableCell>
                         <TableCell>{new Date(patient.admission_date).toLocaleDateString('ar-SA')}</TableCell>
                         <TableCell>
-                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <div className="flex items-center space-x-1 sm:space-x-2 rtl:space-x-reverse">
                             <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => handleViewPatient(patient)}
+                              className="h-8 w-8 p-0"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -366,12 +621,38 @@ const Patients = () => {
                               variant="outline" 
                               size="sm"
                               onClick={() => handleEditPatient(patient)}
+                              className="h-8 w-8 p-0"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
+                              onClick={() => handleViewPatientHistory(patient.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSendMessageToPatient(patient.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleScheduleAppointment(patient.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Calendar className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="h-8 w-8 p-0"
                               onClick={() => handleDeletePatient(patient.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -530,14 +811,14 @@ const Patients = () => {
                   />
                 </div>
 
-                <div className="flex space-x-2 rtl:space-x-reverse">
-                  <Button onClick={handleUpdatePatient} className="flex-1">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 sm:space-x-reverse">
+                  <Button onClick={handleUpdatePatient} className="flex-1 h-10 text-base">
                     حفظ التغييرات
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => setIsEditDialogOpen(false)}
-                    className="flex-1"
+                    className="flex-1 h-10 text-base"
                   >
                     إلغاء
                   </Button>

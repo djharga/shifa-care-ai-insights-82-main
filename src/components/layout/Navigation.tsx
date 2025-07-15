@@ -206,9 +206,9 @@ const Navigation = () => {
           variant="outline"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="bg-background/90 backdrop-blur-sm border-2 shadow-lg hover:bg-background/95"
+          className="bg-background/90 backdrop-blur-sm border-2 shadow-lg hover:bg-background/95 w-12 h-12"
         >
-          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
       </div>
 
@@ -219,9 +219,9 @@ const Navigation = () => {
             variant="outline"
             size="icon"
             onClick={handleBackToHome}
-            className="bg-background/90 backdrop-blur-sm border-2 shadow-lg hover:bg-background/95"
+            className="bg-background/90 backdrop-blur-sm border-2 shadow-lg hover:bg-background/95 w-12 h-12"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-6 w-6" />
           </Button>
         </div>
       )}
@@ -247,11 +247,11 @@ const Navigation = () => {
             </div>
 
             {/* Mobile Navigation Items */}
-            <div className="flex-1 overflow-y-auto space-y-1">
+            <div className="flex-1 overflow-y-auto space-y-2">
               {navigationItems.map((item, idx) => {
                 if (item.section) {
                   return (
-                    <div key={item.section + idx} className="py-2 px-2 text-xs font-bold text-muted-foreground/80 border-b border-border mb-2 mt-4">
+                    <div key={item.section + idx} className="py-3 px-3 text-sm font-bold text-muted-foreground/80 border-b border-border mb-3 mt-6">
                       {item.section}
                     </div>
                   );
@@ -264,19 +264,19 @@ const Navigation = () => {
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 space-x-reverse p-4 rounded-xl transition-all duration-200 ${
+                    className={`flex items-center space-x-3 space-x-reverse p-5 rounded-xl transition-all duration-200 min-h-[60px] ${
                       isActive(item.href)
                         ? 'bg-primary text-primary-foreground shadow-lg'
                         : 'hover:bg-muted/50 active:bg-muted'
                     }`}
                   >
-                    <Icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.href) ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm">{item.title}</div>
-                      <div className={`text-xs mt-1 ${isActive(item.href) ? 'opacity-80' : 'opacity-60'}`}>
-                        {item.description}
+                    <Icon className={`h-6 w-6 flex-shrink-0 ${isActive(item.href) ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                                          <div className="flex-1 min-w-0">
+                        <div className="font-medium text-base">{item.title}</div>
+                        <div className={`text-sm mt-1 ${isActive(item.href) ? 'opacity-80' : 'opacity-60'}`}>
+                          {item.description}
+                        </div>
                       </div>
-                    </div>
                     {isActive(item.href) && (
                       <Badge variant="secondary" className="text-xs flex-shrink-0">
                         نشط
@@ -335,7 +335,7 @@ const Navigation = () => {
           {navigationItems.map((item, idx) => {
             if (item.section) {
               return (
-                <div key={item.section + idx} className="py-2 px-2 text-xs font-bold text-muted-foreground/80 border-b border-border mb-2 mt-4">
+                <div key={item.section + idx} className="py-3 px-3 text-sm font-bold text-muted-foreground/80 border-b border-border mb-3 mt-6">
                   {item.section}
                 </div>
               );

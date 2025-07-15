@@ -13,41 +13,27 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Brain, 
   Heart, 
-  Activity, 
-  TrendingUp, 
-  Clock,
   CheckCircle,
   AlertTriangle,
-  Zap,
-  Target,
   Users,
-  Calendar,
   FileText,
-  Download,
-  Share2,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  RefreshCw,
   Save,
-  Send,
   Loader2,
-  Sparkles,
-  Lightbulb
+  Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SessionAIService } from '@/services/session-ai-service';
 import { SupabaseService } from '@/services/supabase-service';
-import { Session, TreatmentGoal, Activity as ActivityType } from '@/types/session';
-import SessionAnalysis from '@/components/ai/SessionAnalysis';
-import SessionReportGenerator from '@/components/ai/SessionReportGenerator';
+import { Session, AIAnalysisResult } from '@/types/session';
+
 
 export default function AdvancedSessions() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [aiInsights, setAiInsights] = useState<{
+    processedData: AIAnalysisResult;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   // إنشاء instances من الخدمات
@@ -126,46 +112,16 @@ export default function AdvancedSessions() {
         status: 'completed',
         raw_notes: newSession.raw_notes,
         ai_processed_notes: processedData.processedNotes,
-        session_summary: processedData.summary,
+        session_summary: processedData.processedNotes.substring(0, 200) + '...',
         emotions: processedData.emotions,
-        treatment_goals: [],
-        current_progress: 0,
-        next_session_plan: '',
-        therapist_assessment: newSession.therapist_assessment,
-        center_goals: [],
-        activities_planned: []
+        therapist_assessment: newSession.therapist_assessment
       };
       
-      // اقتراح أهداف علاجية
-      const treatmentGoals = await aiService.suggestTreatmentGoals(
-        tempSession as Session,
-        {} // تاريخ المريض
-      );
 
-      // اقتراح أنشطة
-      const activities = await aiService.suggestCenterActivities(
-        tempSession as Session,
-        {} // ملف المريض
-      );
 
-      // اقتراح خطة للجلسة القادمة
-      const nextSessionPlan = await aiService.suggestNextSessionPlan(
-        tempSession as Session,
-        {} // تقدم المريض
-      );
-
-      // تحليل شامل
-      const analysis = await aiService.comprehensiveSessionAnalysis(
-        tempSession as Session
-      );
-
-      setAiInsights({
-        processedData,
-        treatmentGoals,
-        activities,
-        nextSessionPlan,
-        analysis
-      });
+              setAiInsights({
+          processedData
+        });
 
     } catch (error) {
       console.error('خطأ في معالجة الجلسة:', error);
@@ -175,10 +131,7 @@ export default function AdvancedSessions() {
     }
   };
 
-  // معالجة التقارير المولدة
-  const handleReportGenerated = (_reports: { manager: string; family: string }) => {
-    // Implementation needed
-  };
+
 
   // حفظ الجلسة
   const saveSession = async () => {
@@ -201,14 +154,10 @@ export default function AdvancedSessions() {
         status: 'completed',
         raw_notes: newSession.raw_notes,
         ai_processed_notes: aiInsights.processedData.processedNotes,
-        session_summary: aiInsights.processedData.summary,
+        session_summary: aiInsights.processedData.processedNotes.substring(0, 200) + '...',
         emotions: aiInsights.processedData.emotions,
-        treatment_goals: aiInsights.treatmentGoals,
-        current_progress: 0,
-        next_session_plan: aiInsights.nextSessionPlan,
         therapist_assessment: newSession.therapist_assessment,
-        center_goals: [],
-        activities_planned: aiInsights.activities
+        // تم حذف الخصائص القديمة
       };
 
       const savedSession = await supabaseService.createSession(sessionData);
@@ -237,68 +186,7 @@ export default function AdvancedSessions() {
     }
   };
 
-  // وظائف الأزرار
-  const handleDownloadSession = (session: Session) => {
-    toast({
-      title: 'تحميل التقرير',
-      description: `جاري تحميل تقرير جلسة ${session.patient_id}...`,
-    });
-    setTimeout(() => {
-      toast({
-        title: 'تم التحميل',
-        description: 'تم تحميل التقرير بنجاح',
-      });
-    }, 2000);
-  };
-  const handleShareSession = (session: Session) => {
-    toast({
-      title: 'مشاركة الجلسة',
-      description: `سيتم مشاركة جلسة ${session.patient_id}`,
-    });
-  };
-  const handleViewSession = (session: Session) => {
-    toast({
-      title: 'عرض الجلسة',
-      description: `سيتم عرض تفاصيل جلسة ${session.patient_id}`,
-    });
-  };
-  const handleEditSession = (session: Session) => {
-    toast({
-      title: 'تعديل الجلسة',
-      description: `سيتم فتح نموذج تعديل جلسة ${session.patient_id}`,
-    });
-  };
-  const handleDeleteSession = (session: Session) => {
-    toast({
-      title: 'حذف الجلسة',
-      description: `هل أنت متأكد من حذف جلسة ${session.patient_id}؟`,
-      variant: 'destructive',
-    });
-  };
-  const handleGenerateReport = () => {
-    toast({
-      title: 'إنشاء تقرير',
-      description: 'جاري إنشاء التقرير الشامل...'
-    });
-    setTimeout(() => {
-      toast({
-        title: 'تم إنشاء التقرير',
-        description: 'تم إنشاء التقرير بنجاح!',
-      });
-    }, 3000);
-  };
-  const handleExportData = () => {
-    toast({
-      title: 'تصدير البيانات',
-      description: 'جاري تصدير البيانات...'
-    });
-    setTimeout(() => {
-      toast({
-        title: 'تم التصدير',
-        description: 'تم تصدير البيانات بنجاح',
-      });
-    }, 2000);
-  };
+
 
   if (isLoading) {
     return (
@@ -315,12 +203,12 @@ export default function AdvancedSessions() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">الجلسات العلاجية المتقدمة</h1>
-          <p className="text-gray-600 mt-2">نظام الجلسات مع الذكاء الاصطناعي</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">الجلسات العلاجية المتقدمة</h1>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">نظام الجلسات مع الذكاء الاصطناعي</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Brain className="h-8 w-8 text-blue-600" />
-          <span className="text-lg font-semibold text-blue-600">AI Powered</span>
+          <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+          <span className="text-base sm:text-lg font-semibold text-blue-600">AI Powered</span>
         </div>
       </div>
 
@@ -332,11 +220,9 @@ export default function AdvancedSessions() {
       )}
 
       <Tabs defaultValue="new-session" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="new-session">جلسة جديدة</TabsTrigger>
-          <TabsTrigger value="ai-analysis">تحليل الذكاء الاصطناعي</TabsTrigger>
-          <TabsTrigger value="reports">التقارير المخصصة</TabsTrigger>
-          <TabsTrigger value="sessions-history">تاريخ الجلسات</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-12">
+          <TabsTrigger value="new-session" className="text-sm sm:text-base">جلسة جديدة</TabsTrigger>
+          <TabsTrigger value="ai-analysis" className="text-sm sm:text-base">تحليل الذكاء الاصطناعي</TabsTrigger>
         </TabsList>
 
         {/* جلسة جديدة */}
@@ -440,16 +326,16 @@ export default function AdvancedSessions() {
               <Button 
                 onClick={processSessionWithAI}
                 disabled={isProcessing || !newSession.raw_notes.trim()}
-                className="w-full"
+                className="w-full h-12 text-base"
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                     جاري المعالجة بالذكاء الاصطناعي...
                   </>
                 ) : (
                   <>
-                    <Brain className="h-4 w-4 mr-2" />
+                    <Brain className="h-5 w-5 mr-2" />
                     معالجة الجلسة بالذكاء الاصطناعي
                   </>
                 )}
@@ -462,42 +348,36 @@ export default function AdvancedSessions() {
         <TabsContent value="ai-analysis" className="space-y-6">
           {aiInsights ? (
             <>
-              {/* الملاحظات المعالجة */}
+              {/* إعادة صياغة باللهجة المصرية */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
+                  <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
                     <Sparkles className="h-5 w-5 text-blue-600" />
-                    <span>الملاحظات المعالجة بالذكاء الاصطناعي</span>
+                    <span>إعادة صياغة باللهجة المصرية</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-sm font-medium">الملاحظات المنظمة:</Label>
-                      <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium">الملاحظات المعاد صياغتها:</Label>
+                      <div className="mt-2 p-4 bg-gray-50 rounded-lg text-right">
                         {aiInsights.processedData.processedNotes}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">ملخص الجلسة:</Label>
-                      <div className="mt-2 p-4 bg-blue-50 rounded-lg">
-                        {aiInsights.processedData.summary}
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* تحليل المشاعر */}
+              {/* تحليل المشاعر ونمط التفكير */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
-                    <span>تحليل المشاعر</span>
+                  <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                    <Heart className="h-5 w-5 text-red-600" />
+                    <span>تحليل المشاعر ونمط التفكير</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label className="text-sm font-medium">المشاعر الأساسية:</Label>
                       <Badge variant="outline" className="mt-2">
@@ -521,147 +401,93 @@ export default function AdvancedSessions() {
                         ))}
                       </div>
                     </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium">نمط التفكير:</Label>
+                      <div className="mt-2 p-3 bg-yellow-50 rounded-lg">
+                        {aiInsights.processedData.thinkingPattern}
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium">الحالة النفسية العامة:</Label>
+                      <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                        {aiInsights.processedData.psychologicalState}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* الأهداف العلاجية */}
+              {/* خطة علاجية بسيطة */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-purple-600" />
-                    <span>الأهداف العلاجية المقترحة</span>
+                  <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                    <Heart className="h-5 w-5 text-purple-600" />
+                    <span>خطة علاجية بسيطة</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {aiInsights.treatmentGoals.map((goal: TreatmentGoal) => (
-                      <div key={goal.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">{goal.title}</h4>
-                          <Badge variant={goal.priority === 'high' ? 'destructive' : goal.priority === 'medium' ? 'default' : 'secondary'}>
-                            {goal.priority === 'high' ? 'عالية' : goal.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-2">{goal.description}</p>
-                        <div className="mt-2">
-                          <Progress value={goal.progress} />
-                        </div>
+                    <div>
+                      <Label className="text-sm font-medium">أهداف الجلسة القادمة:</Label>
+                      <div className="mt-2 space-y-2">
+                        {aiInsights.processedData.treatmentPlan.goals.map((goal: string, index: number) => (
+                          <div key={index} className="p-3 bg-green-50 rounded-lg">
+                            <div className="flex items-start">
+                              <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <span>{goal}</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* الأنشطة المقترحة */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Activity className="h-5 w-5 text-orange-600" />
-                    <span>الأنشطة المقترحة للمركز</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {aiInsights.activities.map((activity: ActivityType) => (
-                      <div key={activity.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">{activity.title}</h4>
-                          <Badge variant="outline">{activity.type === 'individual' ? 'فردي' : activity.type === 'group' ? 'جماعي' : 'عائلي'}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-2">{activity.description}</p>
-                        <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                          <span>المدة: {activity.duration} دقيقة</span>
-                          <span>التكرار: {activity.frequency === 'daily' ? 'يومي' : activity.frequency === 'weekly' ? 'أسبوعي' : 'شهري'}</span>
-                        </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">الاتجاه العلاجي:</Label>
+                      <div className="mt-2 p-3 bg-indigo-50 rounded-lg">
+                        {aiInsights.processedData.treatmentPlan.direction}
                       </div>
-                    ))}
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">تمرين أو نشاط مقترح:</Label>
+                      <div className="mt-2 p-3 bg-orange-50 rounded-lg">
+                        {aiInsights.processedData.treatmentPlan.exercise}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* خطة الجلسة القادمة */}
+              {/* تقرير مختصر للأهل */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Calendar className="h-5 w-5 text-indigo-600" />
-                    <span>خطة الجلسة القادمة</span>
+                  <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                    <Users className="h-5 w-5 text-teal-600" />
+                    <span>تقرير مختصر للأهل</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 bg-indigo-50 rounded-lg">
-                    {aiInsights.nextSessionPlan}
+                  <div className="p-4 bg-teal-50 rounded-lg border-l-4 border-teal-500">
+                    <div className="text-sm text-gray-700 leading-relaxed">
+                      {aiInsights.processedData.familyReport}
+                    </div>
+                  </div>
+                  <div className="mt-3 text-xs text-gray-500">
+                    <AlertTriangle className="h-3 w-3 inline mr-1" />
+                    هذا التقرير محمي بخصوصية المقيم ولا يحتوي على معلومات حساسة
                   </div>
                 </CardContent>
               </Card>
 
-              {/* التحليل الشامل */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Lightbulb className="h-5 w-5 text-yellow-600" />
-                    <span>التحليل الشامل والتوصيات</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium text-green-700 mb-2">الرؤى المهمة</h4>
-                      <ul className="space-y-1">
-                        {aiInsights.analysis.insights.map((insight: string, index: number) => (
-                          <li key={index} className="text-sm flex items-start">
-                            <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                            {insight}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-blue-700 mb-2">التوصيات</h4>
-                      <ul className="space-y-1">
-                        {aiInsights.analysis.recommendations.map((rec: string, index: number) => (
-                          <li key={index} className="text-sm flex items-start">
-                            <Lightbulb className="h-4 w-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-red-700 mb-2">عوامل الخطر</h4>
-                      <ul className="space-y-1">
-                        {aiInsights.analysis.riskFactors.map((risk: string, index: number) => (
-                          <li key={index} className="text-sm flex items-start">
-                            <AlertTriangle className="h-4 w-4 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
-                            {risk}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-green-700 mb-2">المؤشرات الإيجابية</h4>
-                      <ul className="space-y-1">
-                        {aiInsights.analysis.positiveIndicators.map((indicator: string, index: number) => (
-                          <li key={index} className="text-sm flex items-start">
-                            <TrendingUp className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                            {indicator}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
-              <Button onClick={saveSession} disabled={isProcessing} className="w-full">
+
+              <Button onClick={saveSession} disabled={isProcessing} className="w-full h-12 text-base">
                 {isProcessing ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                     جاري الحفظ...
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-5 w-5 mr-2" />
                     حفظ الجلسة
                   </>
                 )}
@@ -676,74 +502,7 @@ export default function AdvancedSessions() {
           )}
         </TabsContent>
 
-        {/* التقارير المخصصة */}
-        <TabsContent value="reports" className="space-y-6">
-          {aiInsights ? (
-            <SessionReportGenerator 
-              sessionData={{
-                id: 'temp-session',
-                patient_id: newSession.patient_id,
-                patient_name: `المقيم ${newSession.patient_id}`,
-                session_date: new Date().toLocaleDateString('ar-EG'),
-                session_type: newSession.session_type,
-                raw_notes: newSession.raw_notes,
-                ai_processed_notes: aiInsights.processedData?.processedNotes || '',
-                emotions: aiInsights.processedData?.emotions || {},
-                therapist_assessment: newSession.therapist_assessment
-              }}
-              onReportGenerated={handleReportGenerated}
-            />
-          ) : (
-            <Card>
-              <CardContent className="text-center py-12">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">قم بإنشاء جلسة جديدة أولاً لتوليد التقارير المخصصة</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
 
-        {/* تاريخ الجلسات */}
-        <TabsContent value="sessions-history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>تاريخ الجلسات</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {sessions.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">لا توجد جلسات محفوظة</p>
-              ) : (
-                <div className="space-y-4">
-                  {sessions.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <div className="font-medium">{session.patient_id}</div>
-                        <div className="text-sm text-gray-500">{session.session_date}</div>
-                      </div>
-                      <div className="flex space-x-1">
-                        <Button size="sm" variant="outline" onClick={() => handleViewSession(session)}>
-                          <Eye className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleEditSession(session)}>
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDeleteSession(session)}>
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDownloadSession(session)}>
-                          <Download className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleShareSession(session)}>
-                          <Share2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

@@ -288,6 +288,51 @@ const Index = () => {
     }
   };
 
+  // Add important alerts section after stats
+  const importantAlerts = [
+    {
+      title: 'مدفوعات معلقة',
+      description: '3 مدفوعات تحتاج إلى متابعة',
+      icon: AlertTriangle,
+      type: 'warning',
+      href: '/finance'
+    },
+    {
+      title: 'جلسات اليوم',
+      description: '5 جلسات مجدولة لهذا اليوم',
+      icon: Calendar,
+      type: 'info',
+      href: '/sessions'
+    },
+    {
+      title: 'غرف تحتاج صيانة',
+      description: 'غرفتان تحتاجان إلى صيانة',
+      icon: Building2,
+      type: 'warning',
+      href: '/rooms'
+    },
+    {
+      title: 'مرضى جدد',
+      description: 'مريضان جديدان يحتاجان إلى تقييم',
+      icon: UserPlus,
+      type: 'success',
+      href: '/patients'
+    }
+  ];
+
+  const getAlertColor = (type: string) => {
+    switch (type) {
+      case 'warning':
+        return 'border-yellow-200 bg-yellow-50 text-yellow-800';
+      case 'info':
+        return 'border-blue-200 bg-blue-50 text-blue-800';
+      case 'success':
+        return 'border-green-200 bg-green-50 text-green-800';
+      default:
+        return 'border-gray-200 bg-gray-50 text-gray-800';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" dir="rtl">
       <main className="w-full max-w-full">
@@ -305,7 +350,7 @@ const Index = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => i18n.changeLanguage('ar')}
-                className="text-xs sm:text-sm px-2 sm:px-3"
+                className="text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
               >
                 فصحى
               </Button>
@@ -313,7 +358,7 @@ const Index = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => i18n.changeLanguage('ar-EG')}
-                className="text-xs sm:text-sm px-2 sm:px-3"
+                className="text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
               >
                 مصري
               </Button>
@@ -480,7 +525,7 @@ const Index = () => {
                     <Sparkles className="w-3 h-3 mr-1" />
                     ذكي
                   </Badge>
-                  <Button asChild size="sm" className="w-full sm:w-auto">
+                  <Button asChild size="sm" className="w-full sm:w-auto h-10 text-base">
                     <Link to="/ai-assistant">
                       ابدأ المحادثة
                       <ArrowRight className="w-4 h-4 mr-2" />
@@ -490,6 +535,31 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* التنبيهات المهمة */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Bell className="h-5 w-5 mr-2" />
+            التنبيهات المهمة
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {importantAlerts.map((alert, index) => (
+              <Link key={index} to={alert.href}>
+                <Card className={`border-2 hover:shadow-md transition-shadow cursor-pointer ${getAlertColor(alert.type)}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-3">
+                      <alert.icon className="h-5 w-5" />
+                      <div>
+                        <h3 className="font-medium text-sm">{alert.title}</h3>
+                        <p className="text-xs opacity-80">{alert.description}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Footer with Privacy Policy */}
