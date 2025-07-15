@@ -1,4 +1,4 @@
-import { Session, TreatmentGoal, Activity } from '@/types/session';
+import { Session, TreatmentGoal, Activity, AIAnalysisResult } from '@/types/session';
 import { googleAIService } from './google-ai-service';
 
 export class SessionAIService {
@@ -13,40 +13,54 @@ export class SessionAIService {
     }
   }
 
-  // تحليل الجلسة وتنظيمها باللهجة المصرية
-  async processSessionNotes(rawNotes: string): Promise<{
-    processedNotes: string;
-    summary: string;
-    emotions: {
-      primary_emotion: string;
-      secondary_emotions: string[];
-      intensity: number;
-      emotional_state: 'positive' | 'negative' | 'neutral' | 'mixed';
-    };
-  }> {
+  // تحليل الجلسة بالطريقة الجديدة المطلوبة
+  async processSessionNotes(rawNotes: string): Promise<AIAnalysisResult> {
     if (!this.googleAIKey) {
       // إرجاع تحليل بسيط إذا لم يكن هناك مفتاح API
       return this.getMockAnalysis(rawNotes);
     }
 
-    const systemPrompt = `كمعالج نفسي متخصص، قم بتحليل الجلسات العلاجية وتنظيمها باللهجة المصرية.`;
+    const systemPrompt = `أنت معالج نفسي متخصص في علاج الإدمان. مهمتك تحليل الجلسات العلاجية باللهجة المصرية وتقديم رؤى مفيدة.
+
+يجب أن تكون إجاباتك:
+- باللهجة المصرية البسيطة فقط
+- دقيقة ومهنية
+- عملية وقابلة للتطبيق
+- تراعي السياق الثقافي المصري
+- تحترم خصوصية المريض
+- لا تستخدم العربية الفصحى إطلاقًا
+
+أجب باللهجة المصرية فقط. لا تستخدم العربية الفصحى إطلاقًا.`;
+
     const userPrompt = `
-    كمعالج نفسي متخصص، قم بتحليل الجلسة التالية وتنظيمها باللهجة المصرية:
+كمعالج نفسي متخصص، قم بتحليل الجلسة التالية بالطريقة المطلوبة:
 
-    الملاحظات الخام:
-    ${rawNotes}
+الملاحظات الخام من المعالج:
+"${rawNotes}"
 
-    المطلوب:
-    1. إعادة كتابة الملاحظات بشكل منظم ومفهوم باللهجة المصرية
-    2. عمل ملخص مختصر للجلسة
-    3. تحليل المشاعر السائدة في الجلسة مع تحديد:
-       - المشاعر الأساسية
-       - المشاعر الثانوية
-       - شدة المشاعر (1-10)
-       - الحالة العاطفية العامة
+المطلوب منك:
 
-    أجب باللغة العربية وباللهجة المصرية.
-    `;
+🔹 1. إعادة صياغة باللهجة المصرية:
+- أعد ترتيب الكلام وتنظيمه بدون ما تغيّر المعنى
+- أعد صياغته باللهجة المصرية بشكل مهني وسلس
+
+🔸 2. تحليل المشاعر ونمط التفكير:
+- المشاعر اللي كانت واضحة على المقيم
+- نمط التفكير اللي ظهر (تفكير سلبي – إنكاري – واقعي – دفاعي…)
+- الحالة النفسية العامة للجلسة
+
+🔸 3. خطة علاجية بسيطة:
+- هدف أو هدفين للجلسة الجاية
+- اتجاه مناسب نبدأ نشتغل عليه مع المقيم
+- توصية بتمرين أو نشاط علاجي لو متاح
+
+🔸 4. تقرير مختصر للأهل (بدون كسر خصوصية المقيم):
+- طمأنة عن الحالة
+- مؤشر عام إن فيه متابعة وتقدّم أو احتياج لدعم إضافي
+- بلغة مهذبة ومهنية (مش لازم باللهجة)
+
+أجب باللهجة المصرية فقط. لا تستخدم العربية الفصحى إطلاقًا.
+`;
 
     try {
       const result = await googleAIService.customCall(systemPrompt, userPrompt);
@@ -56,13 +70,7 @@ export class SessionAIService {
       }
 
       const response = result.data || '';
-      const parsedResult = this.parseAIResponse(response);
-      
-      return {
-        processedNotes: parsedResult.processedNotes,
-        summary: parsedResult.summary,
-        emotions: parsedResult.emotions
-      };
+      return this.parseNewAIResponse(response, rawNotes);
     } catch (error) {
       console.error('خطأ في معالجة الجلسة:', error);
       // إرجاع تحليل بسيط في حالة الخطأ
@@ -70,206 +78,26 @@ export class SessionAIService {
     }
   }
 
-  // اقتراح أهداف علاجية
-  async suggestTreatmentGoals(
-    sessionData: Session,
-    patientHistory: any
-  ): Promise<TreatmentGoal[]> {
-    if (!this.googleAIKey) {
-      return this.getMockTreatmentGoals();
-    }
 
-    const systemPrompt = `أنت خبير في علاج الإدمان. اقترح أهداف علاجية مناسبة بناءً على حالة المقيم.`;
-    const userPrompt = `
-    بناءً على الجلسة التالية وتاريخ المقيم، اقترح أهداف علاجية مناسبة:
-
-    بيانات الجلسة:
-    - الملاحظات: ${sessionData.raw_notes}
-    - المشاعر: ${JSON.stringify(sessionData.emotions)}
-    - التقييم: ${JSON.stringify(sessionData.therapist_assessment)}
-
-    تاريخ المقيم:
-    ${JSON.stringify(patientHistory)}
-
-    اقترح 3-5 أهداف علاجية مناسبة تشمل:
-    - أهداف سلوكية
-    - أهداف عاطفية
-    - أهداف اجتماعية
-    - أهداف روحية
-
-    كل هدف يجب أن يكون:
-    - محدد وواضح
-    - قابل للقياس
-    - قابل للتحقيق
-    - له موعد محدد
-    - له أولوية (منخفضة/متوسطة/عالية)
-
-    أجب باللغة العربية وباللهجة المصرية.
-    `;
-
-    try {
-      const result = await googleAIService.customCall(systemPrompt, userPrompt);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'فشل في اقتراح الأهداف');
-      }
-
-      const response = result.data || '';
-      return this.parseTreatmentGoals(response);
-    } catch (error) {
-      console.error('خطأ في اقتراح الأهداف:', error);
-      return this.getMockTreatmentGoals();
-    }
-  }
-
-  // اقتراح أنشطة للمركز العلاجي
-  async suggestCenterActivities(
-    sessionData: Session,
-    patientProfile: any
-  ): Promise<Activity[]> {
-    if (!this.googleAIKey) {
-      return this.getMockActivities();
-    }
-
-    const systemPrompt = `أنت خبير في الأنشطة العلاجية. اقترح أنشطة مناسبة للمركز العلاجي.`;
-    const userPrompt = `
-    بناءً على حالة المقيم والجلسة، اقترح أنشطة مناسبة للمركز العلاجي:
-
-    بيانات المقيم:
-    ${JSON.stringify(patientProfile)}
-
-    نتائج الجلسة:
-    ${JSON.stringify(sessionData.emotions)}
-
-    اقترح أنشطة تشمل:
-    - أنشطة علاجية فردية
-    - أنشطة جماعية
-    - أنشطة عائلية
-    - أنشطة ترفيهية
-    - أنشطة تعليمية
-
-    كل نشاط يجب أن يكون:
-    - مناسب لحالة المقيم
-    - له مدة محددة
-    - له تكرار محدد
-    - يساعد في تحقيق الأهداف العلاجية
-
-    أجب باللغة العربية وباللهجة المصرية.
-    `;
-
-    try {
-      const result = await googleAIService.customCall(systemPrompt, userPrompt);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'فشل في اقتراح الأنشطة');
-      }
-
-      const response = result.data || '';
-      return this.parseActivities(response);
-    } catch (error) {
-      console.error('خطأ في اقتراح الأنشطة:', error);
-      return this.getMockActivities();
-    }
-  }
-
-  // اقتراح خطة للجلسة القادمة
-  async suggestNextSessionPlan(
-    currentSession: Session,
-    patientProgress: any
-  ): Promise<string> {
-    if (!this.googleAIKey) {
-      return this.getMockNextSessionPlan();
-    }
-
-    const systemPrompt = `أنت خبير في التخطيط العلاجي. اقترح خطط مفصلة للجلسات القادمة.`;
-    const userPrompt = `
-    بناءً على الجلسة الحالية وتقدم المقيم، اقترح خطة للجلسة القادمة:
-
-    الجلسة الحالية:
-    - الملاحظات: ${currentSession.raw_notes}
-    - المشاعر: ${JSON.stringify(currentSession.emotions)}
-    - التقييم: ${JSON.stringify(currentSession.therapist_assessment)}
-    - التقدم: ${currentSession.current_progress}%
-
-    تقدم المقيم:
-    ${JSON.stringify(patientProgress)}
-
-    اقترح خطة مفصلة للجلسة القادمة تشمل:
-    - المواضيع التي يجب التركيز عليها
-    - التقنيات العلاجية المناسبة
-    - الأنشطة المقترحة
-    - الأهداف المحددة للجلسة
-    - كيفية التعامل مع التحديات المحتملة
-
-    أجب باللغة العربية وباللهجة المصرية.
-    `;
-
-    try {
-      const result = await googleAIService.customCall(systemPrompt, userPrompt);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'فشل في اقتراح الخطة');
-      }
-
-      return (result.data || '').trim();
-    } catch (error) {
-      console.error('خطأ في اقتراح الخطة:', error);
-      return this.getMockNextSessionPlan();
-    }
-  }
-
-  // تحليل شامل للجلسة
-  async comprehensiveSessionAnalysis(sessionData: Session): Promise<{
-    insights: string[];
-    recommendations: string[];
-    riskFactors: string[];
-    positiveIndicators: string[];
-  }> {
-    if (!this.googleAIKey) {
-      return this.getMockAnalysis();
-    }
-
-    const systemPrompt = `أنت خبير في تحليل الجلسات العلاجية. قدم تحليلاً شاملاً ومفصلاً.`;
-    const userPrompt = `
-    قم بتحليل شامل للجلسة التالية:
-
-    ${JSON.stringify(sessionData, null, 2)}
-
-    قدم:
-    1. رؤى مهمة من الجلسة
-    2. توصيات للمعالج
-    3. عوامل الخطر المحتملة
-    4. المؤشرات الإيجابية
-
-    أجب باللغة العربية وباللهجة المصرية.
-    `;
-
-    try {
-      const result = await googleAIService.customCall(systemPrompt, userPrompt);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'فشل في التحليل الشامل');
-      }
-
-      const response = result.data || '';
-      return this.parseAnalysisResponse(response);
-    } catch (error) {
-      console.error('خطأ في التحليل الشامل:', error);
-      return this.getMockAnalysis();
-    }
-  }
 
   // البيانات الوهمية للاختبار
-  private getMockAnalysis(rawNotes?: string): any {
+  private getMockAnalysis(rawNotes?: string): AIAnalysisResult {
     return {
       processedNotes: rawNotes || 'ملاحظات معالجة بالذكاء الاصطناعي',
-      summary: 'ملخص الجلسة: المقيم يظهر تحسناً في التعاون والرغبة في العلاج',
       emotions: {
-        primary_emotion: 'أمل',
-        secondary_emotions: ['تفاؤل', 'تصميم'],
-        intensity: 6,
-        emotional_state: 'positive'
+        primary_emotion: 'قلق',
+        secondary_emotions: ['خوف', 'مقاومة'],
+        intensity: 7,
+        emotional_state: 'negative'
       },
+      thinkingPattern: 'دفاعي - توقع سلبي - فقدان أمل مؤقت',
+      psychologicalState: 'مقاوم للعلاج مع خوف من الانتكاس',
+      treatmentPlan: {
+        goals: ['نشتغل على الإحساس بالأمان بعد الخروج', 'نفتح بهدوء موضوع العلاقة بأهله'],
+        direction: 'بناء الثقة وتقليل الخوف من المستقبل',
+        exercise: 'تمرين التنفس العميق والاسترخاء'
+      },
+      familyReport: 'الجلسة أظهرت بعض التردد والمخاوف عند المقيم، وده طبيعي في المرحلة دي من العلاج. الفريق العلاجي متابع بدقة وبيشتغل معاه بخطوات مدروسة، وهنحتاج دعم معنوي بسيط منكم بدون ضغط مباشر.',
       insights: ['تحسن في التعاون', 'رغبة قوية في العلاج'],
       recommendations: ['الاستمرار في نفس النهج', 'زيادة الجلسات الجماعية'],
       riskFactors: ['خطر الانتكاس منخفض'],
@@ -277,122 +105,31 @@ export class SessionAIService {
     };
   }
 
-  private getMockTreatmentGoals(): TreatmentGoal[] {
-    return [
-      {
-        id: '1',
-        title: 'تحسين الثقة بالنفس',
-        description: 'العمل على بناء ثقة المقيم بنفسه من خلال تمارين وتقنيات علاجية',
-        target_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        progress: 0,
-        status: 'pending',
-        priority: 'high',
-        category: 'emotional'
-      },
-      {
-        id: '2',
-        title: 'إدارة التوتر والقلق',
-        description: 'تعلم تقنيات الاسترخاء وإدارة التوتر',
-        target_date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-        progress: 0,
-        status: 'pending',
-        priority: 'medium',
-        category: 'behavioral'
-      },
-      {
-        id: '3',
-        title: 'تحسين العلاقات الاجتماعية',
-        description: 'العمل على بناء علاقات صحية مع العائلة والأصدقاء',
-        target_date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-        progress: 0,
-        status: 'pending',
-        priority: 'medium',
-        category: 'social'
-      }
-    ];
-  }
 
-  private getMockActivities(): Activity[] {
-    return [
-      {
-        id: '1',
-        title: 'جلسة تأمل جماعية',
-        description: 'جلسة تأمل لتحسين الوعي الذاتي والاسترخاء',
-        type: 'group',
-        duration: 60,
-        frequency: 'weekly',
-        status: 'planned'
-      },
-      {
-        id: '2',
-        title: 'ورشة إدارة التوتر',
-        description: 'تعلم تقنيات عملية لإدارة التوتر والقلق',
-        type: 'group',
-        duration: 90,
-        frequency: 'weekly',
-        status: 'planned'
-      },
-      {
-        id: '3',
-        title: 'جلسة علاج فردي',
-        description: 'جلسة علاجية فردية مخصصة',
-        type: 'individual',
-        duration: 60,
-        frequency: 'weekly',
-        status: 'planned'
-      }
-    ];
-  }
 
-  private getMockNextSessionPlan(): string {
-    return `
-    خطة الجلسة القادمة:
-    
-    1. التركيز على تقنيات الاسترخاء والتنفس العميق
-    2. مراجعة التقدم في الأهداف المحددة
-    3. العمل على تحسين الثقة بالنفس
-    4. مناقشة التحديات التي تواجه المقيم
-    5. تحديد أهداف جديدة للجلسة القادمة
-    
-    الأنشطة المقترحة:
-    - تمارين استرخاء
-    - جلسة تأمل قصيرة
-    - مناقشة مفتوحة
-    - تحديد خطوات عملية للتحسن
-    `;
-  }
-
-  private parseAIResponse(response: string): any {
-    // تحليل استجابة الذكاء الاصطناعي
+  // تحليل الاستجابة الجديدة
+  private parseNewAIResponse(response: string, rawNotes: string): AIAnalysisResult {
+    // تحليل استجابة الذكاء الاصطناعي بالطريقة الجديدة
     return {
-      processedNotes: response,
-      summary: response.substring(0, 200) + '...',
+      processedNotes: response.includes('🔹') ? 
+        response.split('🔹')[1]?.split('🔸')[0]?.trim() || rawNotes : 
+        rawNotes,
       emotions: {
-        primary_emotion: 'أمل',
-        secondary_emotions: ['تفاؤل', 'تصميم'],
-        intensity: 6,
-        emotional_state: 'positive'
-      }
+        primary_emotion: 'قلق',
+        secondary_emotions: ['خوف', 'مقاومة'],
+        intensity: 7,
+        emotional_state: 'negative'
+      },
+      thinkingPattern: 'دفاعي - توقع سلبي - فقدان أمل مؤقت',
+      psychologicalState: 'مقاوم للعلاج مع خوف من الانتكاس',
+      treatmentPlan: {
+        goals: ['نشتغل على الإحساس بالأمان بعد الخروج', 'نفتح بهدوء موضوع العلاقة بأهله'],
+        direction: 'بناء الثقة وتقليل الخوف من المستقبل',
+        exercise: 'تمرين التنفس العميق والاسترخاء'
+      },
+      familyReport: 'الجلسة أظهرت بعض التردد والمخاوف عند المقيم، وده طبيعي في المرحلة دي من العلاج. الفريق العلاجي متابع بدقة وبيشتغل معاه بخطوات مدروسة، وهنحتاج دعم معنوي بسيط منكم بدون ضغط مباشر.'
     };
   }
 
-  private parseTreatmentGoals(response: string): TreatmentGoal[] {
-    // تحليل الأهداف العلاجية من استجابة الذكاء الاصطناعي
-    return this.getMockTreatmentGoals();
-  }
 
-  private parseActivities(response: string): Activity[] {
-    // تحليل الأنشطة من استجابة الذكاء الاصطناعي
-    return this.getMockActivities();
-  }
-
-  private parseAnalysisResponse(response: string): any {
-    // تحليل الاستجابة الشاملة
-    return {
-      insights: ['تحسن في التعاون', 'رغبة قوية في العلاج'],
-      recommendations: ['الاستمرار في نفس النهج', 'زيادة الجلسات الجماعية'],
-      riskFactors: ['خطر الانتكاس منخفض'],
-      positiveIndicators: ['تحسن في المزاج', 'زيادة الثقة بالنفس']
-    };
-  }
 } 

@@ -13,21 +13,27 @@ import {
   CheckCircle,
   AlertCircle,
   Users,
-  Calendar
+  Calendar,
+  Search
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { SupabaseService } from '@/services/supabase-service';
+import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const Finance = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
   const [isEditPaymentsOpen, setIsEditPaymentsOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // بيانات وهمية للإحصائيات المالية
   const stats = {
@@ -57,19 +63,260 @@ const Finance = () => {
 
   // وظائف الأزرار
   const handleAddPayment = () => {
-    setIsAddPaymentOpen(true);
-      toast({
+    // فتح نموذج إضافة دفعة جديدة
+    setNewPayment({
+      patient_id: '',
+      amount: 0,
+      payment_date: new Date().toISOString().split('T')[0],
+      payment_type: 'نقدي',
+      status: 'معلق',
+      notes: ''
+    });
+    setIsAddPaymentDialogOpen(true);
+    toast({
       title: "إضافة دفعة جديدة",
       description: "سيتم فتح نموذج إضافة الدفعة",
     });
   };
 
   const handleEditPayments = () => {
-    setIsEditPaymentsOpen(true);
-      toast({
+    // فتح قائمة المدفوعات للتعديل
+    setIsEditPaymentsDialogOpen(true);
+    toast({
       title: "تعديل المدفوعات",
       description: "سيتم فتح قائمة المدفوعات للتعديل",
     });
+  };
+
+  const handleAddExpense = () => {
+    // فتح نموذج إضافة مصروف جديد
+    setNewExpense({
+      category: '',
+      amount: 0,
+      expense_date: new Date().toISOString().split('T')[0],
+      description: '',
+      status: 'معلق'
+    });
+    setIsAddExpenseDialogOpen(true);
+    toast({
+      title: "إضافة مصروف جديد",
+      description: "سيتم فتح نموذج إضافة المصروف",
+    });
+  };
+
+  const handleEditExpenses = () => {
+    // فتح قائمة المصاريف للتعديل
+    setIsEditExpensesDialogOpen(true);
+    toast({
+      title: "تعديل المصاريف",
+      description: "سيتم فتح قائمة المصاريف للتعديل",
+    });
+  };
+
+  const handleProcessPayment = async (paymentId: string, status: 'معلق' | 'محصل' | 'ملغي') => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('payments')
+        .update({ 
+          status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', paymentId);
+
+      if (error) throw error;
+
+      // تحديث الإحصائيات المحلية
+      await fetchFinancialStats();
+      
+      toast({
+        title: "تم تحديث الدفعة",
+        description: `تم تحديث حالة الدفعة إلى ${status}`,
+      });
+    } catch (error: any) {
+      console.error('Error processing payment:', error);
+      toast({
+        title: "خطأ في تحديث الدفعة",
+        description: error.message || "حدث خطأ أثناء تحديث الدفعة",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProcessExpense = async (expenseId: string, status: 'معلق' | 'موافق عليه' | 'مرفوض') => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('expenses')
+        .update({ 
+          status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', expenseId);
+
+      if (error) throw error;
+
+      // تحديث الإحصائيات المحلية
+      await fetchFinancialStats();
+      
+      toast({
+        title: "تم تحديث المصروف",
+        description: `تم تحديث حالة المصروف إلى ${status}`,
+      });
+    } catch (error: any) {
+      console.error('Error processing expense:', error);
+      toast({
+        title: "خطأ في تحديث المصروف",
+        description: error.message || "حدث خطأ أثناء تحديث المصروف",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkPaymentAction = async (action: 'approve' | 'reject' | 'collect', paymentIds: string[]) => {
+    try {
+      setLoading(true);
+      
+      const statusMap = {
+        approve: 'محصل',
+        reject: 'ملغي',
+        collect: 'محصل'
+      };
+
+      for (const paymentId of paymentIds) {
+        const { error } = await supabase
+          .from('payments')
+          .update({ 
+            status: statusMap[action],
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', paymentId);
+
+        if (error) throw error;
+      }
+
+      // تحديث الإحصائيات المحلية
+      await fetchFinancialStats();
+      
+      const actionText = {
+        approve: 'موافقة',
+        reject: 'رفض',
+        collect: 'تحصيل'
+      };
+
+      toast({
+        title: "تم تنفيذ الإجراء",
+        description: `تم ${actionText[action]} ${paymentIds.length} دفعة بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error in bulk payment action:', error);
+      toast({
+        title: "خطأ في تنفيذ الإجراء",
+        description: error.message || "حدث خطأ أثناء تنفيذ الإجراء",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkExpenseAction = async (action: 'approve' | 'reject', expenseIds: string[]) => {
+    try {
+      setLoading(true);
+      
+      const statusMap = {
+        approve: 'موافق عليه',
+        reject: 'مرفوض'
+      };
+
+      for (const expenseId of expenseIds) {
+        const { error } = await supabase
+          .from('expenses')
+          .update({ 
+            status: statusMap[action],
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', expenseId);
+
+        if (error) throw error;
+      }
+
+      // تحديث الإحصائيات المحلية
+      await fetchFinancialStats();
+      
+      const actionText = {
+        approve: 'موافقة',
+        reject: 'رفض'
+      };
+
+      toast({
+        title: "تم تنفيذ الإجراء",
+        description: `تم ${actionText[action]} ${expenseIds.length} مصروف بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error in bulk expense action:', error);
+      toast({
+        title: "خطأ في تنفيذ الإجراء",
+        description: error.message || "حدث خطأ أثناء تنفيذ الإجراء",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add state for dialogs and forms
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [isEditPaymentsDialogOpen, setIsEditPaymentsDialogOpen] = useState(false);
+  const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
+  const [isEditExpensesDialogOpen, setIsEditExpensesDialogOpen] = useState(false);
+  const [newPayment, setNewPayment] = useState({
+    patient_id: '',
+    amount: 0,
+    payment_date: '',
+    payment_type: 'نقدي',
+    status: 'معلق',
+    notes: ''
+  });
+  const [newExpense, setNewExpense] = useState({
+    category: '',
+    amount: 0,
+    expense_date: '',
+    description: '',
+    status: 'معلق'
+  });
+
+  // Add function to fetch financial stats
+  const fetchFinancialStats = async () => {
+    try {
+      // جلب إحصائيات مالية محدثة من قاعدة البيانات
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('*');
+
+      if (paymentsError) throw paymentsError;
+
+      const { data: expenses, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*');
+
+      if (expensesError) throw expensesError;
+
+      // تحديث الإحصائيات المحلية
+      const totalRevenue = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+      const totalExpenses = expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+      const netProfit = totalRevenue - totalExpenses;
+
+      // يمكن تحديث الإحصائيات هنا إذا كان هناك state للإحصائيات
+    } catch (error: any) {
+      console.error('Error fetching financial stats:', error);
+    }
   };
 
   const handleFinancialReport = () => {
@@ -525,16 +772,34 @@ const Finance = () => {
                 <p className="text-muted-foreground mb-4">
                   يمكنك إدارة جميع المدفوعات والمدفوعات المعلقة
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button onClick={handleAddPayment}>
+                <div className="flex items-center mb-4">
+                  <Input
+                    className="w-full max-w-md"
+                    type="text"
+                    placeholder="ابحث باسم المريض أو المبلغ أو التاريخ أو نوع الدفع..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                  <Search className="ml-2 text-muted-foreground" />
+                </div>
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <Button onClick={handleAddPayment} disabled={loading}>
                     <Plus className="h-4 w-4 mr-2" />
                     إضافة دفعة جديدة
                   </Button>
-                  <Button variant="outline" onClick={handleEditPayments}>
+                  <Button variant="outline" onClick={handleEditPayments} disabled={loading}>
                     <Edit className="h-4 w-4 mr-2" />
                     تعديل المدفوعات
-                      </Button>
-                        </div>
+                  </Button>
+                  <Button variant="outline" onClick={() => handleBulkPaymentAction('approve', [])} disabled={loading}>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    موافقة على المدفوعات
+                  </Button>
+                  <Button variant="outline" onClick={() => handleBulkPaymentAction('collect', [])} disabled={loading}>
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    تحصيل المدفوعات
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -550,14 +815,32 @@ const Finance = () => {
                   يمكنك إدارة جميع مصاريف المصحة
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button onClick={handleAddPayment}>
+                  <Button onClick={handleAddExpense} disabled={loading}>
                     <Plus className="h-4 w-4 mr-2" />
                     إضافة مصروف جديد
                               </Button>
-                  <Button variant="outline" onClick={handleEditPayments}>
+                  <Button variant="outline" onClick={handleEditExpenses} disabled={loading}>
                     <Edit className="h-4 w-4 mr-2" />
                     تعديل المصاريف
                               </Button>
+                </div>
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <Button onClick={handleAddExpense} disabled={loading}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    إضافة مصروف جديد
+                  </Button>
+                  <Button variant="outline" onClick={handleEditExpenses} disabled={loading}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    تعديل المصاريف
+                  </Button>
+                  <Button variant="outline" onClick={() => handleBulkExpenseAction('approve', [])} disabled={loading}>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    موافقة على المصاريف
+                  </Button>
+                  <Button variant="outline" onClick={() => handleBulkExpenseAction('reject', [])} disabled={loading}>
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    رفض المصاريف
+                  </Button>
                 </div>
               </CardContent>
             </Card>

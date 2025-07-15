@@ -1,4 +1,4 @@
-import { User, Calendar, FileText, BarChart3, Brain, Users, Menu, X, Settings, DollarSign, Zap, Building } from "lucide-react";
+import { User, Calendar, FileText, BarChart3, Brain, Users, Menu, X, Settings, DollarSign, Zap, Building, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -21,12 +21,14 @@ const Navbar = () => {
   }, []);
 
   const navItems = [
+    { to: "/dashboard", icon: BarChart3, label: "لوحة التحكم" },
     { to: "/", icon: BarChart3, label: "الرئيسية" },
     { to: "/patients", icon: User, label: "العيانين" },
     { to: "/sessions", icon: Calendar, label: "الجلسات" },
     { to: "/advanced-sessions", icon: Brain, label: "الجلسات بالذكاء الاصطناعي" },
     { to: "/ai-treatment", icon: Brain, label: "ذكاء صناعي" },
     { to: "/reports", icon: FileText, label: "تقارير" },
+    { to: "/user-guide", icon: BookOpen, label: "دليل المستخدم" },
   ];
 
   // أضف رابط إدارة المرافق الموحد إذا كان المستخدم مدير أو محاسب
@@ -43,11 +45,6 @@ const Navbar = () => {
   // أضف رابط الغرف إذا كان المستخدم مدير أو محاسب
   if (userRole === 'admin' || userRole === 'accountant') {
     navItems.push({ to: "/rooms", icon: Building, label: "الغرف والأسرّة" });
-  }
-
-  // أضف رابط لوحة التحكم إذا كان المستخدم مدير أو مشرف
-  if (userRole === 'admin' || userRole === 'supervisor') {
-    navItems.push({ to: "/admin", icon: Settings, label: "لوحة التحكم" });
   }
 
   return (
@@ -69,17 +66,27 @@ const Navbar = () => {
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-4 rtl:space-x-reverse">
-            {navItems.map((item) => (
-              <Link key={item.to} to={item.to}>
-                <Button 
-                  variant={location.pathname === item.to ? 'default' : 'ghost'} 
-                  className="flex items-center space-x-2 rtl:space-x-reverse"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Button>
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.to;
+              return (
+                <Link key={item.to} to={item.to}>
+                  <Button 
+                    variant={isActive ? 'default' : 'ghost'} 
+                    className={`flex items-center space-x-2 rtl:space-x-reverse transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-primary text-primary-foreground shadow-md' 
+                        : 'hover:bg-accent hover:text-accent-foreground'
+                    }`}
+                  >
+                    <item.icon className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : ''}`} />
+                    <span className="font-medium">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-foreground rounded-full" />
+                    )}
+                  </Button>
+                </Link>
+              );
+            })}
           </div>
 
           {/* User Profile */}
@@ -115,23 +122,30 @@ const Navbar = () => {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card">
+          <div className="md:hidden border-t border-border bg-card shadow-lg">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Button
-                    variant={location.pathname === item.to ? 'default' : 'ghost'}
-                    className="w-full justify-start flex items-center space-x-2 rtl:space-x-reverse"
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
-                </Link>
-              ))}
+                    <Button
+                      variant={isActive ? 'default' : 'ghost'}
+                      className={`w-full justify-start flex items-center space-x-2 rtl:space-x-reverse transition-all duration-200 ${
+                        isActive 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                    >
+                      <item.icon className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : ''}`} />
+                      <span className="font-medium">{item.label}</span>
+                    </Button>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

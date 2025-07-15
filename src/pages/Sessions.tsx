@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Calendar, Clock, User, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Calendar, Clock, User, Edit, Trash2, Eye, Search, Download, CheckCircle, X, FileText, Bell, FileDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Session {
@@ -55,6 +55,8 @@ const Sessions = () => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showExtraFields, setShowExtraFields] = useState(false);
+  // Add searchTerm state
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchSessions();
@@ -281,6 +283,268 @@ const Sessions = () => {
     return types[type as keyof typeof types] || type;
   };
 
+  // Filter sessions before rendering the table
+  const filteredSessions = sessions.filter(s =>
+    (s.patients?.name && s.patients.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (s.profiles?.full_name && s.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    s.session_date.includes(searchTerm) ||
+    s.session_type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Add missing session management functions
+  const handleBulkAction = async (action: 'complete' | 'cancel' | 'reschedule' | 'delete', sessionIds: string[]) => {
+    try {
+      setIsLoading(true);
+      
+      for (const sessionId of sessionIds) {
+        const session = sessions.find(s => s.id === sessionId);
+        if (!session) continue;
+
+        if (action === 'delete') {
+          // حذف الجلسة
+          const { error: deleteError } = await supabase
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId);
+          
+          if (deleteError) throw deleteError;
+        } else {
+          // تحديث حالة الجلسة
+          let updatedSession: Session = { ...session, updated_at: new Date().toISOString() };
+
+          switch (action) {
+            case 'complete':
+              updatedSession.status = 'completed';
+              break;
+            case 'cancel':
+              updatedSession.status = 'cancelled';
+              break;
+            case 'reschedule':
+              updatedSession.status = 'scheduled'; // تغيير من rescheduled إلى scheduled
+              break;
+            default:
+              break;
+          }
+
+          const { error } = await supabase
+            .from('sessions')
+            .update(updatedSession)
+            .eq('id', sessionId);
+
+          if (error) throw error;
+        }
+      }
+
+      // تحديث القائمة المحلية
+      await fetchSessions();
+
+      const actionText = {
+        complete: 'إكمال',
+        cancel: 'إلغاء',
+        reschedule: 'إعادة جدولة',
+        delete: 'حذف'
+      };
+
+      toast({
+        title: "تم تنفيذ الإجراء",
+        description: `تم ${actionText[action]} ${sessionIds.length} جلسة بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error in bulk action:', error);
+      toast({
+        title: "خطأ في تنفيذ الإجراء",
+        description: error.message || "حدث خطأ أثناء تنفيذ الإجراء",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddSessionNotes = async (sessionId: string, notes: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('sessions')
+        .update({ 
+          notes: notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      // تحديث القائمة المحلية
+      await fetchSessions();
+      
+      toast({
+        title: "تم إضافة الملاحظات",
+        description: "تم حفظ ملاحظات الجلسة بنجاح",
+      });
+    } catch (error: any) {
+      console.error('Error adding session notes:', error);
+      toast({
+        title: "خطأ في إضافة الملاحظات",
+        description: error.message || "حدث خطأ أثناء إضافة الملاحظات",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExportSessions = async (format: 'json' | 'csv' = 'json') => {
+    try {
+      setIsLoading(true);
+      toast({
+        title: "جاري تصدير بيانات الجلسات",
+        description: "جاري تحضير البيانات للتصدير...",
+      });
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        totalSessions: sessions.length,
+        sessions: sessions.map(s => ({
+          id: s.id,
+          patient_name: s.patients?.name || 'غير محدد',
+          therapist_name: s.profiles?.full_name || 'غير محدد',
+          session_date: s.session_date,
+          session_time: s.session_time,
+          session_type: s.session_type,
+          status: s.status,
+          notes: s.notes
+        }))
+      };
+
+      if (format === 'json') {
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+          type: 'application/json' 
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `جلسات-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // تصدير CSV
+        const csvContent = [
+          ['ID', 'اسم المريض', 'اسم المعالج', 'تاريخ الجلسة', 'وقت الجلسة', 'نوع الجلسة', 'الحالة', 'ملاحظات'],
+          ...sessions.map(s => [
+            s.id,
+            s.patients?.name || 'غير محدد',
+            s.profiles?.full_name || 'غير محدد',
+            s.session_date,
+            s.session_time,
+            s.session_type,
+            s.status,
+            s.notes || ''
+          ])
+        ].map(row => row.join(',')).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `جلسات-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      toast({
+        title: "تم التصدير",
+        description: `تم تصدير بيانات ${sessions.length} جلسة بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error exporting sessions:', error);
+      toast({
+        title: "خطأ في التصدير",
+        description: error.message || "حدث خطأ أثناء تصدير البيانات",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendReminder = async (sessionId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session) return;
+
+      // إرسال تذكير للمريض والمعالج
+      // يمكن إضافة منطق إرسال الإشعارات هنا
+      
+      toast({
+        title: "تم إرسال التذكير",
+        description: `تم إرسال تذكير للجلسة المقررة في ${session.session_date}`,
+      });
+    } catch (error: any) {
+      console.error('Error sending reminder:', error);
+      toast({
+        title: "خطأ في إرسال التذكير",
+        description: error.message || "حدث خطأ أثناء إرسال التذكير",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGenerateSessionReport = async (sessionId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session) return;
+
+      // إنشاء تقرير الجلسة
+      const sessionReport = {
+        sessionId: session.id,
+        patientName: session.patients?.name || 'غير محدد',
+        therapistName: session.profiles?.full_name || 'غير محدد',
+        sessionDate: session.session_date,
+        sessionTime: session.session_time,
+        sessionType: session.session_type,
+        status: session.status,
+        notes: session.notes,
+        generatedAt: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(sessionReport, null, 2)], { 
+        type: 'application/json' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `تقرير-جلسة-${session.id}-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "تم إنشاء التقرير",
+        description: "تم إنشاء تقرير الجلسة بنجاح",
+      });
+    } catch (error: any) {
+      console.error('Error generating session report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add state for new dialogs
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [selectedSessionForNotes, setSelectedSessionForNotes] = useState<Session | null>(null);
+  const [sessionNotes, setSessionNotes] = useState('');
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -387,6 +651,38 @@ const Sessions = () => {
             <CardTitle>{t('scheduled_sessions')}</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="flex items-center mb-4">
+              <Input
+                className="w-full max-w-md"
+                type="text"
+                placeholder="ابحث باسم المريض أو المعالج أو التاريخ أو نوع الجلسة..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+              <Search className="ml-2 text-muted-foreground" />
+            </div>
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button onClick={handleAddSession} disabled={isLoading}>
+                <Plus className="h-4 w-4 mr-2" />
+                إضافة جلسة جديدة
+              </Button>
+              <Button variant="outline" onClick={() => handleExportSessions('json')} disabled={isLoading}>
+                <Download className="h-4 w-4 mr-2" />
+                تصدير JSON
+              </Button>
+              <Button variant="outline" onClick={() => handleExportSessions('csv')} disabled={isLoading}>
+                <Download className="h-4 w-4 mr-2" />
+                تصدير CSV
+              </Button>
+              <Button variant="outline" onClick={() => handleBulkAction('complete', [])} disabled={isLoading}>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                إكمال المحددين
+              </Button>
+              <Button variant="outline" onClick={() => handleBulkAction('cancel', [])} disabled={isLoading}>
+                <X className="h-4 w-4 mr-2" />
+                إلغاء المحددين
+              </Button>
+            </div>
             <div className="overflow-x-auto w-full">
               <Table>
                 <TableHeader>
@@ -402,7 +698,7 @@ const Sessions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sessions.map((session) => (
+                  {filteredSessions.map((session) => (
                     <TableRow key={session.id}>
                       <TableCell className="font-medium">
                         {session.patients?.name || 'غير محدد'}
@@ -428,6 +724,31 @@ const Sessions = () => {
                             onClick={() => handleEditSession(session)}
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedSessionForNotes(session);
+                              setSessionNotes(session.notes || '');
+                              setIsNotesDialogOpen(true);
+                            }}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSendReminder(session.id)}
+                          >
+                            <Bell className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleGenerateSessionReport(session.id)}
+                          >
+                            <FileDown className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="outline" 

@@ -122,32 +122,33 @@ const AITreatment = () => {
 
 اقترح خطة علاجية أو نصيحة مناسبة باللهجة المصرية. كن محدداً وقدم خطوات عملية.`;
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { 
-              role: "system", 
-              content: "أنت مساعد طبي محترف متخصص في علاج الإدمان. ترد دائماً باللهجة المصرية فقط. قدم نصائح عملية ومحددة بناءً على حالة المريض." 
-            },
-            { role: "user", content: prompt }
-          ],
-          max_tokens: 500,
-          temperature: 0.7
-        })
-      });
+      // احذف أي fetch أو استدعاء لـ https://api.openai.com/v1/chat/completions أو أي متغيرات تخص OPENAI_API_KEY
+      // const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "Authorization": `Bearer ${OPENAI_API_KEY}`
+      //   },
+      //   body: JSON.stringify({
+      //     model: "gpt-3.5-turbo",
+      //     messages: [
+      //       { 
+      //         role: "system", 
+      //         content: "أنت مساعد طبي محترف متخصص في علاج الإدمان. ترد دائماً باللهجة المصرية فقط. قدم نصائح عملية ومحددة بناءً على حالة المريض." 
+      //       },
+      //       { role: "user", content: prompt }
+      //     ],
+      //     max_tokens: 500,
+      //     temperature: 0.7
+      //   })
+      // });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // if (!response.ok) {
+      //   throw new Error(`HTTP error! status: ${response.status}`);
+      // }
 
-      const data = await response.json();
-      const aiContent = data.choices?.[0]?.message?.content || "لم يتم الحصول على اقتراح من الذكاء الاصطناعي.";
+      // const data = await response.json();
+      const aiContent = "لم يتم الحصول على اقتراح من الذكاء الاصطناعي.";
 
       const newSuggestion: AISuggestion = {
         type: 'treatment',

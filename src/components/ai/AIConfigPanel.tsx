@@ -34,9 +34,7 @@ interface AIConfig {
 }
 
 const AI_CONFIG_MODELS = [
-  { value: 'gpt-4', label: 'GPT-4 (الأكثر تطوراً)', description: 'أفضل جودة ولكن أغلى' },
-  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (متوازن)', description: 'جودة جيدة وسعر معقول' },
-  { value: 'gpt-3.5-turbo-16k', label: 'GPT-3.5 Turbo 16K', description: 'نفس الجودة مع سياق أطول' }
+  // تم حذف نماذج OpenAI
 ];
 
 const AIConfigPanel = () => {
@@ -208,7 +206,7 @@ const AIConfigPanel = () => {
                 </Button>
               </div>
               <p className="text-xs text-gray-500">
-                احصل على المفتاح من <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">platform.openai.com</a>
+                احذف كل ما يتعلق بـ OpenAI من لوحة إعدادات الذكاء الاصطناعي (AIConfigPanel).
               </p>
             </div>
 

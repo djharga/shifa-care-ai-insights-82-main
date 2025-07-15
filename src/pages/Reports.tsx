@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
-import { Download, TrendingUp, Users, Calendar, AlertCircle } from 'lucide-react';
+import { Download, TrendingUp, Users, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -229,45 +229,297 @@ const Reports = () => {
     }));
   };
 
-  const exportReport = async () => {
+  // Add comprehensive report functions
+  const generatePatientReport = async () => {
     try {
+      setLoading(true);
       toast({
-        title: t("exporting_report"),
-        description: t("report_will_be_downloaded_soon"),
+        title: "جاري إنشاء تقرير المرضى",
+        description: "جاري جمع بيانات المرضى...",
       });
 
+      const { data: patients, error } = await supabase
+        .from('patients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
       const reportData = {
-        stats,
-        monthly_data: monthlyData,
-        addiction_types: addictionTypes,
-        age_groups: ageGroups,
-        timeframe,
-        generated_at: new Date().toISOString()
+        reportType: 'patient_report',
+        generatedAt: new Date().toISOString(),
+        totalPatients: patients?.length || 0,
+        patients: patients,
+        stats: {
+          activePatients: patients?.filter(p => p.status === 'active').length || 0,
+          completedPatients: patients?.filter(p => p.status === 'completed').length || 0,
+          pausedPatients: patients?.filter(p => p.status === 'paused').length || 0,
+          droppedOutPatients: patients?.filter(p => p.status === 'dropped_out').length || 0
+        }
       };
 
-      const { error } = await supabase
+      // حفظ التقرير في قاعدة البيانات
+      const { error: saveError } = await supabase
         .from('reports')
         .insert([{
-          type: 'comprehensive_report',
+          type: 'patient_report',
           data: reportData,
           created_at: new Date().toISOString()
         }]);
 
+      if (saveError) throw saveError;
+
+      toast({
+        title: "تم إنشاء التقرير",
+        description: "تم إنشاء تقرير المرضى بنجاح",
+      });
+
+      return reportData;
+    } catch (error: any) {
+      console.error('Error generating patient report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSessionReport = async () => {
+    try {
+      setLoading(true);
+      toast({
+        title: "جاري إنشاء تقرير الجلسات",
+        description: "جاري جمع بيانات الجلسات...",
+      });
+
+      const { data: sessions, error } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          patients(name),
+          profiles(full_name)
+        `)
+        .order('session_date', { ascending: false });
+
       if (error) throw error;
 
-      setTimeout(() => {
-        toast({
-          title: "تم تصدير التقرير",
-          description: "تم حفظ التقرير بنجاح",
-        });
-      }, 2000);
+      const reportData = {
+        reportType: 'session_report',
+        generatedAt: new Date().toISOString(),
+        totalSessions: sessions?.length || 0,
+        sessions: sessions,
+        stats: {
+          scheduledSessions: sessions?.filter(s => s.status === 'scheduled').length || 0,
+          completedSessions: sessions?.filter(s => s.status === 'completed').length || 0,
+          cancelledSessions: sessions?.filter(s => s.status === 'cancelled').length || 0,
+          noShowSessions: sessions?.filter(s => s.status === 'no_show').length || 0
+        }
+      };
+
+      // حفظ التقرير في قاعدة البيانات
+      const { error: saveError } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'session_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (saveError) throw saveError;
+
+      toast({
+        title: "تم إنشاء التقرير",
+        description: "تم إنشاء تقرير الجلسات بنجاح",
+      });
+
+      return reportData;
+    } catch (error: any) {
+      console.error('Error generating session report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateFinancialReport = async () => {
+    try {
+      setLoading(true);
+      toast({
+        title: "جاري إنشاء التقرير المالي",
+        description: "جاري جمع البيانات المالية...",
+      });
+
+      // جلب بيانات المدفوعات
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('*')
+        .order('payment_date', { ascending: false });
+
+      if (paymentsError) throw paymentsError;
+
+      // جلب بيانات المصاريف
+      const { data: expenses, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('expense_date', { ascending: false });
+
+      if (expensesError) throw expensesError;
+
+      const totalRevenue = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+      const totalExpenses = expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+      const netProfit = totalRevenue - totalExpenses;
+
+      const reportData = {
+        reportType: 'financial_report',
+        generatedAt: new Date().toISOString(),
+        summary: {
+          totalRevenue,
+          totalExpenses,
+          netProfit,
+          profitMargin: totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) + '%' : '0%'
+        },
+        payments: payments,
+        expenses: expenses
+      };
+
+      // حفظ التقرير في قاعدة البيانات
+      const { error: saveError } = await supabase
+        .from('reports')
+        .insert([{
+          type: 'financial_report',
+          data: reportData,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (saveError) throw saveError;
+
+      toast({
+        title: "تم إنشاء التقرير",
+        description: "تم إنشاء التقرير المالي بنجاح",
+      });
+
+      return reportData;
+    } catch (error: any) {
+      console.error('Error generating financial report:', error);
+      toast({
+        title: "خطأ في إنشاء التقرير",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Improve the existing exportReport function
+  const exportReport = async (reportType: string = 'comprehensive') => {
+    try {
+      setLoading(true);
+      toast({
+        title: "جاري تصدير التقرير",
+        description: "جاري تحضير التقرير للتصدير...",
+      });
+
+      let reportData: any = {};
+
+      switch (reportType) {
+        case 'patients':
+          reportData = await generatePatientReport();
+          break;
+        case 'sessions':
+          reportData = await generateSessionReport();
+          break;
+        case 'financial':
+          reportData = await generateFinancialReport();
+          break;
+        case 'comprehensive':
+        default:
+          // تقرير شامل
+          const [patientReport, sessionReport, financialReport] = await Promise.all([
+            generatePatientReport(),
+            generateSessionReport(),
+            generateFinancialReport()
+          ]);
+          
+          reportData = {
+            reportType: 'comprehensive_report',
+            generatedAt: new Date().toISOString(),
+            timeframe: timeframe,
+            stats: stats,
+            monthlyData: monthlyData,
+            addictionTypes: addictionTypes,
+            ageGroups: ageGroups,
+            patientReport,
+            sessionReport,
+            financialReport
+          };
+          break;
+      }
+
+      if (!reportData) {
+        throw new Error('فشل في إنشاء التقرير');
+      }
+
+      // تصدير كملف JSON
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], { 
+        type: 'application/json' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `تقرير-${reportType}-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "تم التصدير",
+        description: `تم تصدير التقرير بنجاح`,
+      });
     } catch (error: any) {
       console.error('Error exporting report:', error);
       toast({
-        title: "خطأ في تصدير التقرير",
+        title: "خطأ في التصدير",
         description: error.message || "حدث خطأ أثناء تصدير التقرير",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      toast({
+        title: "جاري تحديث البيانات",
+        description: "جاري تحديث الإحصائيات والرسوم البيانية...",
+      });
+
+      await Promise.all([
+        fetchStats(),
+        fetchChartData()
+      ]);
+
+      toast({
+        title: "تم التحديث",
+        description: "تم تحديث جميع البيانات بنجاح",
+      });
+    } catch (error: any) {
+      console.error('Error refreshing data:', error);
+      toast({
+        title: "خطأ في التحديث",
+        description: error.message || "حدث خطأ أثناء تحديث البيانات",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -293,10 +545,57 @@ const Reports = () => {
               </SelectContent>
             </Select>
 
-            <Button onClick={exportReport} className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Download className="h-4 w-4" />
-              <span>{t('download_report')}</span>
-            </Button>
+            {/* Add buttons section after the timeframe selector */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button 
+                onClick={() => exportReport('comprehensive')} 
+                className="flex items-center space-x-2 rtl:space-x-reverse"
+                disabled={loading}
+              >
+                <Download className="h-4 w-4" />
+                <span>تقرير شامل</span>
+              </Button>
+              
+              <Button 
+                onClick={() => exportReport('patients')} 
+                variant="outline"
+                className="flex items-center space-x-2 rtl:space-x-reverse"
+                disabled={loading}
+              >
+                <Users className="h-4 w-4" />
+                <span>تقرير المرضى</span>
+              </Button>
+              
+              <Button 
+                onClick={() => exportReport('sessions')} 
+                variant="outline"
+                className="flex items-center space-x-2 rtl:space-x-reverse"
+                disabled={loading}
+              >
+                <Calendar className="h-4 w-4" />
+                <span>تقرير الجلسات</span>
+              </Button>
+              
+              <Button 
+                onClick={() => exportReport('financial')} 
+                variant="outline"
+                className="flex items-center space-x-2 rtl:space-x-reverse"
+                disabled={loading}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>تقرير مالي</span>
+              </Button>
+              
+              <Button 
+                onClick={refreshData} 
+                variant="outline"
+                className="flex items-center space-x-2 rtl:space-x-reverse"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <span>تحديث البيانات</span>
+              </Button>
+            </div>
           </div>
         </div>
 

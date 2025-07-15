@@ -11,12 +11,16 @@ import {
   CheckCircle,
   AlertCircle,
   Bed,
-  Home
+  Home,
+  Search,
+  AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { TableBody } from '@/components/ui/table';
 
 interface Room {
   id: string;
@@ -42,6 +46,201 @@ const Rooms = () => {
   const [isManageBookingsOpen, setIsManageBookingsOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
+  // Add searchTerm state
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Add missing room management functions
+  const handleManageBookings = () => {
+    // فتح صفحة إدارة الحجوزات
+    navigate('/room-bookings');
+    toast({
+      title: "إدارة الحجوزات",
+      description: "سيتم فتح صفحة إدارة الحجوزات",
+    });
+  };
+
+  const handleViewRoomDetails = (roomId: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (room) {
+      // فتح نافذة تفاصيل الغرفة
+      setSelectedRoom(room);
+      setIsViewRoomDialogOpen(true);
+    }
+  };
+
+  const handleBookRoom = async (roomId: string) => {
+    try {
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return;
+
+      if (room.status !== 'متاحة') {
+        toast({
+          title: "الغرفة غير متاحة",
+          description: "هذه الغرفة مشغولة حالياً",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // تحديث حالة الغرفة إلى محجوزة
+      const updatedRoom: Room = {
+        ...room,
+        status: 'محجوزة',
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('rooms')
+        .update(updatedRoom)
+        .eq('id', roomId);
+
+      if (error) throw error;
+
+      setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
+      toast({
+        title: "تم حجز الغرفة",
+        description: `تم حجز الغرفة ${room.number} بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error booking room:', error);
+      toast({
+        title: "خطأ في حجز الغرفة",
+        description: error.message || "حدث خطأ أثناء حجز الغرفة",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReleaseRoom = async (roomId: string) => {
+    try {
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return;
+
+      // تحديث حالة الغرفة إلى متاحة
+      const updatedRoom: Room = {
+        ...room,
+        status: 'متاحة',
+        occupied_beds: Math.max(0, room.occupied_beds - 1),
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('rooms')
+        .update(updatedRoom)
+        .eq('id', roomId);
+
+      if (error) throw error;
+
+      setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
+      toast({
+        title: "تم إفراغ الغرفة",
+        description: `تم إفراغ الغرفة ${room.number} بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error releasing room:', error);
+      toast({
+        title: "خطأ في إفراغ الغرفة",
+        description: error.message || "حدث خطأ أثناء إفراغ الغرفة",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMaintenanceRoom = async (roomId: string) => {
+    try {
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return;
+
+      // تحديث حالة الغرفة إلى صيانة
+      const updatedRoom: Room = {
+        ...room,
+        status: 'صيانة',
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('rooms')
+        .update(updatedRoom)
+        .eq('id', roomId);
+
+      if (error) throw error;
+
+      setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
+      toast({
+        title: "تم وضع الغرفة في الصيانة",
+        description: `تم وضع الغرفة ${room.number} في الصيانة`,
+      });
+    } catch (error: any) {
+      console.error('Error setting room to maintenance:', error);
+      toast({
+        title: "خطأ في تحديث حالة الغرفة",
+        description: error.message || "حدث خطأ أثناء تحديث حالة الغرفة",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkAction = async (action: 'maintenance' | 'release' | 'book', roomIds: string[]) => {
+    try {
+      setLoading(true);
+      
+      for (const roomId of roomIds) {
+        const room = rooms.find(r => r.id === roomId);
+        if (!room) continue;
+
+        let updatedRoom: Room = { ...room, updated_at: new Date().toISOString() };
+
+        switch (action) {
+          case 'maintenance':
+            updatedRoom.status = 'صيانة';
+            break;
+          case 'release':
+            updatedRoom.status = 'متاحة';
+            updatedRoom.occupied_beds = 0;
+            break;
+          case 'book':
+            if (room.status === 'متاحة') {
+              updatedRoom.status = 'محجوزة';
+            }
+            break;
+        }
+
+        const { error } = await supabase
+          .from('rooms')
+          .update(updatedRoom)
+          .eq('id', roomId);
+
+        if (error) throw error;
+      }
+
+      // تحديث القائمة المحلية
+      await fetchRooms();
+
+      const actionText = {
+        maintenance: 'صيانة',
+        release: 'إفراغ',
+        book: 'حجز'
+      };
+
+      toast({
+        title: "تم تنفيذ الإجراء",
+        description: `تم ${actionText[action]} ${roomIds.length} غرفة بنجاح`,
+      });
+    } catch (error: any) {
+      console.error('Error in bulk action:', error);
+      toast({
+        title: "خطأ في تنفيذ الإجراء",
+        description: error.message || "حدث خطأ أثناء تنفيذ الإجراء",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add state for room details dialog
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [isViewRoomDialogOpen, setIsViewRoomDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchRooms();
@@ -129,17 +328,9 @@ const Rooms = () => {
 
   const handleEditRooms = () => {
     setIsEditRoomsOpen(true);
-    toast({
+      toast({
       title: "تعديل الغرف",
       description: "سيتم فتح قائمة الغرف للتعديل",
-    });
-  };
-
-  const handleManageBookings = () => {
-    setIsManageBookingsOpen(true);
-    toast({
-      title: "إدارة الحجوزات",
-      description: "سيتم فتح صفحة إدارة الحجوزات",
     });
   };
 
@@ -202,16 +393,6 @@ const Rooms = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleViewRoomDetails = (roomId: string) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (room) {
-      toast({
-        title: "تفاصيل الغرفة",
-        description: `الغرفة ${room.number} - ${room.type} - ${room.status}`,
-      });
     }
   };
 
@@ -297,6 +478,14 @@ const Rooms = () => {
       });
     }
   };
+
+  // Filter rooms before rendering the table
+  const filteredRooms = rooms.filter(r =>
+    r.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.floor.includes(searchTerm)
+  );
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -412,7 +601,7 @@ const Rooms = () => {
                       <div className="flex items-center space-x-2">
                         <AlertCircle className="h-5 w-5 text-yellow-600" />
                         <span>صيانة</span>
-                      </div>
+                        </div>
                       <Badge className="bg-yellow-100 text-yellow-800">{stats.maintenanceRooms} غرفة</Badge>
                         </div>
                   </div>
@@ -491,8 +680,18 @@ const Rooms = () => {
                 <CardTitle>قائمة الغرف</CardTitle>
                   </CardHeader>
                   <CardContent>
+                <div className="flex items-center mb-4">
+  <Input
+    className="w-full max-w-md"
+    type="text"
+    placeholder="ابحث برقم الغرفة أو النوع أو الحالة أو الطابق..."
+    value={searchTerm}
+    onChange={e => setSearchTerm(e.target.value)}
+  />
+  <Search className="ml-2 text-muted-foreground" />
+</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {rooms.map((room) => (
+                  {filteredRooms.map((room) => (
                     <Card key={room.id} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
@@ -527,6 +726,24 @@ const Rooms = () => {
                             <Users className="h-3 w-3 mr-1" />
                             تفاصيل
                         </Button>
+                          {room.status === 'متاحة' && (
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => handleBookRoom(room.id)}>
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              حجز
+                            </Button>
+                          )}
+                          {room.status === 'مشغولة' && (
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => handleReleaseRoom(room.id)}>
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              إفراغ
+                            </Button>
+                          )}
+                          {room.status !== 'صيانة' && (
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => handleMaintenanceRoom(room.id)}>
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              صيانة
+                            </Button>
+                          )}
                     </div>
                   </CardContent>
                 </Card>

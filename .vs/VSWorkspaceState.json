@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\android",
+    "\\supabase"
   ],
+  "SelectedNode": "\\android\\capacitor.settings.gradle",
   "PreviewInSolutionExplorer": false
 }

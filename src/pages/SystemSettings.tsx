@@ -467,71 +467,31 @@ const SystemSettings = () => {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="openaiApiKey">مفتاح OpenAI API</Label>
+                  <Label htmlFor="googleAiApiKey">مفتاح Google AI API</Label>
                   <div className="flex space-x-2">
                     <Input
-                      id="openaiApiKey"
+                      id="googleAiApiKey"
                       type={showApiKeys ? "text" : "password"}
-                      value={settings.openai_api_key}
-                      onChange={(e) => setSettings(prev => ({ ...prev, openai_api_key: e.target.value }))}
-                      placeholder="sk-..."
+                      value={settings.google_ai_api_key}
+                      onChange={(e) => setSettings(prev => ({ ...prev, google_ai_api_key: e.target.value }))}
+                      placeholder="AIza..."
                     />
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowApiKeys(!showApiKeys)}
-                    >
-                      {showApiKeys ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyApiKey(settings.openai_api_key)}
+                      onClick={() => copyApiKey(settings.google_ai_api_key)}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => generateApiKey('openai')}
+                      onClick={() => generateApiKey('google')}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>تفعيل Google AI</Label>
-                    <p className="text-sm text-gray-600">استخدام Google AI كبديل</p>
-                  </div>
-                  <Switch
-                    checked={settings.google_ai_enabled}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, google_ai_enabled: checked }))}
-                  />
-                </div>
-
-                {settings.google_ai_enabled && (
-                  <div>
-                    <Label htmlFor="googleAiApiKey">مفتاح Google AI API</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="googleAiApiKey"
-                        type={showApiKeys ? "text" : "password"}
-                        value={settings.google_ai_api_key}
-                        onChange={(e) => setSettings(prev => ({ ...prev, google_ai_api_key: e.target.value }))}
-                        placeholder="AIza..."
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyApiKey(settings.google_ai_api_key)}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>

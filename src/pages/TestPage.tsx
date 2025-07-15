@@ -165,7 +165,9 @@ const TestPage = () => {
                   <p className="text-foreground mb-4">
                     هذه بطاقة اختبار للتأكد من أن الأنماط الأساسية شغالة
                   </p>
-                  <Button className="w-full">زر تجريبي</Button>
+                  <Button className="w-full" onClick={() => toast({ title: "زر تجريبي", description: "تم الضغط على الزر بنجاح!" })}>
+                    زر تجريبي
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -343,8 +345,8 @@ const TestPage = () => {
                     <Input id="notes" placeholder="أدخل الملاحظات" />
                   </div>
                   <div className="flex space-x-2 space-x-reverse">
-                    <Button>حفظ</Button>
-                    <Button variant="outline">إلغاء</Button>
+                    <Button onClick={() => toast({ title: "حفظ", description: "تم الضغط على زر حفظ!" })}>حفظ</Button>
+                    <Button variant="outline" onClick={() => toast({ title: "إلغاء", description: "تم الضغط على زر إلغاء!" })}>إلغاء</Button>
                   </div>
                 </div>
               </CardContent>
