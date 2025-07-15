@@ -7,6 +7,8 @@
   NODE_VERSION = "22"
   NPM_VERSION = "10"
   NODE_ENV = "production"
+  VITE_SUPABASE_URL = "https://klmonieepqpljusopnga.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsbW9uaWVlcHFwbGp1c29wbmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4MTY3NTgsImV4cCI6MjA2NzM5Mjc1OH0.mG9jmmPP_6Nv3nMrOWEDIjEMqCnf-yt_zgS6nxXwglo"
 
 [[redirects]]
   from = "/*"
