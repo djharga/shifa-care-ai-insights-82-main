@@ -1,100 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { 
   Brain, 
+  CheckCircle, 
+  AlertTriangle, 
+  Loader2, 
+  RefreshCw,
   Wifi,
   WifiOff,
-  RefreshCw,
-  Settings
+  Activity,
+  Zap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { googleAIService } from '@/services/google-ai-service';
 
 interface AIStatus {
-  isConfigured: boolean;
-  isConnected: boolean;
-  lastTest: string | null;
+  isOnline: boolean;
+  responseTime: number;
+  lastCheck: Date;
   errorCount: number;
-  successCount: number;
+  successRate: number;
+  model: string;
+  provider: string;
 }
 
-interface AIStatusIndicatorProps {
-  // Add props if needed
-}
-
-export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
-  const { toast } = useToast();
-  const [isTesting, setIsTesting] = useState(false);
-  const [statusIndicator, setStatusIndicator] = useState<AIStatus>({
-    isConfigured: false,
-    isConnected: false,
-    lastTest: null,
+const AIStatusIndicator = () => {
+  const [status, setStatus] = useState<AIStatus>({
+    isOnline: false,
+    responseTime: 0,
+    lastCheck: new Date(),
     errorCount: 0,
-    successCount: 0
+    successRate: 0,
+    model: 'gemini-1.5-flash',
+    provider: 'Google AI'
   });
+  const [isChecking, setIsChecking] = useState(false);
+  const { toast } = useToast();
 
-  // Mock AI service for demonstration
-  const openAIService = {
-    checkStatus: async () => {
-      // Mock implementation
-      return { status: 'online', responseTime: 150 };
-    },
-    customCall: async () => {
-      // Mock implementation
-      return { success: true, data: 'مرحباً', error: null };
-    }
-  };
-
-  const testAIConnection = async () => {
-    setIsTesting(true);
+  // فحص حالة الذكاء الاصطناعي
+  const checkAIStatus = async () => {
+    setIsChecking(true);
     
     try {
-      const response = await openAIService.customCall();
-
-      if (response.success) {
-        setStatusIndicator(prev => ({
+      const startTime = Date.now();
+      
+      const systemPrompt = `أنت مساعد بسيط. رد بكلمة "متصل" فقط.`;
+      const userPrompt = `أجب بكلمة "متصل" فقط.`;
+      
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+      
+      if (result.success) {
+        setStatus(prev => ({
           ...prev,
-          isConnected: true,
-          lastTest: new Date().toLocaleString('ar-EG'),
-          successCount: prev.successCount + 1
+          isOnline: true,
+          responseTime,
+          lastCheck: new Date(),
+          successRate: Math.min(prev.successRate + 10, 100),
+          errorCount: Math.max(prev.errorCount - 1, 0)
         }));
-
+        
         toast({
-          title: "✅ اتصال OpenAI يعمل",
-          description: "تم اختبار الاتصال بنجاح",
+          title: "متصل",
+          description: `الذكاء الاصطناعي يعمل بشكل طبيعي (${responseTime}ms)`,
         });
       } else {
-        throw new Error(response.error || 'خطأ غير معروف');
+        throw new Error(result.error || 'فشل في الاتصال');
       }
     } catch (error: any) {
-      setStatusIndicator(prev => ({
+      console.error('خطأ في فحص حالة الذكاء الاصطناعي:', error);
+      
+      setStatus(prev => ({
         ...prev,
-        isConnected: false,
-        lastTest: new Date().toLocaleString('ar-EG'),
-        errorCount: prev.errorCount + 1
+        isOnline: false,
+        lastCheck: new Date(),
+        errorCount: prev.errorCount + 1,
+        successRate: Math.max(prev.successRate - 10, 0)
       }));
-
+      
       toast({
-        title: "❌ خطأ في الاتصال",
-        description: error.message || "فشل في اختبار الاتصال",
+        title: "غير متصل",
+        description: "فشل في الاتصال بالذكاء الاصطناعي",
         variant: "destructive",
       });
     } finally {
-      setIsTesting(false);
+      setIsChecking(false);
     }
   };
 
+  // فحص تلقائي كل دقيقة
+  useEffect(() => {
+    checkAIStatus();
+    
+    const interval = setInterval(checkAIStatus, 60000); // كل دقيقة
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const getStatusColor = () => {
-    if (!statusIndicator.isConfigured) return 'bg-gray-500';
-    if (statusIndicator.isConnected) return 'bg-green-500';
-    return 'bg-red-500';
+    if (status.isOnline) {
+      if (status.responseTime < 1000) return 'text-green-600';
+      if (status.responseTime < 3000) return 'text-yellow-600';
+      return 'text-orange-600';
+    }
+    return 'text-red-600';
+  };
+
+  const getStatusIcon = () => {
+    if (isChecking) return <Loader2 className="h-4 w-4 animate-spin" />;
+    if (status.isOnline) return <CheckCircle className="h-4 w-4" />;
+    return <AlertTriangle className="h-4 w-4" />;
   };
 
   const getStatusText = () => {
-    if (!statusIndicator.isConfigured) return 'غير مُعد';
-    if (statusIndicator.isConnected) return 'متصل';
+    if (isChecking) return 'جاري الفحص...';
+    if (status.isOnline) return 'متصل';
     return 'غير متصل';
+  };
+
+  const getResponseTimeText = () => {
+    if (status.responseTime < 1000) return 'سريع';
+    if (status.responseTime < 3000) return 'متوسط';
+    return 'بطيء';
   };
 
   return (
@@ -102,81 +134,75 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = () => {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-2">
-            <Brain className="h-4 w-4" />
+            <Brain className="h-4 w-4 text-purple-600" />
             <span>حالة الذكاء الاصطناعي</span>
           </div>
-          <Badge 
-            variant="outline" 
-            className={`${getStatusColor()} text-white border-0`}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={checkAIStatus}
+            disabled={isChecking}
+            className="h-6 w-6 p-0"
           >
-            {getStatusText()}
-          </Badge>
+            <RefreshCw className={`h-3 w-3 ${isChecking ? 'animate-spin' : ''}`} />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* حالة الاتصال */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            {statusIndicator.isConnected ? (
-              <Wifi className="h-4 w-4 text-green-600" />
-            ) : (
-              <WifiOff className="h-4 w-4 text-red-600" />
-            )}
-            <span className="text-sm">الاتصال</span>
+            {getStatusIcon()}
+            <span className="text-sm font-medium">{getStatusText()}</span>
           </div>
-          <span className="text-sm text-gray-600">
-            {statusIndicator.isConnected ? 'متصل' : 'غير متصل'}
-          </span>
+          <Badge 
+            variant={status.isOnline ? "default" : "destructive"}
+            className="text-xs"
+          >
+            {status.provider}
+          </Badge>
         </div>
 
-        {/* آخر اختبار */}
-        {statusIndicator.lastTest && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm">آخر اختبار</span>
-            <span className="text-sm text-gray-600">{statusIndicator.lastTest}</span>
+        {/* وقت الاستجابة */}
+        {status.isOnline && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span>وقت الاستجابة:</span>
+              <span className={`font-medium ${getStatusColor()}`}>
+                {status.responseTime}ms ({getResponseTimeText()})
+              </span>
+            </div>
+            <Progress 
+              value={Math.min((status.responseTime / 5000) * 100, 100)} 
+              className="h-1"
+            />
           </div>
         )}
 
-        {/* إحصائيات */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm">النجاحات</span>
-          <span className="text-sm text-green-600">{statusIndicator.successCount}</span>
+        {/* معدل النجاح */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span>معدل النجاح:</span>
+            <span className="font-medium">{status.successRate}%</span>
+          </div>
+          <Progress value={status.successRate} className="h-1" />
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm">الأخطاء</span>
-          <span className="text-sm text-red-600">{statusIndicator.errorCount}</span>
+        {/* معلومات إضافية */}
+        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+          <div className="flex items-center space-x-1">
+            <Activity className="h-3 w-3" />
+            <span>النموذج: {status.model}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <Zap className="h-3 w-3" />
+            <span>الأخطاء: {status.errorCount}</span>
+          </div>
         </div>
 
-        {/* أزرار التحكم */}
-        <div className="flex space-x-2 pt-2">
-          <Button
-            size="sm"
-            onClick={testAIConnection}
-            disabled={isTesting}
-            className="flex-1"
-          >
-            {isTesting ? (
-              <>
-                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                جاري الاختبار...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-3 w-3 mr-1" />
-                اختبار الاتصال
-              </>
-            )}
-          </Button>
-          
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-          >
-            <Settings className="h-3 w-3 mr-1" />
-            الإعدادات
-          </Button>
+        {/* آخر فحص */}
+        <div className="text-xs text-gray-500 text-center">
+          آخر فحص: {status.lastCheck.toLocaleTimeString('ar-EG')}
         </div>
       </CardContent>
     </Card>

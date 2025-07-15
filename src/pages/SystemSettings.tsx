@@ -29,10 +29,12 @@ import {
   FileText,
   Palette,
   Users,
-  Calendar
+  Calendar,
+  Brain
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { googleAIService } from '@/services/google-ai-service';
 
 interface SystemSettings {
   id?: string;
@@ -52,11 +54,11 @@ interface SystemSettings {
   
   // إعدادات الذكاء الاصطناعي
   ai_enabled: boolean;
-  openai_api_key: string;
-  google_ai_enabled: boolean;
   google_ai_api_key: string;
   ai_response_timeout: number;
   ai_max_tokens: number;
+  ai_model: string;
+  ai_language: string;
   
   // إعدادات قاعدة البيانات
   database_backup_enabled: boolean;
@@ -111,11 +113,11 @@ const SystemSettings = () => {
     
     // إعدادات الذكاء الاصطناعي
     ai_enabled: true,
-    openai_api_key: '',
-    google_ai_enabled: false,
-    google_ai_api_key: '',
+    google_ai_api_key: import.meta.env.VITE_GOOGLE_AI_API_KEY || '',
     ai_response_timeout: 30,
     ai_max_tokens: 2000,
+    ai_model: 'gemini-1.5-flash',
+    ai_language: 'egyptian_arabic',
     
     // إعدادات قاعدة البيانات
     database_backup_enabled: true,
@@ -199,42 +201,31 @@ const SystemSettings = () => {
     }
   };
 
-  // حفظ الإعدادات
   const saveSettings = async () => {
-    setIsLoading(true);
     try {
-      const settingsData = {
+      setIsLoading(true);
+      
+      const updatedSettings = {
         ...settings,
         updated_at: new Date().toISOString()
       };
 
-      let error;
-      if (settings.id) {
-        // تحديث الإعدادات الموجودة
-        const { error: updateError } = await supabase
-          .from('system_settings')
-          .update(settingsData)
-          .eq('id', settings.id);
-        error = updateError;
-      } else {
-        // إنشاء إعدادات جديدة
-        const { error: insertError } = await supabase
-          .from('system_settings')
-          .insert([settingsData]);
-        error = insertError;
-      }
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert(updatedSettings);
 
       if (error) throw error;
-      
+
+      setSettings(updatedSettings);
       toast({
-        title: "✅ تم حفظ الإعدادات",
-        description: "تم حفظ جميع الإعدادات بنجاح",
+        title: "✅ تم الحفظ",
+        description: "تم حفظ إعدادات النظام بنجاح",
       });
     } catch (error: any) {
       console.error('Error saving settings:', error);
       toast({
         title: "❌ خطأ في الحفظ",
-        description: error.message || "فشل في حفظ الإعدادات",
+        description: error.message || "فشل في حفظ إعدادات النظام",
         variant: "destructive",
       });
     } finally {
@@ -247,45 +238,43 @@ const SystemSettings = () => {
     try {
       setIsLoading(true);
       
-      // اختبار الاتصال بـ OpenAI
-      if (settings.ai_enabled && settings.openai_api_key) {
-        const response = await fetch('/api/test-openai', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            apiKey: settings.openai_api_key
-          })
+      if (!settings.ai_enabled) {
+        toast({
+          title: "الذكاء الاصطناعي معطل",
+          description: "يرجى تفعيل الذكاء الاصطناعي أولاً",
+          variant: "destructive",
         });
+        return;
+      }
 
-        if (!response.ok) throw new Error('فشل في الاتصال بـ OpenAI');
+      if (!settings.google_ai_api_key) {
+        toast({
+          title: "مفتاح API مفقود",
+          description: "يرجى إدخال مفتاح Google AI API",
+          variant: "destructive",
+        });
+        return;
       }
 
       // اختبار الاتصال بـ Google AI
-      if (settings.google_ai_enabled && settings.google_ai_api_key) {
-        const response = await fetch('/api/test-google-ai', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            apiKey: settings.google_ai_api_key
-          })
-        });
-
-        if (!response.ok) throw new Error('فشل في الاتصال بـ Google AI');
-      }
+      const systemPrompt = `أنت مساعد اختبار. رد بكلمة "متصل" فقط.`;
+      const userPrompt = `أجب بكلمة "متصل" فقط.`;
       
-      toast({
-        title: "✅ اتصال ناجح",
-        description: "تم اختبار الاتصال بالذكاء الاصطناعي بنجاح",
-      });
+      const result = await googleAIService.customCall(systemPrompt, userPrompt);
+      
+      if (result.success) {
+        toast({
+          title: "✅ اتصال ناجح",
+          description: "تم اختبار الاتصال بـ Google Gemini بنجاح",
+        });
+      } else {
+        throw new Error(result.error || 'فشل في الاتصال');
+      }
     } catch (error: any) {
       console.error('Error testing AI connection:', error);
       toast({
         title: "❌ فشل في الاتصال",
-        description: error.message || "فشل في الاتصال بالذكاء الاصطناعي",
+        description: error.message || "فشل في الاتصال بـ Google Gemini",
         variant: "destructive",
       });
     } finally {
@@ -303,16 +292,16 @@ const SystemSettings = () => {
   };
 
   // توليد مفتاح API جديد
-  const generateApiKey = async (type: 'openai' | 'google') => {
+  const generateApiKey = async () => {
     try {
       setIsLoading(true);
       
       // محاكاة توليد مفتاح جديد
-      const newKey = `sk-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      const newKey = `AIza${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
       
       const updatedSettings = {
         ...settings,
-        [type === 'openai' ? 'openai_api_key' : 'google_ai_api_key']: newKey,
+        google_ai_api_key: newKey,
         updated_at: new Date().toISOString()
       };
 
@@ -326,7 +315,7 @@ const SystemSettings = () => {
       setSettings(updatedSettings);
       toast({
         title: "✅ تم التوليد",
-        description: `تم توليد مفتاح ${type === 'openai' ? 'OpenAI' : 'Google AI'} جديد`,
+        description: "تم توليد مفتاح Google AI جديد",
       });
     } catch (error: any) {
       console.error('Error generating API key:', error);
@@ -344,14 +333,15 @@ const SystemSettings = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">إعدادات النظام</h1>
-          <p className="text-gray-600">إدارة إعدادات النظام والمنصة</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">إعدادات النظام</h1>
+          <p className="text-gray-600 text-sm sm:text-base">إدارة إعدادات النظام والمنصة</p>
         </div>
         <div className="flex space-x-2">
           <Button
             onClick={testAIConnection}
             variant="outline"
             className="flex items-center"
+            disabled={isLoading}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             اختبار الاتصال
@@ -390,9 +380,9 @@ const SystemSettings = () => {
         <TabsContent value="general" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Globe className="h-5 w-5" />
-                الإعدادات العامة
+              <CardTitle className="flex items-center space-x-2">
+                <Globe className="h-5 w-5 text-blue-600" />
+                <span>الإعدادات العامة</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -448,9 +438,9 @@ const SystemSettings = () => {
         <TabsContent value="ai" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Zap className="h-5 w-5" />
-                إعدادات الذكاء الاصطناعي
+              <CardTitle className="flex items-center space-x-2">
+                <Brain className="h-5 w-5 text-purple-600" />
+                <span>إعدادات الذكاء الاصطناعي</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -479,6 +469,13 @@ const SystemSettings = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setShowApiKeys(!showApiKeys)}
+                    >
+                      {showApiKeys ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => copyApiKey(settings.google_ai_api_key)}
                     >
                       <Copy className="h-4 w-4" />
@@ -486,10 +483,68 @@ const SystemSettings = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => generateApiKey('google')}
+                      onClick={generateApiKey}
+                      disabled={isLoading}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    احصل على المفتاح من <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a>
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="aiModel">نموذج الذكاء الاصطناعي</Label>
+                    <Select value={settings.ai_model} onValueChange={(value) => setSettings(prev => ({ ...prev, ai_model: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash (سريع)</SelectItem>
+                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (متقدم)</SelectItem>
+                        <SelectItem value="gemini-pro">Gemini Pro (عام)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="aiLanguage">لغة الرد</Label>
+                    <Select value={settings.ai_language} onValueChange={(value) => setSettings(prev => ({ ...prev, ai_language: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="egyptian_arabic">اللهجة المصرية</SelectItem>
+                        <SelectItem value="modern_standard_arabic">العربية الفصحى</SelectItem>
+                        <SelectItem value="english">English</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="aiMaxTokens">الحد الأقصى للكلمات</Label>
+                    <Input
+                      id="aiMaxTokens"
+                      type="number"
+                      value={settings.ai_max_tokens}
+                      onChange={(e) => setSettings(prev => ({ ...prev, ai_max_tokens: parseInt(e.target.value) || 2000 }))}
+                      min="100"
+                      max="8000"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="aiTimeout">مهلة الاستجابة (ثواني)</Label>
+                    <Input
+                      id="aiTimeout"
+                      type="number"
+                      value={settings.ai_response_timeout}
+                      onChange={(e) => setSettings(prev => ({ ...prev, ai_response_timeout: parseInt(e.target.value) || 30 }))}
+                      min="10"
+                      max="120"
+                    />
                   </div>
                 </div>
               </div>
@@ -501,9 +556,9 @@ const SystemSettings = () => {
         <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5" />
-                إعدادات الأمان
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-red-600" />
+                <span>إعدادات الأمان</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -560,9 +615,9 @@ const SystemSettings = () => {
         <TabsContent value="database" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Database className="h-5 w-5" />
-                إعدادات قاعدة البيانات
+              <CardTitle className="flex items-center space-x-2">
+                <Database className="h-5 w-5 text-green-600" />
+                <span>إعدادات قاعدة البيانات</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -624,9 +679,9 @@ const SystemSettings = () => {
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="h-5 w-5" />
-                إعدادات الإشعارات
+              <CardTitle className="flex items-center space-x-2">
+                <Bell className="h-5 w-5 text-yellow-600" />
+                <span>إعدادات الإشعارات</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -644,7 +699,7 @@ const SystemSettings = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>إشعارات SMS</Label>
+                    <Label>إشعارات الرسائل النصية</Label>
                     <p className="text-sm text-gray-600">إرسال إشعارات عبر الرسائل النصية</p>
                   </div>
                   <Switch
@@ -655,8 +710,8 @@ const SystemSettings = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>إشعارات Push</Label>
-                    <p className="text-sm text-gray-600">إشعارات فورية في المتصفح</p>
+                    <Label>إشعارات المتصفح</Label>
+                    <p className="text-sm text-gray-600">إظهار إشعارات في المتصفح</p>
                   </div>
                   <Switch
                     checked={settings.push_notifications}
@@ -667,7 +722,7 @@ const SystemSettings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>صوت الإشعارات</Label>
-                    <p className="text-sm text-gray-600">تشغيل صوت عند استلام إشعار</p>
+                    <p className="text-sm text-gray-600">تشغيل صوت عند وصول إشعار</p>
                   </div>
                   <Switch
                     checked={settings.notification_sound}
@@ -683,9 +738,9 @@ const SystemSettings = () => {
         <TabsContent value="interface" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Palette className="h-5 w-5" />
-                إعدادات الواجهة
+              <CardTitle className="flex items-center space-x-2">
+                <Palette className="h-5 w-5 text-indigo-600" />
+                <span>إعدادات الواجهة</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -703,22 +758,20 @@ const SystemSettings = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="language">اللغة</Label>
-                  <Select value={settings.language} onValueChange={(value) => setSettings(prev => ({ ...prev, language: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ar-EG">العربية (مصر)</SelectItem>
-                      <SelectItem value="ar-SA">العربية (السعودية)</SelectItem>
-                      <SelectItem value="en-US">English (US)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>دعم اللغة العربية</Label>
+                    <p className="text-sm text-gray-600">تفعيل الاتجاه من اليمين لليسار</p>
+                  </div>
+                  <Switch
+                    checked={settings.rtl_enabled}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, rtl_enabled: checked }))}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>الوضع المضغوط</Label>
@@ -740,35 +793,6 @@ const SystemSettings = () => {
                     onCheckedChange={(checked) => setSettings(prev => ({ ...prev, animations_enabled: checked }))}
                   />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="h-5 w-5" />
-                إعدادات المستخدمين
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex space-x-2">
-                <Button variant="outline" className="flex items-center">
-                  <Users className="h-4 w-4 mr-2" />
-                  إدارة المستخدمين
-                </Button>
-                <Button variant="outline" className="flex items-center">
-                  <Shield className="h-4 w-4 mr-2" />
-                  إدارة الصلاحيات
-                </Button>
-                <Button variant="outline" className="flex items-center">
-                  <FileText className="h-4 w-4 mr-2" />
-                  سجل النشاط
-                </Button>
-                <Button variant="outline" className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  الجدول الزمني
-                </Button>
               </div>
             </CardContent>
           </Card>
